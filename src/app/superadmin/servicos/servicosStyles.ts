@@ -1,0 +1,233 @@
+import { StyleSheet } from "react-native";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+
+  voltar: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 26,
+  },
+
+  voltarTexto: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#160909",
+    marginLeft: 8,
+    fontFamily: "serif",
+  },
+
+  titulo: {
+    fontSize: 36,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  subtitulo: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+    marginTop: 6,
+    marginBottom: 24,
+  },
+
+  botao: {
+    width: "100%",
+    height: 60,
+    backgroundColor: "#FDB515",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+
+  textoBotaoCriar: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  textoVazio: {
+    marginTop: 30,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+  },
+
+  lista: {
+    gap: 14,
+  },
+
+  card: {
+    backgroundColor: "#E9E9E9",
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    borderLeftWidth: 6,
+    borderLeftColor: "#FDB515",
+  },
+
+  cardIcone: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#FDB515",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+
+  cardInfo: {
+    flex: 1,
+  },
+
+  cardTitulo: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 4,
+  },
+
+  cardTexto: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "serif",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+
+  modalContainer: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 22,
+  },
+
+  modalTitulo: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 18,
+    textAlign: "center",
+  },
+
+  label: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 8,
+  },
+
+  instituicoesBox: {
+    maxHeight: 180,
+    marginBottom: 16,
+  },
+
+  opcaoInstituicao: {
+    backgroundColor: "#E9E9E9",
+    borderRadius: 9,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+
+  opcaoInstituicaoSelecionada: {
+    backgroundColor: "#FDB515",
+    borderColor: "#160909",
+  },
+
+  opcaoInstituicaoTexto: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  textoVazioModal: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+    textAlign: "center",
+    marginVertical: 15,
+  },
+
+  modalInput: {
+    width: "100%",
+    height: 58,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 9,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 18,
+  },
+
+  modalBotoes: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  modalBotaoCancelar: {
+    flex: 1,
+    height: 52,
+    backgroundColor: "#160909",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalBotaoCriar: {
+    flex: 1,
+    height: 52,
+    backgroundColor: "#FDB515",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalBotaoTexto: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#ffffffff",
+    fontFamily: "serif",
+  },
+
+    modalBotaoTexto1: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#000000ff",
+    fontFamily: "serif",
+  },
+});
+
+export default styles;
