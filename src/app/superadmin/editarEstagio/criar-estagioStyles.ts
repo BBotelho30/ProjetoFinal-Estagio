@@ -39,108 +39,38 @@ const styles = StyleSheet.create({
     color: "#777",
     fontFamily: "serif",
     marginTop: 6,
-    marginBottom: 24,
-  },
-
-  botao: {
-    width: "100%",
-    height: 60,
-    backgroundColor: "#FDB515",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-
-  textoBotaoCriar: {
-    fontSize: 24,
-    fontWeight: "900",
-    color: "#160909",
-    fontFamily: "serif",
-  },
-
-  textoVazio: {
-    marginTop: 30,
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#777",
-    fontFamily: "serif",
-  },
-
-  lista: {
-    gap: 14,
-  },
-
-  card: {
-    backgroundColor: "#E9E9E9",
-    borderRadius: 14,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    borderLeftWidth: 6,
-    borderLeftColor: "#FDB515",
-  },
-
-  cardIcone: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#FDB515",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-  },
-
-  cardInfo: {
-    flex: 1,
-  },
-
-  cardTitulo: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#160909",
-    fontFamily: "serif",
-    marginBottom: 4,
-  },
-
-  cardTexto: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#666",
-    fontFamily: "serif",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
-  },
-
-  modalContainer: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 22,
-  },
-
-  modalTitulo: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#160909",
-    fontFamily: "serif",
-    marginBottom: 18,
-    textAlign: "center",
+    marginBottom: 26,
   },
 
   label: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
+    marginBottom: 10,
+    marginTop: 14,
+  },
+
+  opcao: {
+    backgroundColor: "#E9E9E9",
+    borderRadius: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
     marginBottom: 8,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+
+  opcaoSelecionada: {
+    backgroundColor: "#FDB515",
+    borderColor: "#160909",
+  },
+
+  opcaoTexto: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#160909",
+    fontFamily: "serif",
   },
 
   selectToggle: {
@@ -198,53 +128,41 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
 
-  modalInput: {
+  textoVazio: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+    marginBottom: 12,
+  },
+
+  input: {
     width: "100%",
-    height: 58,
+    height: 60,
     backgroundColor: "#E9E9E9",
-    borderRadius: 9,
+    borderRadius: 10,
     paddingHorizontal: 16,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 18,
+    marginTop: 12,
   },
 
-  modalBotoes: {
-    flexDirection: "row",
-    gap: 12,
-  },
-
-  modalBotaoCancelar: {
-    flex: 1,
-    height: 52,
-    backgroundColor: "#160909",
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  modalBotaoCriar: {
-    flex: 1,
-    height: 52,
+  botaoCriar: {
+    width: "100%",
+    height: 62,
     backgroundColor: "#FDB515",
-    borderRadius: 9,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 28,
   },
 
-  modalBotaoTexto: {
-    fontSize: 18,
+  textoBotao: {
+    fontSize: 24,
     fontWeight: "900",
-    color: "#ffffffff",
-    fontFamily: "serif",
-  },
-
-  modalBotaoTexto1: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#000000ff",
+    color: "#160909",
     fontFamily: "serif",
   },
 });

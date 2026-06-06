@@ -51,7 +51,7 @@ export default function SuperAdminHome() {
 
         <Pressable
           style={styles.card}
-          onPress={() => router.push({ pathname: "/superadmin/ensinos-clinicos" } as any)}
+          onPress={() => router.push({ pathname: "/superadmin/ensinos-clinicos/ensinos-clinicos" } as any)}
         >
           <Ionicons name="school-outline" size={36} color="#FDB515" />
           <View style={styles.cardTexto}>
@@ -64,7 +64,7 @@ export default function SuperAdminHome() {
 
         <Pressable
           style={styles.card}
-          onPress={() => router.push({ pathname: "/superadmin/estagios" } as any)}
+          onPress={() => router.push({ pathname: "/superadmin/editarEstagio/editarEstagio" } as any)}
         >
           <Ionicons name="calendar-outline" size={36} color="#FDB515" />
           <View style={styles.cardTexto}>

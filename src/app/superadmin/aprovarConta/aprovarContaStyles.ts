@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     color: "#777",
     fontFamily: "serif",
     marginTop: 6,
-    marginBottom: 26,
+    marginBottom: 15,
   },
 
   lista: {
@@ -167,6 +167,113 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontFamily: "serif",
     textAlign: "center",
+  },
+
+  //filtros
+
+  filterRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  filterButton: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  filterButtonActive: {
+    backgroundColor: "#FDB515",
+    borderColor: "#160909",
+    borderWidth: 1,
+  },
+
+  filterButtonText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#555",
+    fontFamily: "serif",
+  },
+
+  filterButtonTextActive: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  filterToggle: {
+    height: 44,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 12,
+    marginTop: 10,
+  },
+
+  filterToggleText: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  filterDropdown: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E9E9E9",
+  },
+
+  filterOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+
+  filterOptionActive: {
+    backgroundColor: "#FDB515",
+  },
+
+  filterOptionText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  filterOptionTextActive: {
+    color: "#160909",
+    fontWeight: "900",
+  },
+
+  searchInput: {
+    flex: 1,
+    height: 48,
+    backgroundColor: "#F6F6F6",
+    borderRadius: 9,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    marginRight: 10,
+    fontFamily: "serif",
+  },
+
+  searchRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
   },
 });
 

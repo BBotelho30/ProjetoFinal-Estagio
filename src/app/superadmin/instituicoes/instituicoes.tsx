@@ -165,7 +165,7 @@ export default function CriarInstituicoes() {
                 onPress={criarInstituicao}
                 disabled={aCriar}
               >
-                <Text style={styles.modalBotaoTexto}>
+                <Text style={styles.modalBotaoTexto1}>
                   {aCriar ? "A criar..." : "Criar"}
                 </Text>
               </Pressable>

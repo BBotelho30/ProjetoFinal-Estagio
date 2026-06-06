@@ -31,9 +31,12 @@ type Servico = {
 export default function Servicos() {
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
-  const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<number | null>(null);
+  const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<
+    number | null
+  >(null);
   const [nomeServico, setNomeServico] = useState("");
   const [modalVisivel, setModalVisivel] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [aCriar, setACriar] = useState(false);
 
@@ -94,6 +97,7 @@ export default function Servicos() {
     setNomeServico("");
     setInstituicaoSelecionada(null);
     setModalVisivel(false);
+    setDropdownOpen(false);
     setACriar(false);
     carregarDados();
   }
@@ -122,9 +126,15 @@ export default function Servicos() {
       </Pressable>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#FDB515" style={{ marginTop: 30 }} />
+        <ActivityIndicator
+          size="large"
+          color="#FDB515"
+          style={{ marginTop: 30 }}
+        />
       ) : servicos.length === 0 ? (
-        <Text style={styles.textoVazio}>Ainda não existem serviços criados.</Text>
+        <Text style={styles.textoVazio}>
+          Ainda não existem serviços criados.
+        </Text>
       ) : (
         <View style={styles.lista}>
           {servicos.map((servico) => (
@@ -151,29 +161,53 @@ export default function Servicos() {
 
             <Text style={styles.label}>Escolhe a instituição</Text>
 
-            <ScrollView style={styles.instituicoesBox}>
-              {instituicoes.length === 0 ? (
-                <Text style={styles.textoVazioModal}>
-                  Ainda não existem instituições criadas.
-                </Text>
-              ) : (
-                instituicoes.map((instituicao) => (
-                  <Pressable
-                    key={instituicao.id}
-                    style={[
-                      styles.opcaoInstituicao,
-                      instituicaoSelecionada === instituicao.id &&
-                        styles.opcaoInstituicaoSelecionada,
-                    ]}
-                    onPress={() => setInstituicaoSelecionada(instituicao.id)}
-                  >
-                    <Text style={styles.opcaoInstituicaoTexto}>
-                      {instituicao.nome}
-                    </Text>
-                  </Pressable>
-                ))
-              )}
-            </ScrollView>
+            <Pressable
+              style={styles.selectToggle}
+              onPress={() => setDropdownOpen((prev) => !prev)}
+            >
+              <Text style={styles.selectToggleText}>
+                {instituicaoSelecionada
+                  ? instituicoes.find((i) => i.id === instituicaoSelecionada)
+                      ?.nome
+                  : "Selecionar instituição..."}
+              </Text>
+              <Ionicons
+                name={
+                  dropdownOpen ? "chevron-up-outline" : "chevron-down-outline"
+                }
+                size={22}
+                color="#160909"
+              />
+            </Pressable>
+
+            {dropdownOpen && (
+              <ScrollView style={styles.instituicoesBox} nestedScrollEnabled>
+                {instituicoes.length === 0 ? (
+                  <Text style={styles.textoVazioModal}>
+                    Ainda não existem instituições criadas.
+                  </Text>
+                ) : (
+                  instituicoes.map((instituicao) => (
+                    <Pressable
+                      key={instituicao.id}
+                      style={[
+                        styles.opcaoInstituicao,
+                        instituicaoSelecionada === instituicao.id &&
+                          styles.opcaoInstituicaoSelecionada,
+                      ]}
+                      onPress={() => {
+                        setInstituicaoSelecionada(instituicao.id);
+                        setDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.opcaoInstituicaoTexto}>
+                        {instituicao.nome}
+                      </Text>
+                    </Pressable>
+                  ))
+                )}
+              </ScrollView>
+            )}
 
             <TextInput
               placeholder="Nome do serviço"
@@ -181,7 +215,7 @@ export default function Servicos() {
               style={styles.modalInput}
               value={nomeServico}
               onChangeText={setNomeServico}
-            />. 
+            />
 
             <View style={styles.modalBotoes}>
               <Pressable
@@ -190,6 +224,7 @@ export default function Servicos() {
                   setModalVisivel(false);
                   setNomeServico("");
                   setInstituicaoSelecionada(null);
+                  setDropdownOpen(false);
                 }}
               >
                 <Text style={styles.modalBotaoTexto}>Cancelar</Text>
@@ -200,7 +235,7 @@ export default function Servicos() {
                 onPress={criarServico}
                 disabled={aCriar}
               >
-                <Text style={styles.modalBotaoTexto1}>
+                <Text style={styles.modalBotaoTexto}>
                   {aCriar ? "A criar..." : "Criar"}
                 </Text>
               </Pressable>

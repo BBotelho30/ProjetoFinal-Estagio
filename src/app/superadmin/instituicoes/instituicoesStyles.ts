@@ -72,116 +72,138 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 24,
   },
 
   modalContainer: {
+    width: "100%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 24,
-    width: "85%",
-    maxWidth: 400,
+    borderRadius: 18,
+    padding: 22,
   },
 
   modalTitulo: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "900",
     color: "#160909",
-    marginBottom: 16,
     fontFamily: "serif",
+    marginBottom: 18,
+    textAlign: "center",
+  },
+
+  label: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 8,
   },
 
   modalInput: {
-    borderWidth: 1,
-    borderColor: "#E9E9E9",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    fontSize: 16,
-    color: "#1f1f1f",
+    width: "100%",
+    height: 58,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 9,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#160909",
     fontFamily: "serif",
+    marginBottom: 18,
   },
 
   modalBotoes: {
     flexDirection: "row",
-    gap: 8,
-    justifyContent: "flex-end",
+    gap: 12,
   },
 
   modalBotaoCancelar: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 6,
-    backgroundColor: "#E9E9E9",
+    flex: 1,
+    height: 52,
+    backgroundColor: "#160909",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   modalBotaoCriar: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 6,
+    flex: 1,
+    height: 52,
     backgroundColor: "#FDB515",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   modalBotaoTexto: {
-    color: "#160909",
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#ffffffff",
+    fontFamily: "serif",
+  },
+
+  modalBotaoTexto1: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#000000ff",
     fontFamily: "serif",
   },
 
   textoVazio: {
-  marginTop: 30,
-  textAlign: "center",
-  fontSize: 18,
-  fontWeight: "700",
-  color: "#777",
-  fontFamily: "serif",
-},
+    marginTop: 30,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+  },
 
-lista: {
-  marginTop: 20,
-  gap: 14,
-},
+  lista: {
+    marginTop: 20,
+    gap: 14,
+  },
 
-card: {
-  backgroundColor: "#E9E9E9",
-  borderRadius: 14,
-  padding: 16,
-  flexDirection: "row",
-  alignItems: "center",
-  borderLeftWidth: 6,
-  borderLeftColor: "#FDB515",
-},
+  card: {
+    backgroundColor: "#E9E9E9",
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    borderLeftWidth: 6,
+    borderLeftColor: "#FDB515",
+  },
 
-cardIcone: {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-  backgroundColor: "#FDB515",
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: 14,
-},
+  cardIcone: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#FDB515",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
 
-cardInfo: {
-  flex: 1,
-},
+  cardInfo: {
+    flex: 1,
+  },
 
-cardTitulo: {
-  fontSize: 20,
-  fontWeight: "900",
-  color: "#160909",
-  fontFamily: "serif",
-  marginBottom: 4,
-},
+  cardTitulo: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 4,
+  },
 
-cardTexto: {
-  fontSize: 15,
-  fontWeight: "600",
-  color: "#666",
-  fontFamily: "serif",
-},
+  cardTexto: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "serif",
+  },
 });
 
 export default styles;
