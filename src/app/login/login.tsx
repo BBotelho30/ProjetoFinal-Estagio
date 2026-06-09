@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { Alert, Image, Pressable, Text, TextInput, View} from "react-native";
-import styles from "./loginStyles";
 import { router } from "expo-router";
+import { useState } from "react";
+import { Image, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { supabase } from "../../lib/supabase";
+import styles from "./loginStyles";
 
 export default function LoginScreen() {
   const [mostrarPassword, setMostrarPassword] = useState(false);
@@ -12,11 +12,18 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupOnClose, setPopupOnClose] = useState<(() => void) | null>(null);
+
   async function fazerLogin() {
     if (loading) return;
 
     if (!email || !password) {
-      Alert.alert("Erro", "Preenche o email e a palavra-passe.");
+      setPopupTitle("Erro");
+      setPopupMessage("Preenche o email e a palavra-passe.");
+      setPopupVisible(true);
       return;
     }
 
@@ -30,14 +37,18 @@ export default function LoginScreen() {
 
       if (error) {
         console.log("ERRO LOGIN:", error);
-        Alert.alert("Erro", error.message);
+        setPopupTitle("Erro");
+        setPopupMessage(error.message);
+        setPopupVisible(true);
         return;
       }
 
       const user = data.user;
 
       if (!user) {
-        Alert.alert("Erro", "Não foi possível iniciar sessão.");
+        setPopupTitle("Erro");
+        setPopupMessage("Não foi possível iniciar sessão.");
+        setPopupVisible(true);
         return;
       }
 
@@ -49,23 +60,25 @@ export default function LoginScreen() {
 
       if (perfilError) {
         console.log("ERRO PERFIL:", perfilError);
-        Alert.alert("Erro", "Não foi possível carregar o perfil.");
+        setPopupTitle("Erro");
+        setPopupMessage("Não foi possível carregar o perfil.");
+        setPopupVisible(true);
         return;
       }
 
       if (perfil.estado === "pendente") {
-        Alert.alert(
-          "Conta pendente",
-          "A tua conta ainda está a aguardar aprovação do SuperAdmin."
+        setPopupTitle("Conta pendente");
+        setPopupMessage(
+          "A tua conta ainda está a aguardar aprovação do Administrador.",
         );
+        setPopupVisible(true);
         return;
       }
 
       if (perfil.estado === "rejeitado") {
-        Alert.alert(
-          "Conta rejeitada",
-          "A tua conta foi rejeitada pelo SuperAdmin."
-        );
+        setPopupTitle("Conta rejeitada");
+        setPopupMessage("A tua conta foi rejeitada pelo Administrador.");
+        setPopupVisible(true);
         return;
       }
 
@@ -76,9 +89,11 @@ export default function LoginScreen() {
       } else if (perfil.tipo === "orientador") {
         router.push({ pathname: "/orientador/home" } as any);
       } else if (perfil.tipo === "superadmin") {
-        router.push({ pathname: "/superadmin/home",} as any);
+        router.push({ pathname: "/superadmin/home" } as any);
       } else {
-        Alert.alert("Erro", "Tipo de utilizador desconhecido.");
+        setPopupTitle("Erro");
+        setPopupMessage("Tipo de utilizador desconhecido.");
+        setPopupVisible(true);
       }
     } finally {
       setLoading(false);
@@ -133,11 +148,7 @@ export default function LoginScreen() {
         <Text style={styles.esqueci}>Esqueci-me da palavra-passe</Text>
       </Pressable>
 
-      <Pressable
-        style={styles.botao}
-        onPress={fazerLogin}
-        disabled={loading}
-      >
+      <Pressable style={styles.botao} onPress={fazerLogin} disabled={loading}>
         <Text style={styles.textoBotao}>
           {loading ? "A entrar..." : "Entrar"}
         </Text>
@@ -150,6 +161,27 @@ export default function LoginScreen() {
           <Text style={styles.criarConta}>Criar Conta</Text>
         </Pressable>
       </View>
+
+      <Modal
+        visible={popupVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPopupVisible(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>{popupTitle}</Text>
+            <Text style={styles.popupMessage}>{popupMessage}</Text>
+
+            <Pressable
+              style={styles.popupOkButton}
+              onPress={() => setPopupVisible(false)}
+            >
+              <Text style={styles.popupOkText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

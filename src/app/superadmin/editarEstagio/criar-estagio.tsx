@@ -21,6 +21,7 @@ type Servico = {
   instituicao_id: number;
 };
 
+// Página para criar uma nova edição de estágio, com dropdowns para selecionar ensino clínico, instituição e serviço, e campos para ano letivo, vagas, data início e data fim
 export default function CriarEstagio() {
   const [ensinos, setEnsinos] = useState<EnsinoClinico[]>([]);
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
@@ -49,6 +50,7 @@ export default function CriarEstagio() {
     (servico) => servico.instituicao_id === instituicaoSelecionada,
   );
 
+  // carregar ensinos clínicos, instituições e serviços para os dropdowns
   async function carregarDados() {
     const { data: ensinosData } = await supabase
       .from("ensinos_clinicos")
@@ -70,6 +72,7 @@ export default function CriarEstagio() {
     setServicos(servicosData || []);
   }
 
+  // função para criar a edição de estágio na base de dados
   async function criarEstagio() {
     if (loading) return;
 
@@ -284,16 +287,18 @@ export default function CriarEstagio() {
         </ScrollView>
       )}
 
+    <Text style={styles.label}>Ano Letivo</Text>
       <TextInput
-        placeholder="Ano letivo ex: 2025/2026"
+        placeholder="ex: 2025/2026"
         placeholderTextColor="#8c8787"
         style={styles.input}
         value={anoLetivo}
         onChangeText={setAnoLetivo}
       />
 
+    <Text style={styles.label}>Número de Vagas</Text>
       <TextInput
-        placeholder="Número de vagas"
+        placeholder="ex: 10"
         placeholderTextColor="#8c8787"
         style={styles.input}
         value={vagas}
@@ -301,16 +306,18 @@ export default function CriarEstagio() {
         keyboardType="numeric"
       />
 
+    <Text style={styles.label}>Data Inicio</Text>
       <TextInput
-        placeholder="Data início ex: 2026-01-15"
+        placeholder="ex:2026-01-15"
         placeholderTextColor="#8c8787"
         style={styles.input}
         value={dataInicio}
         onChangeText={setDataInicio}
       />
 
+    <Text style={styles.label}>Data Fim</Text>
       <TextInput
-        placeholder="Data fim ex: 2026-03-15"
+        placeholder="ex: 2026-03-15"
         placeholderTextColor="#8c8787"
         style={styles.input}
         value={dataFim}

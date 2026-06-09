@@ -94,6 +94,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
+
+
   label: {
     fontSize: 15,
     fontWeight: "900",
@@ -106,6 +108,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: "#555",
+    textTransform: "capitalize",
+    fontFamily: "serif",
+  },
+
+    valor1: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#d77513ff",
     textTransform: "capitalize",
     fontFamily: "serif",
   },

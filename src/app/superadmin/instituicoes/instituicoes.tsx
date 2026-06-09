@@ -24,10 +24,12 @@ export default function CriarInstituicoes() {
   const [modalVisivel, setModalVisivel] = useState(false);
   const [nomeInstituicao, setNomeInstituicao] = useState("");
   const [enderecoInstituicao, setEnderecoInstituicao] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
   const [loading, setLoading] = useState(false);
   const [aCriar, setACriar] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   async function carregarInstituicoes() {
     setLoading(true);
@@ -57,12 +59,26 @@ export default function CriarInstituicoes() {
 
     setACriar(true);
 
-    const { error } = await supabase.from("instituicoes").insert([
-      {
-        nome: nomeInstituicao.trim(),
-        endereco: enderecoInstituicao.trim() || null,
-      },
-    ]);
+    let error: any = null;
+
+    if (editingId) {
+      const res = await supabase
+        .from("instituicoes")
+        .update({
+          nome: nomeInstituicao.trim(),
+          endereco: enderecoInstituicao.trim() || null,
+        })
+        .eq("id", editingId);
+      error = res.error;
+    } else {
+      const res = await supabase.from("instituicoes").insert([
+        {
+          nome: nomeInstituicao.trim(),
+          endereco: enderecoInstituicao.trim() || null,
+        },
+      ]);
+      error = res.error;
+    }
 
     if (error) {
       console.log("ERRO AO CRIAR INSTITUIÇÃO:", error);
@@ -71,13 +87,39 @@ export default function CriarInstituicoes() {
       return;
     }
 
-    Alert.alert("Sucesso", "Instituição criada com sucesso!");
+    Alert.alert(
+      "Sucesso",
+      editingId
+        ? "Instituição atualizada com sucesso!"
+        : "Instituição criada com sucesso!",
+    );
 
     setModalVisivel(false);
     setNomeInstituicao("");
     setEnderecoInstituicao("");
+    setEditingId(null);
     setACriar(false);
 
+    carregarInstituicoes();
+  }
+
+  function apagarInstituicao(id: number) {
+    setConfirmDeleteId(id);
+  }
+
+  async function confirmarApagar() {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
+
+    const { error } = await supabase.from("instituicoes").delete().eq("id", id);
+    if (error) {
+      console.log("ERRO AO APAGAR INSTITUIÇÃO:", error);
+      Alert.alert("Erro", "Não foi possível apagar a instituição.");
+      return;
+    }
+
+    Alert.alert("Sucesso", "Instituição apagada.");
     carregarInstituicoes();
   }
 
@@ -100,14 +142,28 @@ export default function CriarInstituicoes() {
         Gerir hospitais, unidades e instituições parceiras.
       </Text>
 
-      <Pressable style={styles.botao} onPress={() => setModalVisivel(true)}>
+      <Pressable
+        style={styles.botao}
+        onPress={() => {
+          setEditingId(null);
+          setNomeInstituicao("");
+          setEnderecoInstituicao("");
+          setModalVisivel(true);
+        }}
+      >
         <Text style={styles.textoBotaoCriar}>Criar instituição</Text>
       </Pressable>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#FDB515" style={{ marginTop: 30 }} />
+        <ActivityIndicator
+          size="large"
+          color="#FDB515"
+          style={{ marginTop: 30 }}
+        />
       ) : instituicoes.length === 0 ? (
-        <Text style={styles.textoVazio}>Ainda não existem instituições criadas.</Text>
+        <Text style={styles.textoVazio}>
+          Ainda não existem instituições criadas.
+        </Text>
       ) : (
         <View style={styles.lista}>
           {instituicoes.map((instituicao) => (
@@ -121,6 +177,31 @@ export default function CriarInstituicoes() {
                 <Text style={styles.cardTexto}>
                   {instituicao.endereco || "Sem endereço definido"}
                 </Text>
+
+                <View style={styles.cardActions}>
+                  <Pressable
+                    style={[styles.actionButton, styles.actionEdit]}
+                    onPress={() => {
+                      setEditingId(instituicao.id);
+                      setNomeInstituicao(instituicao.nome);
+                      setEnderecoInstituicao(instituicao.endereco || "");
+                      setModalVisivel(true);
+                    }}
+                  >
+                    <Ionicons name="pencil-outline" size={18} color="#160909" />
+                    <Text style={styles.actionText}>Editar</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[styles.actionButton, styles.actionDelete]}
+                    onPress={() => apagarInstituicao(instituicao.id)}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#fff" />
+                    <Text style={[styles.actionText, { color: "#fff" }]}>
+                      Apagar
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           ))}
@@ -130,7 +211,9 @@ export default function CriarInstituicoes() {
       <Modal visible={modalVisivel} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitulo}>Criar Instituição</Text>
+            <Text style={styles.modalTitulo}>
+              {editingId ? "Editar Instituição" : "Criar Instituição"}
+            </Text>
 
             <TextInput
               placeholder="Nome da instituição"
@@ -155,6 +238,7 @@ export default function CriarInstituicoes() {
                   setModalVisivel(false);
                   setNomeInstituicao("");
                   setEnderecoInstituicao("");
+                  setEditingId(null);
                 }}
               >
                 <Text style={styles.modalBotaoTexto}>Cancelar</Text>
@@ -166,8 +250,49 @@ export default function CriarInstituicoes() {
                 disabled={aCriar}
               >
                 <Text style={styles.modalBotaoTexto1}>
-                  {aCriar ? "A criar..." : "Criar"}
+                  {aCriar
+                    ? editingId
+                      ? "A gravar..."
+                      : "A criar..."
+                    : editingId
+                      ? "Salvar"
+                      : "Criar"}
                 </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de confirmação para apagar */}
+      <Modal
+        visible={confirmDeleteId !== null}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitulo}>Confirmar eliminação</Text>
+            <Text
+              style={{ textAlign: "center", marginBottom: 18, color: "#333" }}
+            >
+              Tens a certeza que queres apagar esta instituição? Esta ação não
+              pode ser desfeita.
+            </Text>
+
+            <View style={styles.modalBotoes}>
+              <Pressable
+                style={styles.modalBotaoCancelar}
+                onPress={() => setConfirmDeleteId(null)}
+              >
+                <Text style={styles.modalBotaoTexto}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.modalBotaoCriar}
+                onPress={confirmarApagar}
+              >
+                <Text style={styles.modalBotaoTexto}>Apagar</Text>
               </Pressable>
             </View>
           </View>

@@ -97,6 +97,56 @@ const styles = StyleSheet.create({
     color: "#FDB515",
     fontFamily: "serif",
   },
+
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+
+  popupContainer: {
+    width: "85%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  popupTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#160909",
+    marginBottom: 8,
+  },
+
+  popupMessage: {
+    fontSize: 16,
+    color: "#1f1f1f",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+
+  popupOkButton: {
+    width: "60%",
+    height: 46,
+    backgroundColor: "#FDB515",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  popupOkText: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
+  },
 });
 
 export default styles;

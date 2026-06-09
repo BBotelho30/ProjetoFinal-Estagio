@@ -19,6 +19,7 @@ type Utilizador = {
   email: string;
   tipo: string;
   estado: string;
+  numero_identificacao: string | null;
 };
 
 export default function AprovarContas() {
@@ -37,7 +38,7 @@ export default function AprovarContas() {
     // Vai buscar utilizadores com estado "pendente"
     const { data, error } = await supabase
       .from("utilizadores")
-      .select("id, nome, email, tipo, estado")
+      .select("id, nome, email, tipo, estado, numero_identificacao")
       .eq("estado", "pendente")
       .order("criado_em", { ascending: false }); // Ordenar por data de criação, do mais recente para o mais antigo
 
@@ -254,9 +255,16 @@ export default function AprovarContas() {
                   <Text style={styles.valor}>{user.tipo}</Text>
                 </View>
 
+                <View style = {styles.linhaInfo}>
+                  <Text style={styles.label}>Número ID:</Text>
+                  <Text style={styles.valor}>
+                    {user.numero_identificacao || "N/A"}
+                  </Text>
+                </View>
+
                 <View style={styles.linhaInfo}>
                   <Text style={styles.label}>Estado:</Text>
-                  <Text style={styles.estadoPendente}>Pendente</Text>
+                  <Text style={styles.valor1}>{user.estado}</Text>
                 </View>
 
                 <View style={styles.botoes}>

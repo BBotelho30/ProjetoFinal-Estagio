@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#777",
     fontFamily: "serif",
-    marginTop: 6,
+    marginTop: 5,
     marginBottom: 26,
   },
 
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 10,
+    marginBottom: 5,
     marginTop: 14,
   },
 
@@ -82,7 +82,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 16,
+    marginTop: 5,
   },
 
   selectToggleText: {

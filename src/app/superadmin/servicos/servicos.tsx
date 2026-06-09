@@ -37,8 +37,10 @@ export default function Servicos() {
   const [nomeServico, setNomeServico] = useState("");
   const [modalVisivel, setModalVisivel] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [aCriar, setACriar] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   async function carregarDados() {
     setLoading(true);
@@ -79,26 +81,66 @@ export default function Servicos() {
 
     setACriar(true);
 
-    const { error } = await supabase.from("servicos").insert([
-      {
-        nome: nomeServico.trim(),
-        instituicao_id: instituicaoSelecionada,
-      },
-    ]);
+    let error: any = null;
+
+    if (editingId) {
+      const res = await supabase
+        .from("servicos")
+        .update({
+          nome: nomeServico.trim(),
+          instituicao_id: instituicaoSelecionada,
+        })
+        .eq("id", editingId);
+      error = res.error;
+    } else {
+      const res = await supabase.from("servicos").insert([
+        {
+          nome: nomeServico.trim(),
+          instituicao_id: instituicaoSelecionada,
+        },
+      ]);
+      error = res.error;
+    }
 
     if (error) {
-      console.log("ERRO AO CRIAR SERVIÇO:", error);
-      Alert.alert("Erro", error.message);
+      console.log("ERRO AO CRIAR/ATUALIZAR SERVIÇO:", error);
+      Alert.alert("Erro", error.message || "Ocorreu um erro.");
       setACriar(false);
       return;
     }
 
-    Alert.alert("Sucesso", "Serviço criado com sucesso!");
+    Alert.alert(
+      "Sucesso",
+      editingId
+        ? "Serviço atualizado com sucesso!"
+        : "Serviço criado com sucesso!",
+    );
     setNomeServico("");
     setInstituicaoSelecionada(null);
     setModalVisivel(false);
     setDropdownOpen(false);
+    setEditingId(null);
     setACriar(false);
+    carregarDados();
+  }
+
+  function apagarServico(id: number) {
+    setConfirmDeleteId(id);
+  }
+
+  async function confirmarApagar() {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
+
+    const { error } = await supabase.from("servicos").delete().eq("id", id);
+    if (error) {
+      console.log("ERRO AO APAGAR SERVIÇO:", error);
+      Alert.alert("Erro", "Não foi possível apagar o serviço.");
+      return;
+    }
+
+    Alert.alert("Sucesso", "Serviço apagado.");
     carregarDados();
   }
 
@@ -121,7 +163,16 @@ export default function Servicos() {
         Criar serviços associados às instituições.
       </Text>
 
-      <Pressable style={styles.botao} onPress={() => setModalVisivel(true)}>
+      <Pressable
+        style={styles.botao}
+        onPress={() => {
+          setEditingId(null);
+          setNomeServico("");
+          setInstituicaoSelecionada(null);
+          setDropdownOpen(false);
+          setModalVisivel(true);
+        }}
+      >
         <Text style={styles.textoBotaoCriar}>Criar serviço</Text>
       </Pressable>
 
@@ -148,6 +199,31 @@ export default function Servicos() {
                 <Text style={styles.cardTexto}>
                   {servico.instituicoes?.nome || "Sem instituição"}
                 </Text>
+
+                <View style={styles.cardActions}>
+                  <Pressable
+                    style={[styles.actionButton, styles.actionEdit]}
+                    onPress={() => {
+                      setEditingId(servico.id);
+                      setNomeServico(servico.nome);
+                      setInstituicaoSelecionada(servico.instituicao_id);
+                      setModalVisivel(true);
+                    }}
+                  >
+                    <Ionicons name="pencil-outline" size={18} color="#160909" />
+                    <Text style={styles.actionText}>Editar</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[styles.actionButton, styles.actionDelete]}
+                    onPress={() => apagarServico(servico.id)}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#fff" />
+                    <Text style={[styles.actionText, { color: "#fff" }]}>
+                      Apagar
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           ))}
@@ -157,7 +233,9 @@ export default function Servicos() {
       <Modal visible={modalVisivel} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitulo}>Criar Serviço</Text>
+            <Text style={styles.modalTitulo}>
+              {editingId ? "Editar Serviço" : "Criar Serviço"}
+            </Text>
 
             <Text style={styles.label}>Escolhe a instituição</Text>
 
@@ -225,6 +303,7 @@ export default function Servicos() {
                   setNomeServico("");
                   setInstituicaoSelecionada(null);
                   setDropdownOpen(false);
+                  setEditingId(null);
                 }}
               >
                 <Text style={styles.modalBotaoTexto}>Cancelar</Text>
@@ -236,8 +315,49 @@ export default function Servicos() {
                 disabled={aCriar}
               >
                 <Text style={styles.modalBotaoTexto}>
-                  {aCriar ? "A criar..." : "Criar"}
+                  {aCriar
+                    ? editingId
+                      ? "A gravar..."
+                      : "A criar..."
+                    : editingId
+                      ? "Salvar"
+                      : "Criar"}
                 </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de confirmação para apagar */}
+      <Modal
+        visible={confirmDeleteId !== null}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitulo}>Confirmar eliminação</Text>
+            <Text
+              style={{ textAlign: "center", marginBottom: 18, color: "#333" }}
+            >
+              Tens a certeza que queres apagar este serviço? Esta ação não pode
+              ser desfeita.
+            </Text>
+
+            <View style={styles.modalBotoes}>
+              <Pressable
+                style={styles.modalBotaoCancelar}
+                onPress={() => setConfirmDeleteId(null)}
+              >
+                <Text style={styles.modalBotaoTexto}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.modalBotaoCriar}
+                onPress={confirmarApagar}
+              >
+                <Text style={styles.modalBotaoTexto}>Apagar</Text>
               </Pressable>
             </View>
           </View>

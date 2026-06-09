@@ -111,6 +111,39 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
   },
 
+  cardActions: {
+    marginTop: 12,
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+  },
+
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+
+  actionEdit: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#160909",
+  },
+
+  actionDelete: {
+    backgroundColor: "#e74c3c",
+  },
+
+  actionText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#160909",
+    marginLeft: 8,
+    fontFamily: "serif",
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",

@@ -6,14 +6,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
-    paddingTop: 105,
+    paddingTop: 60,
   },
 
   logo: {
     width: 110,
     height: 110,
     borderRadius: 55,
-    marginBottom: 35,
+    marginBottom: 25,
   },
 
   titulo: {
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#FDB515",
     fontFamily: "serif",
-    marginBottom: 58,
+    marginBottom: 30,
   },
 
   inputContainer: {
@@ -99,44 +99,123 @@ const styles = StyleSheet.create({
   },
 
   tipoTitulo: {
-  width: "100%",
-  fontSize: 18,
-  fontWeight: "900",
-  color: "#160909",
-  fontFamily: "serif",
-  marginBottom: 12,
-},
+    width: "100%",
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 12,
+  },
 
-tipoContainer: {
-  width: "100%",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginBottom: 24,
-},
+  tipoContainer: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
 
-tipoOpcao: {
-  flex: 1,
-  height: 55,
-  backgroundColor: "#E9E9E9",
-  borderRadius: 9,
-  alignItems: "center",
-  justifyContent: "center",
-  marginHorizontal: 4,
-  borderWidth: 2,
-  borderColor: "transparent",
-},
+  tipoOpcao: {
+    flex: 1,
+    height: 55,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
 
-tipoOpcaoSelecionada: {
-  backgroundColor: "#FDB515",
-  borderColor: "#160909",
-},
+  tipoOpcaoSelecionada: {
+    backgroundColor: "#FDB515",
+    borderColor: "#160909",
+  },
 
-tipoTexto: {
-  fontSize: 16,
-  fontWeight: "900",
-  color: "#160909",
-  fontFamily: "serif",
-},
+  tipoTexto: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  popupModal: {
+    width: "85%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+
+  popupContainer: {
+    width: "85%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  popupTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#160909",
+    marginBottom: 8,
+  },
+
+  popupMessage: {
+    fontSize: 16,
+    color: "#1f1f1f",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+
+  popupButton: {
+    width: "60%",
+    height: 46,
+    backgroundColor: "#FDB515",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  popupButtonText: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
+  },
+
+  popupOkButton: {
+    width: "60%",
+    height: 46,
+    backgroundColor: "#FDB515",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+
+  popupOkText: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
+  },
 });
 
 export default styles;
