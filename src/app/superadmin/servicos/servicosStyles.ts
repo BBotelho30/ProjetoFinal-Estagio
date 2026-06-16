@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
+import globalStyles from "../../../styles/globalStyles";
 
-const styles = StyleSheet.create({
+const local = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -23,13 +24,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#160909",
     marginLeft: 8,
-    fontFamily: "serif",
-  },
-
-  titulo: {
-    fontSize: 36,
-    fontWeight: "900",
-    color: "#160909",
     fontFamily: "serif",
   },
 
@@ -159,15 +153,6 @@ const styles = StyleSheet.create({
     padding: 22,
   },
 
-  modalTitulo: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#160909",
-    fontFamily: "serif",
-    marginBottom: 18,
-    textAlign: "center",
-  },
-
   label: {
     fontSize: 16,
     fontWeight: "900",
@@ -281,5 +266,11 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
   },
 });
+
+const styles = {
+  ...local,
+  titulo: globalStyles.titulo,
+  modalTitulo: globalStyles.modalTitulo,
+};
 
 export default styles;

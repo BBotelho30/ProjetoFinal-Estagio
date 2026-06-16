@@ -3,11 +3,17 @@ import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import styles from "./homeStyles";
 
+
+
 export default function SuperAdminHome() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.titulo}>Olá, Admin</Text>
       <Text style={styles.subtitulo}>Gestão do Passaporte de Enfermagem</Text>
+
+      <Pressable onPress={() => router.push("/superadmin/perfil/perfil" as any)}>
+      <Ionicons name = "person-circle-outline" size={75} color="#FDB515" style={styles.icone1} />
+      </Pressable>
 
       <View style={styles.cardsContainer}>
         <Pressable
@@ -19,6 +25,16 @@ export default function SuperAdminHome() {
             <Text style={styles.cardTitulo}>Aprovar Contas</Text>
             <Text style={styles.cardDescricao}>
               Validar alunos, professores e orientadores pendentes.
+            </Text>
+          </View>
+        </Pressable>
+
+          <Pressable style={styles.card} onPress={() => router.push("/superadmin/utilizadores/utilizadores" as any)}>
+          <Ionicons name="people-outline" size={36} color="#FDB515" />
+            <View style={styles.cardTexto}>
+            <Text style={styles.cardTitulo}>Utilizadores</Text>
+            <Text style={styles.cardDescricao}>
+                Consultar alunos, professores e orientadores aprovados.
             </Text>
           </View>
         </Pressable>
@@ -74,6 +90,16 @@ export default function SuperAdminHome() {
             </Text>
           </View>
         </Pressable>
+
+        <Pressable style={styles.card} onPress={() => router.push("/superadmin/professoresResponsaveis/professoresResponsaveis" as any)}>
+          <Ionicons name="ribbon-outline" size={36} color="#FDB515" />
+          <View style={styles.cardTexto}>
+          <Text style={styles.cardTitulo}>Professores Responsáveis</Text>
+          <Text style={styles.cardDescricao}>
+            Nomear professores responsáveis por ensinos clínicos.
+          </Text>
+        </View>
+      </Pressable>
 
         <Pressable
           style={styles.card}

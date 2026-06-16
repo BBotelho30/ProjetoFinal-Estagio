@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -65,6 +66,12 @@ const styles = StyleSheet.create({
     color: "#555",
     fontFamily: "serif",
     lineHeight: 19,
+  },
+
+  icone1: {
+    position: "absolute",
+    top: -100,
+    right: -7,
   },
 });
 

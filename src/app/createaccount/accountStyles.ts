@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
+import globalStyles from "../../styles/globalStyles";
 
-const styles = StyleSheet.create({
+const local = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 32,
@@ -14,21 +15,6 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     marginBottom: 25,
-  },
-
-  titulo: {
-    fontSize: 39,
-    fontWeight: "900",
-    color: "#160909",
-    fontFamily: "serif",
-  },
-
-  tituloAmarelo: {
-    fontSize: 39,
-    fontWeight: "900",
-    color: "#FDB515",
-    fontFamily: "serif",
-    marginBottom: 30,
   },
 
   inputContainer: {
@@ -137,85 +123,19 @@ const styles = StyleSheet.create({
     color: "#160909",
     fontFamily: "serif",
   },
-
-  popupModal: {
-    width: "85%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-
-  popupOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-
-  popupContainer: {
-    width: "85%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-
-  popupTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#160909",
-    marginBottom: 8,
-  },
-
-  popupMessage: {
-    fontSize: 16,
-    color: "#1f1f1f",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-
-  popupButton: {
-    width: "60%",
-    height: 46,
-    backgroundColor: "#FDB515",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  popupButtonText: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#160909",
-  },
-
-  popupOkButton: {
-    width: "60%",
-    height: 46,
-    backgroundColor: "#FDB515",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-  },
-
-  popupOkText: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#160909",
-  },
 });
+
+const styles = {
+  ...local,
+  // reuse shared title and popup styles
+  titulo: globalStyles.titulo,
+  tituloAmarelo: globalStyles.tituloAmarelo,
+  popupOverlay: globalStyles.popupOverlay,
+  popupContainer: globalStyles.popupContainer,
+  popupTitle: globalStyles.popupTitle,
+  popupMessage: globalStyles.popupMessage,
+  popupOkButton: globalStyles.popupOkButton,
+  popupOkText: globalStyles.popupOkText,
+};
 
 export default styles;

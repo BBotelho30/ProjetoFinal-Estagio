@@ -1,11 +1,19 @@
 import { StyleSheet } from "react-native";
+import globalStyles from "../../styles/globalStyles";
 
-const styles = StyleSheet.create({
-    container: {
+const local = StyleSheet.create({
+  container: {
     flex: 1,
     width: "100%",
     height: "100%",
-    },
+  },
+
+    titulo1: {
+    fontSize: 39,
+    fontWeight: "900",
+    color: "#ffffffff",
+    fontFamily: "serif",
+  },
 
   texto: {
     fontSize: 30,
@@ -22,21 +30,6 @@ const styles = StyleSheet.create({
     borderRadius: 55,
     marginBottom: 50,
     marginTop: -100,
-  },
-
-  titulo: {
-    fontSize: 39,
-    fontWeight: "900",
-    color: "#ffffffff",
-    fontFamily: "serif",
-  },
-
-  tituloAmarelo: {
-    fontSize: 39,
-    fontWeight: "900",
-    color: "#FDB515",
-    fontFamily: "serif",
-    marginBottom: 58,
   },
 
   inputContainer: {
@@ -106,8 +99,7 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
   },
 
-
-    overlay: {
+  overlay: {
     flex: 1,
     width: "100%",
     height: "100%",
@@ -116,9 +108,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 32,
     paddingTop: 105,
-    },
-
-  
+  },
 });
+
+const styles = {
+  ...local,
+  titulo: globalStyles.titulo,
+  tituloAmarelo: globalStyles.tituloAmarelo,
+};
 
 export default styles;

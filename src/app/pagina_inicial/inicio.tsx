@@ -21,7 +21,7 @@ return (
         resizeMode="cover"
       />
 
-      <Text style={styles.titulo}>Passaporte</Text>
+      <Text style={styles.titulo1}>Passaporte</Text>
       <Text style={styles.tituloAmarelo}>de Enfermagem</Text>
 
       <Text style={styles.texto}>Bem-vindo ao Passaporte de Enfermagem, a plataforma que acompanha e organiza o teu percurso nos ensinos clínicos.</Text>
