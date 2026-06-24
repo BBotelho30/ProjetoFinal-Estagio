@@ -101,6 +101,26 @@ export default function SuperAdminHome() {
         </View>
       </Pressable>
 
+      <Pressable style={styles.card} onPress={() => router.push("/superadmin/criar_equipas/equipasEstagio" as any)}>
+        <Ionicons name="people-circle-outline" size={36} color="#FDB515" />
+        <View style={styles.cardTexto}>
+        <Text style={styles.cardTitulo}>Equipas dos Estágios</Text>
+        <Text style={styles.cardDescricao}>
+          Associar professores e orientadores às edições de estágio.
+        </Text>
+      </View>
+    </Pressable>
+
+         <Pressable style={styles.card} onPress={() => router.push("/superadmin/distribuirAlunos/distribuirAlunos" as any)}>
+          <Ionicons name="ribbon-outline" size={36} color="#FDB515" />
+          <View style={styles.cardTexto}>
+          <Text style={styles.cardTitulo}>Distribuir Alunos</Text>
+          <Text style={styles.cardDescricao}>
+            Associar alunos a estágios, professores e orientadores.
+          </Text>
+        </View>
+      </Pressable>
+
         <Pressable
           style={styles.card}
           onPress={() => router.push({ pathname: "/superadmin/inscricoes" } as any)}

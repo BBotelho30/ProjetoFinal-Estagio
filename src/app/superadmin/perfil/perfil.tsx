@@ -148,6 +148,7 @@ export default function PerfilAdmin() {
         <Pressable style={styles.botaoEditar} onPress={() => setEditar(true)}>
           <Text style={styles.textoBotao}>Editar Perfil</Text>
         </Pressable>
+        
       ) : (
         <View style={styles.botoesLinha}>
           <Pressable
@@ -157,7 +158,11 @@ export default function PerfilAdmin() {
               setNovaPassword("");
               carregarPerfil();
             }}
-          >
+          > 
+          <Pressable style={styles.botaoEditar} onPress={() => setEditar(true)}>
+          <Text style={styles.textoBotao}>Editar Perfil</Text>
+        </Pressable>v
+
             <Text style={styles.textoCancelar}>Cancelar</Text>
           </Pressable>
 

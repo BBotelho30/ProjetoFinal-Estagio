@@ -1,0 +1,6 @@
+- [ ] Refactor: mover estilos de barra de pesquisa e filtros (toggle + dropdown + options) de `aprovarContaStyles.ts` para `src/styles/globalStyles.ts`.
+- [ ] Criar/usar chaves em `globalStyles` para `searchContainer`, `searchInput`, `filterToggle`, `filterToggleText`, `filterDropdown`, `filterOption`, `filterOptionActive`, `filterOptionText`, `filterOptionTextActive`.
+- [ ] Atualizar todas as páginas que têm barra de pesquisa e filtros para reutilizar os estilos do `globalStyles`.
+- [ ] Remover estilos duplicados dos arquivos de `*Styles.ts` dessas páginas.
+- [ ] Garantir que `equipasEstagio` continua com o design pretendido após a refatoração.
+- [ ] Rodar `npx tsc -p tsconfig.json --noEmit` para validar compilação.

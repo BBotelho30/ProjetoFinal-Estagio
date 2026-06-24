@@ -27,15 +27,9 @@ export default function CriarEstagio() {
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
 
-  const [ensinoSelecionado, setEnsinoSelecionado] = useState<number | null>(
-    null,
-  );
-  const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<
-    number | null
-  >(null);
-  const [servicoSelecionado, setServicoSelecionado] = useState<number | null>(
-    null,
-  );
+  const [ensinoSelecionado, setEnsinoSelecionado] = useState<number | null>(null);
+  const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<number | null>(null);
+  const [servicoSelecionado, setServicoSelecionado] = useState<number | null>(null);
   const [ensinoOpen, setEnsinoOpen] = useState(false);
   const [instituicaoOpen, setInstituicaoOpen] = useState(false);
   const [servicoOpen, setServicoOpen] = useState(false);
@@ -44,6 +38,10 @@ export default function CriarEstagio() {
   const [vagas, setVagas] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
+
+  const [permiteReposicao, setPermiteReposicao] = useState(false);
+  const [limiteFaltas, setLimiteFaltas] = useState("15");
+  const [maxHorasDia, setMaxHorasDia] = useState("7");
   const [loading, setLoading] = useState(false);
 
   const servicosFiltrados = servicos.filter(
@@ -94,16 +92,30 @@ export default function CriarEstagio() {
     //inserir estágio na base de dados
     const { error } = await supabase.from("edicoes_estagio").insert([
       {
-        ensino_clinico_id: ensinoSelecionado,
-        instituicao_id: instituicaoSelecionada,
-        servico_id: servicoSelecionado,
-        ano_letivo: anoLetivo.trim(),
-        vagas: Number(vagas),
-        data_inicio: dataInicio.trim() || null,
-        data_fim: dataFim.trim() || null,
-        estado: "ativo",
+          ensino_clinico_id: ensinoSelecionado,
+          instituicao_id: instituicaoSelecionada,
+          servico_id: servicoSelecionado,
+          ano_letivo: anoLetivo.trim(),
+          vagas: Number(vagas),
+          data_inicio: dataInicio.trim() || null,
+          data_fim: dataFim.trim() || null,
+
+          permite_reposicao_horas: permiteReposicao,
+          limite_faltas_percentagem: Number(limiteFaltas),
+          max_horas_dia: Number(maxHorasDia),
+
+          estado: "ativo",
       },
+
+      
     ]);
+
+    //se não permitir reposição, definir maxHorasDia para 7
+      useEffect(() => {
+        if (!permiteReposicao) {
+          setMaxHorasDia("7");
+        }
+      }, [permiteReposicao]);
 
     setLoading(false);
 
@@ -323,6 +335,51 @@ export default function CriarEstagio() {
         value={dataFim}
         onChangeText={setDataFim}
       />
+
+      <Text style={styles.label}>Permite Reposição de Horas?</Text>
+
+      <Pressable
+        style={styles.selectToggle}
+        onPress={() => setPermiteReposicao(!permiteReposicao)}
+      >
+        <Text style={styles.selectToggleText}>
+          {permiteReposicao ? "Sim" : "Não"}
+        </Text>
+
+        <Ionicons
+          name={permiteReposicao ? "checkmark-circle" : "close-circle"}
+          size={24}
+          color={permiteReposicao ? "#2ecc71" : "#e74c3c"}
+        />
+      </Pressable>
+
+      <Text style={styles.label}>Limite de Faltas (%)</Text>
+
+      <TextInput
+        placeholder="15"
+        placeholderTextColor="#8c8787"
+        style={styles.input}
+        value={limiteFaltas}
+        onChangeText={setLimiteFaltas}
+        keyboardType="numeric"
+      />
+
+      <Text style={styles.label}>Máximo de Horas por Dia</Text>
+
+      <TextInput
+        placeholder="7"
+        placeholderTextColor="#8c8787"
+        style={styles.input}
+        value={maxHorasDia}
+        onChangeText={setMaxHorasDia}
+        keyboardType="numeric"
+      />
+
+      <Text style={styles.subtitulo}>
+        {permiteReposicao
+          ? "Os alunos podem compensar horas perdidas."
+          : "Os alunos não podem compensar horas. Conta para o limite de faltas."}
+      </Text>
 
       <Pressable
         style={styles.botaoCriar}

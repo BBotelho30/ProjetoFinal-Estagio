@@ -121,6 +121,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "serif",
   },
+
+  
 });
 
 export default styles;
