@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import globalStyles from "../../../styles/globalStyles";
 
 const styles = StyleSheet.create({
   container: {
@@ -49,48 +50,6 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
     marginBottom: 5,
     marginTop: 14,
-  },
-
-  opcao: {
-    backgroundColor: "#E9E9E9",
-    borderRadius: 10,
-    paddingVertical: 13,
-    paddingHorizontal: 15,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-
-  opcaoSelecionada: {
-    backgroundColor: "#FDB515",
-    borderColor: "#160909",
-  },
-
-  opcaoTexto: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#160909",
-    fontFamily: "serif",
-  },
-
-  selectToggle: {
-    width: "100%",
-    minHeight: 56,
-    backgroundColor: "#E9E9E9",
-    borderRadius: 9,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-    marginTop: 5,
-  },
-
-  selectToggleText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#160909",
-    fontFamily: "serif",
   },
 
   instituicoesBox: {
@@ -166,6 +125,21 @@ const styles = StyleSheet.create({
     color: "#160909",
     fontFamily: "serif",
   },
+ 
 });
 
-export default styles;
+const finalStyles = {
+  ...styles,
+
+  titulo: globalStyles.titulo,
+
+  selectToggle: globalStyles.selectToggle,
+  selectToggleText: globalStyles.selectToggleText,
+
+  dropdown: globalStyles.dropdown,
+  opcao: globalStyles.dropdownOption,
+  opcaoSelecionada: globalStyles.dropdownOptionSelected,
+  opcaoTexto: globalStyles.dropdownOptionText,
+};
+
+export default finalStyles;

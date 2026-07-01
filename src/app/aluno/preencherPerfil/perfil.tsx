@@ -405,7 +405,7 @@ export default function PerfilAluno() {
 
           <Pressable
             style={styles.bottomItem}
-            onPress={() => router.push("/aluno/presencas" as any)}
+            onPress={() => router.push("/aluno/presenca?from=bottom" as any)}
           >
             <Ionicons name="calendar-outline" size={24} color="#160909" />
             <Text style={styles.bottomTexto}>Presenças</Text>
@@ -413,7 +413,7 @@ export default function PerfilAluno() {
 
           <Pressable
             style={styles.bottomItem}
-            onPress={() => router.push("/aluno/avaliacoes" as any)}
+            onPress={() => router.push("/aluno/avaliacao/avaliacao?from=bottom" as any)}
           >
             <Ionicons name="star-outline" size={24} color="#160909" />
             <Text style={styles.bottomTexto}>Avaliações</Text>
@@ -421,13 +421,13 @@ export default function PerfilAluno() {
 
           <Pressable
             style={styles.bottomItem}
-            onPress={() => router.push("/aluno/reunioes" as any)}
+            onPress={() => router.push("/aluno/agenda/agenda?from=bottom" as any)}
           >
             <Ionicons name="people-outline" size={24} color="#160909" />
             <Text style={styles.bottomTexto}>Agenda</Text>
           </Pressable>
 
-          <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/estagios/estagio" as any)}>
+          <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/estagios/estagio?from=bottom" as any)}>
           <Ionicons name="briefcase-outline" size={24} color="#160909" />
           <Text style={styles.bottomTexto}>Ensinos Clinicos</Text>
         </Pressable>

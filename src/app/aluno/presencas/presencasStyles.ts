@@ -389,6 +389,24 @@ const local = StyleSheet.create({
     color: "#FDB515",
     fontFamily: "serif",
   },
+
+  avisoReprovacao: {
+  backgroundColor: "#F8C8C8",
+  borderRadius: 12,
+  padding: 14,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 10,
+  marginBottom: 18,
+},
+
+avisoReprovacaoTexto: {
+  flex: 1,
+  fontSize: 14,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
 });
 
 const styles = {

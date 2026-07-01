@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
+import globalStyles from "../../styles/globalStyles";
 
-const styles = StyleSheet.create({
+const local = StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -214,6 +215,166 @@ const styles = StyleSheet.create({
     color: "#160909",
     fontFamily: "serif",
     },
+
+    topIcons: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+
+    sidebarOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 999,
+      elevation: 999,
+    },
+
+    sidebarBackdrop: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0,0,0,0.25)",
+    },
+
+    sidebar: {
+      width: "72%",
+      height: "100%",
+      backgroundColor: "#FDB515",
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      borderTopRightRadius: 28,
+      borderBottomRightRadius: 28,
+      overflow: "hidden",
+    },
+
+    sidebarHeader: {
+      height: 130,
+      backgroundColor: "#225943",
+      paddingTop: 50,
+      paddingHorizontal: 22,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+
+    sidebarTitulo: {
+      fontSize: 28,
+      fontWeight: "900",
+      color: "#FFFFFF",
+      fontFamily: "serif",
+    },
+
+    sidebarImagemFixa: {
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      backgroundColor: "#E9E9E9",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    sidebarBody: {
+      flex: 1,
+      backgroundColor: "#FDB515",
+      paddingHorizontal: 22,
+      paddingTop: 24,
+      paddingBottom: 28,
+    },
+
+    sidebarItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      paddingVertical: 14,
+    },
+
+    sidebarTexto: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: "#160909",
+      fontFamily: "serif",
+    },
+
+    logoutButton: {
+      height: 52,
+      backgroundColor: "#e74c3c",
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+
+    logoutTexto: {
+      fontSize: 17,
+      fontWeight: "900",
+      color: "#FFFFFF",
+      fontFamily: "serif",
+    },
+
+    imagemSidebar: {
+      width: "100%",
+      height: "100%",
+      borderRadius: 29,
+    },
+
+    modalBotoes: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 12,
+    },
+
+    modalBotaoCancelar: {
+      flex: 1,
+      height: 52,
+      backgroundColor: "#160909",
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    modalBotaoCriar: {
+      flex: 1,
+      height: 52,
+      backgroundColor: "#FDB515",
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    modalBotaoTexto: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: "#FFFFFF",
+      fontFamily: "serif",
+    },
+
+    modalBotaoTextoEscuro: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: "#160909",
+      fontFamily: "serif",
+    },
 });
+
+const styles = {
+  ...local,
+  titulo: globalStyles.titulo,
+  popupContainer: globalStyles.popupContainer,
+  popupTitle: globalStyles.popupTitle,
+  popupMessage: globalStyles.popupMessage,
+  popupOkButton: globalStyles.popupOkButton,
+  popupOkText: globalStyles.popupOkText,
+  popupOverlay: globalStyles.popupOverlay,
+
+};
 
 export default styles;

@@ -57,7 +57,7 @@ const local = StyleSheet.create({
   },
 
   textoBotaoCriar: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",

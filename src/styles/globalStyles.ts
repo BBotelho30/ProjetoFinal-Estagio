@@ -115,6 +115,53 @@ card: {
   borderLeftColor: "#FDB515",
 },
 
+dropdown: {
+  width: "100%",
+  marginTop: 6,
+  marginBottom: 12,
+},
+
+dropdownOption: {
+  width: "100%",
+  height: 48,
+  backgroundColor: "#E9E9E9",
+  borderRadius: 9,
+  justifyContent: "center",
+  paddingHorizontal: 14,
+  marginBottom: 8,
+},
+
+dropdownOptionSelected: {
+  backgroundColor: "#FDB515",
+},
+
+dropdownOptionText: {
+  fontSize: 16,
+  fontWeight: "800",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+selectToggle: {
+  width: "100%",
+  minHeight: 56,
+  backgroundColor: "#E9E9E9",
+  borderRadius: 9,
+  paddingHorizontal: 16,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+  marginTop: 5,
+},
+
+selectToggleText: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
 });
 
 export default globalStyles;

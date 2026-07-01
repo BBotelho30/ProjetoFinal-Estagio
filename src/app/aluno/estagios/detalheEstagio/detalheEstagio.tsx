@@ -338,7 +338,7 @@ export default function DetalheEstagio() {
 
         <Pressable
           style={styles.acaoCard}
-          onPress={() => abrirIndisponivel("relatório final")}
+          onPress={() => router.push(`/aluno/relatoriosFinais/relatoriosFinais?inscricaoId=${estagio?.id}` as any)}
         >
           <Ionicons name="document-text-outline" size={24} color="#160909" />
           <Text style={styles.acaoTexto}>Relatório Final</Text>
@@ -347,21 +347,12 @@ export default function DetalheEstagio() {
 
         <Pressable
           style={styles.acaoCard}
-          onPress={() => abrirIndisponivel("comentários semanais")}
-        >
+          onPress={() => router.push(`/aluno/comentariosSemanais/comentarioSemanal?inscricaoId=${estagio?.id}` as any)}>
           <Ionicons name="chatbubble-ellipses-outline" size={24} color="#160909" />
           <Text style={styles.acaoTexto}>Comentários Semanais</Text>
           <Ionicons name="chevron-forward-outline" size={22} color="#160909" />
         </Pressable>
 
-        <Pressable
-          style={styles.acaoCard}
-          onPress={() => abrirIndisponivel("avaliação")}
-        >
-          <Ionicons name="star-outline" size={24} color="#160909" />
-          <Text style={styles.acaoTexto}>Avaliação</Text>
-          <Ionicons name="chevron-forward-outline" size={22} color="#160909" />
-        </Pressable>
       </View>
 
       <Modal visible={popupVisivel} transparent animationType="fade">

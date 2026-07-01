@@ -286,7 +286,7 @@ return (
           <Text style={styles.bottomTexto}>Presenças</Text>
         </Pressable>
 
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/avaliacoes?from=bottom" as any)}>
+        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/avaliacao/avaliacao?from=bottom" as any)}>
           <Ionicons name="star-outline" size={24} color="#160909" />
           <Text style={styles.bottomTexto}>Avaliações</Text>
         </Pressable>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -28,14 +29,13 @@ type Utilizador = {
 
 type EstagioAtual = {
   id: number;
-  estado: string;
+  professor_id: string | null;
+  orientador_id: string | null;
   edicoes_estagio?: {
-    ano_letivo: string;
-    data_inicio?: string | null;
-    data_fim?: string | null;
+    data_inicio: string | null;
+    data_fim: string | null;
     ensinos_clinicos?: {
       nome: string;
-      ano_curricular: number;
     };
     instituicoes?: {
       nome: string;
@@ -44,10 +44,10 @@ type EstagioAtual = {
       nome: string;
     };
   };
-  utilizadores_professor?: {
+  professor?: {
     nome: string;
   } | null;
-  utilizadores_orientador?: {
+  orientador?: {
     nome: string;
   } | null;
 };
@@ -65,7 +65,13 @@ export default function AlunoHome() {
   const [reunioes, setReunioes] = useState<Reuniao[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function carregarAluno() {
+  const [menuAberto, setMenuAberto] = useState(false);
+  const [popupVisivel, setPopupVisivel] = useState(false);
+
+  const [popupDefinicoesVisivel, setPopupDefinicoesVisivel] = useState(false);
+  const [confirmarLogoutVisivel, setConfirmarLogoutVisivel] = useState(false);
+
+  async function carregarDados() {
     setLoading(true);
 
     const { data: authData } = await supabase.auth.getUser();
@@ -77,7 +83,7 @@ export default function AlunoHome() {
 
     const userId = authData.user.id;
 
-    const { data: alunoData, error: alunoError } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from("utilizadores")
       .select(
         "id, nome, email, numero_identificacao, ano_curricular, telefone, morada, data_nascimento, grau, curso, foto_url"
@@ -85,39 +91,70 @@ export default function AlunoHome() {
       .eq("id", userId)
       .single();
 
-    if (alunoError || !alunoData) {
-      console.log("ERRO ALUNO HOME:", alunoError);
+    if (userError || !userData) {
+      console.log("ERRO ALUNO HOME:", userError);
       setLoading(false);
       return;
     }
 
-    setUtilizador(alunoData);
+    setUtilizador(userData as any);
 
-    const { data: inscricaoData, error: inscricaoError } = await supabase
+    const { data: estagioData, error: estagioError } = await supabase
       .from("inscricoes_estagio")
       .select(`
         id,
-        estado,
+        professor_id,
+        orientador_id,
+        estado_estagio,
         edicoes_estagio(
-          ano_letivo,
           data_inicio,
           data_fim,
-          ensinos_clinicos(nome, ano_curricular),
+          ensinos_clinicos(nome),
           instituicoes(nome),
           servicos(nome)
-        ),
-        utilizadores_professor:utilizadores!inscricoes_estagio_professor_id_fkey(nome),
-        utilizadores_orientador:utilizadores!inscricoes_estagio_orientador_id_fkey(nome)
+        )
       `)
       .eq("aluno_id", userId)
+      .neq("estado_estagio", "concluido")
       .order("id", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (inscricaoError) {
-      console.log("ERRO ESTÁGIO ATUAL:", inscricaoError);
+    if (estagioError) {
+      console.log("ERRO ESTÁGIO HOME:", estagioError);
+    }
+
+    if (estagioData) {
+      let professor = null;
+      let orientador = null;
+
+      if ((estagioData as any).professor_id) {
+        const { data: professorData } = await supabase
+          .from("utilizadores")
+          .select("nome")
+          .eq("id", (estagioData as any).professor_id)
+          .single();
+
+        professor = professorData;
+      }
+
+      if ((estagioData as any).orientador_id) {
+        const { data: orientadorData } = await supabase
+          .from("utilizadores")
+          .select("nome")
+          .eq("id", (estagioData as any).orientador_id)
+          .single();
+
+        orientador = orientadorData;
+      }
+
+      setEstagioAtual({
+        ...(estagioData as any),
+        professor,
+        orientador,
+      });
     } else {
-      setEstagioAtual((inscricaoData as any) || null);
+      setEstagioAtual(null);
     }
 
     const { data: reunioesData, error: reunioesError } = await supabase
@@ -138,7 +175,7 @@ export default function AlunoHome() {
   }
 
   useEffect(() => {
-    carregarAluno();
+    carregarDados();
   }, []);
 
   function perfilIncompleto() {
@@ -154,34 +191,18 @@ export default function AlunoHome() {
     );
   }
 
-  function formatarData(data: string | null) {
-    if (!data) return "Sem data definida";
+  function formatarData(data: string | null | undefined) {
+    if (!data) return "Sem data";
 
     const date = new Date(data);
-
     if (Number.isNaN(date.getTime())) return data;
 
-    return date.toLocaleDateString("pt-PT", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return date.toLocaleDateString("pt-PT");
   }
 
-  function formatarDataHora(data: string | null) {
-    if (!data) return "Sem data marcada";
-
-    const date = new Date(data);
-
-    if (Number.isNaN(date.getTime())) return data;
-
-    return date.toLocaleString("pt-PT", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  async function terminarSessao() {
+    await supabase.auth.signOut();
+    router.replace("/login/login" as any);
   }
 
   if (loading) {
@@ -194,10 +215,17 @@ export default function AlunoHome() {
 
   return (
     <View style={styles.page}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={styles.topIcons}>
+          <Pressable onPress={() => setMenuAberto(true)}>
+            <Ionicons name="menu-outline" size={34} color="#160909" />
+          </Pressable>
+
+          <Pressable onPress={() => setPopupVisivel(true)}>
+            <Ionicons name="notifications-outline" size={30} color="#160909" />
+          </Pressable>
+        </View>
+
         <View style={styles.header}>
           <View>
             <Text style={styles.ola}>Olá,</Text>
@@ -243,16 +271,19 @@ export default function AlunoHome() {
         <Text style={styles.secaoTitulo}>Acessos rápidos</Text>
 
         <View style={styles.grid}>
-          <Pressable style={styles.cardAtalho} onPress={() => router.push("/aluno/estagios/estagio" as any)}>
-            <Ionicons name="briefcase-outline" size={36} color="#FDB515" />
-            <Text style={styles.cardTitulo}>Ensinos Clinicos</Text>
+          <Pressable
+            style={styles.cardAtalho}
+            onPress={() => router.push("/aluno/estagios/estagio" as any)}
+          >
+            <Ionicons name="briefcase-outline" size={34} color="#FDB515" />
+            <Text style={styles.cardTitulo}>Ensinos Clínicos</Text>
           </Pressable>
 
           <Pressable
             style={styles.cardAtalho}
             onPress={() => router.push("/aluno/presencas" as any)}
           >
-            <Ionicons name="calendar-outline" size={32} color="#FDB515" />
+            <Ionicons name="calendar-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Presenças</Text>
           </Pressable>
 
@@ -260,7 +291,7 @@ export default function AlunoHome() {
             style={styles.cardAtalho}
             onPress={() => router.push("/aluno/avaliacoes" as any)}
           >
-            <Ionicons name="star-outline" size={32} color="#FDB515" />
+            <Ionicons name="star-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Avaliações</Text>
           </Pressable>
 
@@ -268,21 +299,23 @@ export default function AlunoHome() {
             style={styles.cardAtalho}
             onPress={() => router.push("/aluno/agenda/agenda" as any)}
           >
-            <Ionicons name="people-outline" size={32} color="#FDB515" />
+            <Ionicons name="people-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Agenda</Text>
           </Pressable>
         </View>
 
+
+
         <Text style={styles.secaoTitulo}>Estágio atual</Text>
 
-        {!estagioAtual ? (
-          <Text style={styles.mensagemVazia}>
-            Ainda não tens nenhum estágio atribuído.
-          </Text>
-        ) : (
+        {estagioAtual ? (
           <Pressable
             style={styles.estagioAtualCard}
-            onPress={() => router.push("/aluno/estagio" as any)}
+            onPress={() =>
+              router.push(
+                `/aluno/estagios/detalheEstagio/detalheEstagio?id=${estagioAtual.id}` as any
+              )
+            }
           >
             <View style={styles.estagioIcone}>
               <Ionicons name="briefcase-outline" size={30} color="#160909" />
@@ -291,7 +324,7 @@ export default function AlunoHome() {
             <View style={{ flex: 1 }}>
               <Text style={styles.estagioTitulo}>
                 {estagioAtual.edicoes_estagio?.ensinos_clinicos?.nome ||
-                  "Ensino clínico"}
+                  "Ensino Clínico"}
               </Text>
 
               <Text style={styles.estagioTexto}>
@@ -301,21 +334,23 @@ export default function AlunoHome() {
               </Text>
 
               <Text style={styles.estagioTexto}>
-                {formatarData(estagioAtual.edicoes_estagio?.data_inicio || null)}{" "}
-                - {formatarData(estagioAtual.edicoes_estagio?.data_fim || null)}
+                {formatarData(estagioAtual.edicoes_estagio?.data_inicio)} -{" "}
+                {formatarData(estagioAtual.edicoes_estagio?.data_fim)}
               </Text>
 
               <Text style={styles.estagioTexto}>
-                Professor:{" "}
-                {estagioAtual.utilizadores_professor?.nome || "Não indicado"}
+                Professor: {estagioAtual.professor?.nome || "Não indicado"}
               </Text>
 
               <Text style={styles.estagioTexto}>
-                Orientador:{" "}
-                {estagioAtual.utilizadores_orientador?.nome || "Não indicado"}
+                Orientador: {estagioAtual.orientador?.nome || "Não indicado"}
               </Text>
             </View>
           </Pressable>
+        ) : (
+          <Text style={styles.mensagemVazia}>
+            Ainda não tens estágio atribuído.
+          </Text>
         )}
 
         <Text style={styles.secaoTitulo}>Próximos eventos</Text>
@@ -327,63 +362,221 @@ export default function AlunoHome() {
         ) : (
           <View style={styles.eventosLista}>
             {reunioes.map((reuniao) => (
-              <Pressable
-                key={reuniao.id}
-                style={styles.eventoCard}
-                onPress={() => router.push("/aluno/reunioes" as any)}
-              >
-                <View style={{ flex: 1 }}>
+              <View key={reuniao.id} style={styles.eventoCard}>
+                <View>
                   <Text style={styles.eventoTitulo}>
-                    {reuniao.assunto || "Reunião de acompanhamento"}
+                    {reuniao.assunto || "Reunião"}
                   </Text>
-
                   <Text style={styles.eventoTexto}>
-                    {formatarDataHora(reuniao.data_hora)}
+                    {reuniao.data_hora
+                      ? new Date(reuniao.data_hora).toLocaleString("pt-PT")
+                      : "Sem data"}
                   </Text>
-
-                  {reuniao.local ? (
-                    <Text style={styles.eventoTexto}>{reuniao.local}</Text>
-                  ) : null}
                 </View>
 
                 <Ionicons name="calendar-outline" size={28} color="#FDB515" />
-              </Pressable>
+              </View>
             ))}
           </View>
         )}
       </ScrollView>
 
-      <View style={styles.bottomBar}>
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/home" as any)}>
-          <Ionicons name="home-outline" size={24} color="#FDB515" />
-          <Text style={styles.bottomTextoAtivo}>Home</Text>
+      {!menuAberto && (
+        <View style={styles.bottomBar}>
+          <Pressable style={styles.bottomItem}>
+            <Ionicons name="home-outline" size={24} color="#FDB515" />
+            <Text style={styles.bottomTextoAtivo}>Home</Text>
+          </Pressable>
+
+        <Pressable style={styles.bottomItem}onPress={() => {setMenuAberto(false);setPopupDefinicoesVisivel(true);}}>
+          <Ionicons name="settings-outline" size={24} color="#160909" />
+          <Text style={styles.bottomTexto}>Definições</Text>
         </Pressable>
 
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/presencas?from=bottom" as any)}>
-          <Ionicons name="calendar-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Presenças</Text>
-        </Pressable>
+          <Pressable
+            style={styles.bottomItem}
+            onPress={() =>
+              router.push("/aluno/preencherPerfil/perfil?from=bottom" as any)
+            }
+          >
+            <Ionicons name="person-outline" size={24} color="#160909" />
+            <Text style={styles.bottomTexto}>Perfil</Text>
+          </Pressable>
+        </View>
+      )}
 
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/avaliacoes?from=bottom" as any)}>
-          <Ionicons name="star-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Avaliações</Text>
-        </Pressable>
+      {menuAberto && (
+        <View style={styles.sidebarOverlay}>
+          <Pressable
+            style={styles.sidebarBackdrop}
+            onPress={() => setMenuAberto(false)}
+          />
 
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/agenda/agenda?from=bottom" as any)}>
-          <Ionicons name="people-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Agenda</Text>
-        </Pressable>
+          <View style={styles.sidebar}>
+            <View style={styles.sidebarHeader}>
+              <Text style={styles.sidebarTitulo}>Menu</Text>
 
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/estagios/estagio?from=bottom" as any)}>
-          <Ionicons name="briefcase-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Ensinos Clinicos</Text>
-        </Pressable>
+              <View style={styles.sidebarImagemFixa}>
+              <Image source={require("../../../assets/images/enf.jpg")} style={styles.imagemSidebar} resizeMode="cover"/>             
+               </View>
+            </View>
 
-        <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/preencherPerfil/perfil?from=bottom" as any)}>
-          <Ionicons name="person-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Perfil</Text>
-        </Pressable>
-      </View>
+            <View style={styles.sidebarBody}>
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  router.push("/aluno/estagios/estagio" as any);
+                }}
+              >
+                <Ionicons name="briefcase-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Ensinos Clínicos</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  router.push("/aluno/agenda/agenda" as any);
+                }}
+              >
+                <Ionicons name="calendar-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Agenda</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  router.push("/aluno/presencas" as any);
+                }}
+              >
+                <Ionicons name="clipboard-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Presenças</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  router.push("/aluno/avaliacoes" as any);
+                }}
+              >
+                <Ionicons name="star-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Avaliações</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  setPopupVisivel(true);
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={25}
+                  color="#160909"
+                />
+                <Text style={styles.sidebarTexto}>Comentários Semanais</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  router.push("/aluno/preencherPerfil/perfil?from=top" as any);
+                }}
+              >
+                <Ionicons name="person-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Perfil</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  setPopupVisivel(true);
+                }}
+              >
+                <Ionicons name="settings-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Definições</Text>
+              </Pressable>
+
+              <View style={{ flex: 1 }} />
+
+              <Pressable style={styles.logoutButton} onPress={() => setConfirmarLogoutVisivel(true)}>
+                <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+                <Text style={styles.logoutTexto}>Terminar Sessão</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      <Modal visible={popupVisivel} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>Em desenvolvimento</Text>
+            <Text style={styles.popupMessage}>
+              Esta funcionalidade será implementada futuramente.
+            </Text>
+
+            <Pressable
+              style={styles.popupOkButton}
+              onPress={() => setPopupVisivel(false)}
+            >
+              <Text style={styles.popupOkText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+
+      <Modal visible={popupDefinicoesVisivel} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>Definições</Text>
+            <Text style={styles.popupMessage}>
+              Esta página encontra-se em desenvolvimento.
+            </Text>
+
+            <Pressable
+              style={styles.popupOkButton}
+              onPress={() => setPopupDefinicoesVisivel(false)}
+            >
+              <Text style={styles.popupOkText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={confirmarLogoutVisivel} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>Terminar Sessão</Text>
+            <Text style={styles.popupMessage}>
+              Tens a certeza que queres terminar sessão?
+            </Text>
+
+            <View style={styles.modalBotoes}>
+              <Pressable
+                style={styles.modalBotaoCancelar}
+                onPress={() => setConfirmarLogoutVisivel(false)}
+              >
+                <Text style={styles.modalBotaoTexto}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.modalBotaoCriar}
+                onPress={terminarSessao}
+              >
+                <Text style={styles.modalBotaoTextoEscuro}>Sair</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

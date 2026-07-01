@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
+import globalStyles from "../../../styles/globalStyles";
 
-const styles = StyleSheet.create({
+const local = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -23,13 +24,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#160909",
     marginLeft: 8,
-    fontFamily: "serif",
-  },
-
-  titulo: {
-    fontSize: 36,
-    fontWeight: "900",
-    color: "#160909",
     fontFamily: "serif",
   },
 
@@ -59,6 +53,82 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
   },
 
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  searchContainer: {
+    flex: 1,
+    height: 56,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#160909",
+    fontFamily: "serif",
+    marginLeft: 10,
+  },
+
+  filterToggle: {
+    height: 56,
+    backgroundColor: "#E9E9E9",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 14,
+  },
+
+  filterToggleText: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  filterDropdown: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E9E9E9",
+  },
+
+  filterOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+
+  filterOptionActive: {
+    backgroundColor: "#FDB515",
+  },
+
+  filterOptionText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  filterOptionTextActive: {
+    fontWeight: "900",
+  },
+
   textoVazio: {
     marginTop: 30,
     textAlign: "center",
@@ -77,7 +147,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderLeftWidth: 6,
-    borderLeftColor: "#FDB515",
   },
 
   cardTopo: {
@@ -148,7 +217,7 @@ const styles = StyleSheet.create({
   },
 
   actionEdit: {
-    backgroundColor: "#ffffffff",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#160909",
   },
@@ -165,7 +234,6 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
   },
 
-  // Modal styles (reused)
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -176,18 +244,10 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     width: "100%",
+    maxHeight: "88%",
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 22,
-  },
-
-  modalTitulo: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#160909",
-    fontFamily: "serif",
-    marginBottom: 18,
-    textAlign: "center",
   },
 
   label: {
@@ -211,51 +271,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  selectToggle: {
-    width: "100%",
-    minHeight: 56,
-    backgroundColor: "#E9E9E9",
-    borderRadius: 9,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-    marginTop: 5,
-  },
-
-  selectToggleText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#160909",
-    fontFamily: "serif",
-  },
-
   instituicoesBox: {
     maxHeight: 180,
     marginBottom: 16,
-  },
-
-  opcaoInstituicao: {
-    backgroundColor: "#E9E9E9",
-    borderRadius: 9,
-    paddingVertical: 13,
-    paddingHorizontal: 14,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-
-  opcaoInstituicaoSelecionada: {
-    backgroundColor: "#FDB515",
-    borderColor: "#160909",
-  },
-
-  opcaoInstituicaoTexto: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#160909",
-    fontFamily: "serif",
   },
 
   textoVazioModal: {
@@ -270,6 +288,7 @@ const styles = StyleSheet.create({
   modalBotoes: {
     flexDirection: "row",
     gap: 12,
+    marginTop: 12,
   },
 
   modalBotaoCancelar: {
@@ -290,12 +309,49 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  modalBotaoApagar: {
+    flex: 1,
+    height: 52,
+    backgroundColor: "#e74c3c",
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   modalBotaoTexto: {
     fontSize: 18,
     fontWeight: "900",
-    color: "#ffffffff",
+    color: "#FFFFFF",
+    fontFamily: "serif",
+  },
+
+  modalBotaoTextoEscuro: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
     fontFamily: "serif",
   },
 });
+
+const styles = {
+  ...local,
+
+  titulo: globalStyles.titulo,
+  modalTitulo: globalStyles.modalTitulo,
+
+  popupOverlay: globalStyles.popupOverlay,
+  popupContainer: globalStyles.popupContainer,
+  popupTitle: globalStyles.popupTitle,
+  popupMessage: globalStyles.popupMessage,
+  popupOkButton: globalStyles.popupOkButton,
+  popupOkText: globalStyles.popupOkText,
+
+  selectToggle: globalStyles.selectToggle,
+  selectToggleText: globalStyles.selectToggleText,
+  dropdown: globalStyles.dropdown,
+  opcao: globalStyles.dropdownOption,
+  opcaoSelecionada: globalStyles.dropdownOptionSelected,
+  opcaoTexto: globalStyles.dropdownOptionText,
+};
 
 export default styles;

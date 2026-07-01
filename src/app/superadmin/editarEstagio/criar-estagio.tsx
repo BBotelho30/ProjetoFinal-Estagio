@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput } from "react-native";
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { supabase } from "../../../lib/supabase";
 import styles from "./criar-estagioStyles";
 
@@ -43,6 +43,8 @@ export default function CriarEstagio() {
   const [limiteFaltas, setLimiteFaltas] = useState("15");
   const [maxHorasDia, setMaxHorasDia] = useState("7");
   const [loading, setLoading] = useState(false);
+
+  const [mostrarReposicao, setMostrarReposicao] = useState(false);
 
   const servicosFiltrados = servicos.filter(
     (servico) => servico.instituicao_id === instituicaoSelecionada,
@@ -336,22 +338,53 @@ export default function CriarEstagio() {
         onChangeText={setDataFim}
       />
 
-      <Text style={styles.label}>Permite Reposição de Horas?</Text>
+    <Text style={styles.label}>Permite Reposição de Horas?</Text>
 
-      <Pressable
-        style={styles.selectToggle}
-        onPress={() => setPermiteReposicao(!permiteReposicao)}
-      >
-        <Text style={styles.selectToggleText}>
-          {permiteReposicao ? "Sim" : "Não"}
-        </Text>
+    <Pressable
+      style={styles.selectToggle}
+      onPress={() => setMostrarReposicao(!mostrarReposicao)}
+    >
+      <Text style={styles.selectToggleText}>
+        {permiteReposicao ? "Sim" : "Não"}
+      </Text>
 
-        <Ionicons
-          name={permiteReposicao ? "checkmark-circle" : "close-circle"}
-          size={24}
-          color={permiteReposicao ? "#2ecc71" : "#e74c3c"}
-        />
-      </Pressable>
+      <Ionicons
+        name={mostrarReposicao ? "chevron-up" : "chevron-down"}
+        size={22}
+        color="#160909"
+      />
+    </Pressable>
+
+    {mostrarReposicao ? (
+      <View style={styles.dropdown}>
+        <Pressable
+          style={[
+            styles.opcao,
+            permiteReposicao === true && styles.opcaoSelecionada,
+          ]}
+          onPress={() => {
+            setPermiteReposicao(true);
+            setMostrarReposicao(false);
+          }}
+        >
+          <Text style={styles.opcaoTexto}>Sim</Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.opcao,
+            permiteReposicao === false && styles.opcaoSelecionada,
+          ]}
+          onPress={() => {
+            setPermiteReposicao(false);
+            setMaxHorasDia("7");
+            setMostrarReposicao(false);
+          }}
+        >
+          <Text style={styles.opcaoTexto}>Não</Text>
+        </Pressable>
+      </View>
+    ) : null}
 
       <Text style={styles.label}>Limite de Faltas (%)</Text>
 
