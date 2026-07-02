@@ -2,14 +2,12 @@ import { StyleSheet } from "react-native";
 import globalStyles from "../../../styles/globalStyles";
 
 const local = StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
+  page: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 120,
   },
 
   loadingContainer: {
@@ -17,12 +15,6 @@ const local = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 130,
   },
 
   voltar: {
@@ -57,7 +49,7 @@ const local = StyleSheet.create({
     marginBottom: 14,
   },
 
-  fotoPerfil: {
+  foto: {
     width: 116,
     height: 116,
     borderRadius: 58,
@@ -91,16 +83,22 @@ const local = StyleSheet.create({
     color: "#666",
     fontFamily: "serif",
     marginTop: 4,
-    textAlign: "center",
   },
 
-  numero: {
+    numero: {
     fontSize: 15,
-    fontWeight: "900",
-    color: "#160909",
+    fontWeight: "700",
+    color: "#666",
     fontFamily: "serif",
-    marginTop: 6,
-    textAlign: "center",
+    marginTop: 4,
+  },
+
+  uploadTexto: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#777",
+    fontFamily: "serif",
+    marginTop: 10,
   },
 
   formCard: {
@@ -190,7 +188,7 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-  botaoSair: {
+  botaoLogout: {
     height: 56,
     backgroundColor: "#160909",
     borderRadius: 10,
@@ -201,57 +199,10 @@ const local = StyleSheet.create({
     marginTop: 22,
   },
 
-  textoSair: {
+  textoLogout: {
     fontSize: 18,
     fontWeight: "900",
     color: "#FFFFFF",
-    fontFamily: "serif",
-  },
-
-  selectToggle: {
-    width: "100%",
-    minHeight: 56,
-    backgroundColor: "#E9E9E9",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  selectToggleText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#160909",
-    fontFamily: "serif",
-  },
-
-  dropdown: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    marginTop: 6,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#E9E9E9",
-  },
-
-  opcao: {
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-
-  opcaoSelecionada: {
-    backgroundColor: "#FDB515",
-  },
-
-  opcaoTexto: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#160909",
     fontFamily: "serif",
   },
 
@@ -277,55 +228,54 @@ const local = StyleSheet.create({
   },
 
   bottomTexto: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
     color: "#160909",
     fontFamily: "serif",
   },
 
   bottomTextoAtivo: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "900",
     color: "#FDB515",
     fontFamily: "serif",
   },
 
-  popupBotoesLinha: {
+  modalBotoes: {
     flexDirection: "row",
     gap: 12,
-    width: "100%",
-    marginTop: 8,
+    marginTop: 12,
   },
 
-  popupBotaoCancelar: {
+  modalBotaoCancelar: {
     flex: 1,
-    height: 46,
+    height: 52,
     backgroundColor: "#160909",
-    borderRadius: 8,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  popupBotaoSair: {
+  modalBotaoCriar: {
     flex: 1,
-    height: 46,
-    backgroundColor: "#e74c3c",
-    borderRadius: 8,
+    height: 52,
+    backgroundColor: "#FDB515",
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  popupTextoCancelar: {
-    fontSize: 16,
+  modalBotaoTexto: {
+    fontSize: 18,
     fontWeight: "900",
     color: "#FFFFFF",
     fontFamily: "serif",
   },
 
-  popupTextoSair: {
-    fontSize: 16,
+  modalBotaoTextoEscuro: {
+    fontSize: 18,
     fontWeight: "900",
-    color: "#FFFFFF",
+    color: "#160909",
     fontFamily: "serif",
   },
 });

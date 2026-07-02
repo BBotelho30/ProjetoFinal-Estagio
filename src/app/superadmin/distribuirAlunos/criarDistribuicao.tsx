@@ -252,7 +252,7 @@ export default function CriarDistribuicao() {
       }
 
       mostrarPopup("Sucesso", "Distribuição editada com sucesso.");
-      setTimeout(() => router.push("/superadmin/distribuir-alunos" as any), 900);
+      setTimeout(() => router.push("/superadmin/distribuirAlunos/distribuirAlunos" as any), 900);
       return;
     }
 
@@ -279,7 +279,7 @@ export default function CriarDistribuicao() {
     }
 
     mostrarPopup("Sucesso", "Alunos distribuídos com sucesso.");
-    setTimeout(() => router.push("/superadmin/distribuir-alunos" as any), 900);
+    setTimeout(() => router.push("/superadmin/distribuirAlunos/distribuirAlunos" as any), 900);
   }
 
   if (loading) {

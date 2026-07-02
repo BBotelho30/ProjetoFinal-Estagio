@@ -246,7 +246,7 @@ const local = StyleSheet.create({
 
   logoutButton: {
     height: 52,
-    backgroundColor: "#160909",
+    backgroundColor: "#e74c3c",
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -297,6 +297,89 @@ const local = StyleSheet.create({
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
+  },
+
+                
+  imagemSidebar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 29,
+  },
+
+  mensagemVazia: {
+  fontSize: 15,
+  fontWeight: "700",
+  color: "#777",
+  fontFamily: "serif",
+  marginBottom: 26,
+},
+
+  listaEstagios: {
+    gap: 12,
+    marginBottom: 28,
+  },
+
+  estagioCard: {
+    backgroundColor: "#E9E9E9",
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderLeftWidth: 6,
+    borderLeftColor: "#FDB515",
+  },
+
+  estagioIcone: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FDB515",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  estagioTitulo: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  estagioTexto: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#666",
+    fontFamily: "serif",
+    marginTop: 4,
+  },
+
+  eventosLista: {
+    gap: 12,
+  },
+
+  eventoCard: {
+    backgroundColor: "#E9E9E9",
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  eventoTitulo: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
+  eventoTexto: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#666",
+    fontFamily: "serif",
+    marginTop: 4,
   },
 });
 

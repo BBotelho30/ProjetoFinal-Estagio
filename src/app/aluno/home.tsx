@@ -67,9 +67,13 @@ export default function AlunoHome() {
 
   const [menuAberto, setMenuAberto] = useState(false);
   const [popupVisivel, setPopupVisivel] = useState(false);
+  const [popupTitulo, setPopupTitulo] = useState("");
+  const [popupMensagem, setPopupMensagem] = useState("");
 
   const [popupDefinicoesVisivel, setPopupDefinicoesVisivel] = useState(false);
   const [confirmarLogoutVisivel, setConfirmarLogoutVisivel] = useState(false);
+
+
 
   async function carregarDados() {
     setLoading(true);
@@ -213,6 +217,12 @@ export default function AlunoHome() {
     );
   }
 
+    function mostrarPopup(titulo: string, mensagem: string) {
+    setPopupTitulo(titulo);
+    setPopupMensagem(mensagem);
+    setPopupVisivel(true);
+  }
+
   return (
     <View style={styles.page}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -221,7 +231,7 @@ export default function AlunoHome() {
             <Ionicons name="menu-outline" size={34} color="#160909" />
           </Pressable>
 
-          <Pressable onPress={() => setPopupVisivel(true)}>
+          <Pressable onPress={() => mostrarPopup( "Notificações", "Esta funcionalidade será implementada futuramente.")}>
             <Ionicons name="notifications-outline" size={30} color="#160909" />
           </Pressable>
         </View>
@@ -388,10 +398,10 @@ export default function AlunoHome() {
             <Text style={styles.bottomTextoAtivo}>Home</Text>
           </Pressable>
 
-        <Pressable style={styles.bottomItem}onPress={() => {setMenuAberto(false);setPopupDefinicoesVisivel(true);}}>
-          <Ionicons name="settings-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Definições</Text>
-        </Pressable>
+        <Pressable style={styles.bottomItem} onPress={() => mostrarPopup( "Definições", "Esta página encontra-se em desenvolvimento.")}>
+            <Ionicons name="settings-outline" size={25} color="#160909" />
+            <Text style={styles.bottomTexto}>Definições</Text>
+          </Pressable>
 
           <Pressable
             style={styles.bottomItem}
@@ -533,23 +543,6 @@ export default function AlunoHome() {
       </Modal>
 
 
-      <Modal visible={popupDefinicoesVisivel} transparent animationType="fade">
-        <View style={styles.popupOverlay}>
-          <View style={styles.popupContainer}>
-            <Text style={styles.popupTitle}>Definições</Text>
-            <Text style={styles.popupMessage}>
-              Esta página encontra-se em desenvolvimento.
-            </Text>
-
-            <Pressable
-              style={styles.popupOkButton}
-              onPress={() => setPopupDefinicoesVisivel(false)}
-            >
-              <Text style={styles.popupOkText}>OK</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
 
       <Modal visible={confirmarLogoutVisivel} transparent animationType="fade">
         <View style={styles.popupOverlay}>

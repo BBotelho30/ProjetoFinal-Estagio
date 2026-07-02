@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import { supabase } from "../../../lib/supabase";
 import styles from "./perfilStyles";
-import { useLocalSearchParams } from "expo-router";
 
 export default function PerfilAluno() {
   const [loading, setLoading] = useState(true);
@@ -36,9 +35,7 @@ export default function PerfilAluno() {
   const [popupVisivel, setPopupVisivel] = useState(false);
   const [popupTitulo, setPopupTitulo] = useState("");
   const [popupMensagem, setPopupMensagem] = useState("");
-
   const [confirmarSair, setConfirmarSair] = useState(false);
-
   const [mostrarAnos, setMostrarAnos] = useState(false);
 
   const { from } = useLocalSearchParams();
@@ -128,7 +125,6 @@ export default function PerfilAluno() {
     }
 
     const { data } = supabase.storage.from("fotos-perfil").getPublicUrl(path);
-
     const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
     const { error: updateError } = await supabase
@@ -195,12 +191,10 @@ export default function PerfilAluno() {
       </View>
     );
   }
+
   return (
     <View style={styles.page}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Pressable
           style={styles.voltar}
           onPress={() => router.push("/aluno/home" as any)}
@@ -209,137 +203,148 @@ export default function PerfilAluno() {
           <Text style={styles.voltarTexto}>Voltar</Text>
         </Pressable>
 
+        <Text style={styles.titulo}>Perfil</Text>
+
         <View style={styles.cardPerfil}>
-          <Pressable onPress={escolherFoto}>
+          <Pressable style={styles.fotoContainer} onPress={escolherFoto}>
             {fotoUrl ? (
               <Image source={{ uri: fotoUrl }} style={styles.fotoPerfil} />
             ) : (
               <Ionicons
                 name="person-circle-outline"
-                size={120}
+                size={110}
                 color="#FDB515"
               />
             )}
+
+            <View style={styles.cameraIcon}>
+              <Ionicons name="camera-outline" size={20} color="#160909" />
+            </View>
           </Pressable>
 
           <Text style={styles.nome}>{nome}</Text>
           <Text style={styles.email}>{email}</Text>
           <Text style={styles.numero}>
-            {numero ? `Nº ${numero}` : "Sem número"}
+            Nº Identificação: {numero || "-"}
           </Text>
         </View>
 
-        <Text style={styles.label}>Ano curricular</Text>
+        <View style={styles.formCard}>
+          <Text style={styles.label}>Ano curricular</Text>
 
-        <Pressable
-          style={[styles.selectToggle, !editar && styles.inputBloqueado]}
-          onPress={() => {
-            if (editar) setMostrarAnos(!mostrarAnos);
-          }}
-        >
-          <Text style={styles.selectToggleText}>
-            {anoCurricular
-              ? `${anoCurricular}.º ano`
-              : "Selecionar ano curricular"}
-          </Text>
+          <Pressable
+            style={[styles.selectToggle, !editar && styles.inputBloqueado]}
+            onPress={() => {
+              if (editar) setMostrarAnos(!mostrarAnos);
+            }}
+          >
+            <Text style={styles.selectToggleText}>
+              {anoCurricular
+                ? `${anoCurricular}.º ano`
+                : "Selecionar ano curricular"}
+            </Text>
 
-          {editar && (
-            <Ionicons
-              name={mostrarAnos ? "chevron-up" : "chevron-down"}
-              size={22}
-              color="#160909"
-            />
+            {editar && (
+              <Ionicons
+                name={mostrarAnos ? "chevron-up" : "chevron-down"}
+                size={22}
+                color="#160909"
+              />
+            )}
+          </Pressable>
+
+          {editar && mostrarAnos && (
+            <View style={styles.dropdown}>
+              {["1", "2", "3", "4"].map((ano) => (
+                <Pressable
+                  key={ano}
+                  style={[
+                    styles.opcao,
+                    anoCurricular === ano && styles.opcaoSelecionada,
+                  ]}
+                  onPress={() => {
+                    setAnoCurricular(ano);
+                    setMostrarAnos(false);
+                  }}
+                >
+                  <Text style={styles.opcaoTexto}>{ano}.º ano</Text>
+                </Pressable>
+              ))}
+            </View>
           )}
-        </Pressable>
 
-        {editar && mostrarAnos && (
-          <View style={styles.dropdown}>
-            {["1", "2", "3", "4"].map((ano) => (
+          <Text style={styles.label}>Grau</Text>
+          <TextInput
+            style={[styles.input, styles.inputBloqueado]}
+            value={grau}
+            editable={false}
+          />
+
+          <Text style={styles.label}>Curso</Text>
+          <TextInput
+            style={[styles.input, styles.inputBloqueado]}
+            value={curso}
+            editable={false}
+          />
+
+          <Text style={styles.label}>Telefone</Text>
+          <TextInput
+            style={[styles.input, !editar && styles.inputBloqueado]}
+            value={telefone}
+            onChangeText={setTelefone}
+            editable={editar}
+            keyboardType="phone-pad"
+          />
+
+          <Text style={styles.label}>Morada</Text>
+          <TextInput
+            style={[styles.input, !editar && styles.inputBloqueado]}
+            value={morada}
+            onChangeText={setMorada}
+            editable={editar}
+          />
+
+          <Text style={styles.label}>Data de nascimento</Text>
+          <TextInput
+            style={[styles.input, !editar && styles.inputBloqueado]}
+            value={dataNascimento}
+            onChangeText={setDataNascimento}
+            editable={editar}
+            placeholder="AAAA-MM-DD"
+            placeholderTextColor="#8c8787"
+          />
+
+          {!editar ? (
+            <Pressable
+              style={styles.botaoEditar}
+              onPress={() => setEditar(true)}
+            >
+              <Text style={styles.textoBotao}>Editar Perfil</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.botoesLinha}>
               <Pressable
-                key={ano}
-                style={[
-                  styles.opcao,
-                  anoCurricular === ano && styles.opcaoSelecionada,
-                ]}
+                style={styles.botaoCancelar}
                 onPress={() => {
-                  setAnoCurricular(ano);
-                  setMostrarAnos(false);
+                  setEditar(false);
+                  carregarPerfil();
                 }}
               >
-                <Text style={styles.opcaoTexto}>{ano}.º ano</Text>
+                <Text style={styles.textoCancelar}>Cancelar</Text>
               </Pressable>
-            ))}
-          </View>
-        )}
 
-        <Text style={styles.label}>Grau</Text>
-        <TextInput
-          style={[styles.input, styles.inputBloqueado]}
-          value={grau}
-          editable={false}
-        />
-
-        <Text style={styles.label}>Curso</Text>
-        <TextInput
-          style={[styles.input, styles.inputBloqueado]}
-          value={curso}
-          editable={false}
-        />
-
-        <Text style={styles.label}>Telefone</Text>
-        <TextInput
-          style={[styles.input, !editar && styles.inputBloqueado]}
-          value={telefone}
-          onChangeText={setTelefone}
-          editable={editar}
-          keyboardType="phone-pad"
-        />
-
-        <Text style={styles.label}>Morada</Text>
-        <TextInput
-          style={[styles.input, !editar && styles.inputBloqueado]}
-          value={morada}
-          onChangeText={setMorada}
-          editable={editar}
-        />
-
-        <Text style={styles.label}>Data de nascimento</Text>
-        <TextInput
-          style={[styles.input, !editar && styles.inputBloqueado]}
-          value={dataNascimento}
-          onChangeText={setDataNascimento}
-          editable={editar}
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor="#8c8787"
-        />
-
-        {!editar ? (
-          <Pressable style={styles.botaoEditar} onPress={() => setEditar(true)}>
-            <Text style={styles.textoBotao}>Editar Perfil</Text>
-          </Pressable>
-        ) : (
-          <View style={styles.botoesLinha}>
-            <Pressable
-              style={styles.botaoCancelar}
-              onPress={() => {
-                setEditar(false);
-                carregarPerfil();
-              }}
-            >
-              <Text style={styles.textoCancelar}>Cancelar</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.botaoGuardar}
-              onPress={guardarPerfil}
-              disabled={aGuardar}
-            >
-              <Text style={styles.textoBotao}>
-                {aGuardar ? "A guardar..." : "Guardar"}
-              </Text>
-            </Pressable>
-          </View>
-        )}
+              <Pressable
+                style={styles.botaoGuardar}
+                onPress={guardarPerfil}
+                disabled={aGuardar}
+              >
+                <Text style={styles.textoGuardar}>
+                  {aGuardar ? "A guardar..." : "Guardar"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
 
         <Pressable
           style={styles.botaoSair}
@@ -348,49 +353,6 @@ export default function PerfilAluno() {
           <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
           <Text style={styles.textoSair}>Terminar sessão</Text>
         </Pressable>
-
-        <Modal visible={popupVisivel} transparent animationType="fade">
-          <View style={styles.popupOverlay}>
-            <View style={styles.popupContainer}>
-              <Text style={styles.popupTitle}>{popupTitulo}</Text>
-              <Text style={styles.popupMessage}>{popupMensagem}</Text>
-
-              <Pressable
-                style={styles.popupOkButton}
-                onPress={() => setPopupVisivel(false)}
-              >
-                <Text style={styles.popupOkText}>OK</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal visible={confirmarSair} transparent animationType="fade">
-          <View style={styles.popupOverlay}>
-            <View style={styles.popupContainer}>
-              <Text style={styles.popupTitle}>Terminar sessão</Text>
-              <Text style={styles.popupMessage}>
-                Tens a certeza que queres sair da tua conta?
-              </Text>
-
-              <View style={styles.popupBotoesLinha}>
-                <Pressable
-                  style={styles.popupBotaoCancelar}
-                  onPress={() => setConfirmarSair(false)}
-                >
-                  <Text style={styles.popupTextoCancelar}>Cancelar</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.popupBotaoSair}
-                  onPress={terminarSessao}
-                >
-                  <Text style={styles.popupTextoSair}>Sair</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </ScrollView>
 
       {mostrarBottomBar && (
@@ -405,7 +367,7 @@ export default function PerfilAluno() {
 
           <Pressable
             style={styles.bottomItem}
-            onPress={() => router.push("/aluno/presenca?from=bottom" as any)}
+            onPress={() => router.push("/aluno/presencas?from=bottom" as any)}
           >
             <Ionicons name="calendar-outline" size={24} color="#160909" />
             <Text style={styles.bottomTexto}>Presenças</Text>
@@ -413,7 +375,7 @@ export default function PerfilAluno() {
 
           <Pressable
             style={styles.bottomItem}
-            onPress={() => router.push("/aluno/avaliacao/avaliacao?from=bottom" as any)}
+            onPress={() => router.push("/aluno/avaliacoes?from=bottom" as any)}
           >
             <Ionicons name="star-outline" size={24} color="#160909" />
             <Text style={styles.bottomTexto}>Avaliações</Text>
@@ -421,16 +383,23 @@ export default function PerfilAluno() {
 
           <Pressable
             style={styles.bottomItem}
-            onPress={() => router.push("/aluno/agenda/agenda?from=bottom" as any)}
+            onPress={() =>
+              router.push("/aluno/agenda/agenda?from=bottom" as any)
+            }
           >
             <Ionicons name="people-outline" size={24} color="#160909" />
             <Text style={styles.bottomTexto}>Agenda</Text>
           </Pressable>
 
-          <Pressable style={styles.bottomItem} onPress={() => router.push("/aluno/estagios/estagio?from=bottom" as any)}>
-          <Ionicons name="briefcase-outline" size={24} color="#160909" />
-          <Text style={styles.bottomTexto}>Ensinos Clinicos</Text>
-        </Pressable>
+          <Pressable
+            style={styles.bottomItem}
+            onPress={() =>
+              router.push("/aluno/estagios/estagio?from=bottom" as any)
+            }
+          >
+            <Ionicons name="briefcase-outline" size={24} color="#160909" />
+            <Text style={styles.bottomTexto}>Ensinos Clínicos</Text>
+          </Pressable>
 
           <Pressable style={styles.bottomItem}>
             <Ionicons name="person-outline" size={24} color="#FDB515" />
@@ -438,6 +407,46 @@ export default function PerfilAluno() {
           </Pressable>
         </View>
       )}
+
+      <Modal visible={popupVisivel} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>{popupTitulo}</Text>
+            <Text style={styles.popupMessage}>{popupMensagem}</Text>
+
+            <Pressable
+              style={styles.popupOkButton}
+              onPress={() => setPopupVisivel(false)}
+            >
+              <Text style={styles.popupOkText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={confirmarSair} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>Terminar sessão</Text>
+            <Text style={styles.popupMessage}>
+              Tens a certeza que queres sair da tua conta?
+            </Text>
+
+            <View style={styles.popupBotoesLinha}>
+              <Pressable
+                style={styles.popupBotaoCancelar}
+                onPress={() => setConfirmarSair(false)}
+              >
+                <Text style={styles.popupTextoCancelar}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Text style={styles.popupTextoSair}>Sair</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

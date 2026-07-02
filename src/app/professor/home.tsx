@@ -20,8 +20,31 @@ type Utilizador = {
   foto_url: string | null;
 };
 
+type EstagioProfessor = {
+  id: number;
+  estado_estagio: string | null;
+  aluno?: { nome: string } | null;
+  edicoes_estagio?: {
+    id: number;
+    data_inicio: string | null;
+    data_fim: string | null;
+    ensinos_clinicos?: { nome: string } | null;
+    instituicoes?: { nome: string } | null;
+    servicos?: { nome: string } | null;
+  } | null;
+};
+
+type Reuniao = {
+  id: number;
+  assunto: string | null;
+  data_hora: string | null;
+  local: string | null;
+};
+
 export default function ProfessorHome() {
   const [utilizador, setUtilizador] = useState<Utilizador | null>(null);
+  const [estagios, setEstagios] = useState<EstagioProfessor[]>([]);
+  const [reunioes, setReunioes] = useState<Reuniao[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [menuAberto, setMenuAberto] = useState(false);
@@ -30,7 +53,6 @@ export default function ProfessorHome() {
   const [popupVisivel, setPopupVisivel] = useState(false);
   const [popupTitulo, setPopupTitulo] = useState("");
   const [popupMensagem, setPopupMensagem] = useState("");
-
   const [confirmarLogoutVisivel, setConfirmarLogoutVisivel] = useState(false);
 
   function mostrarPopup(titulo: string, mensagem: string) {
@@ -51,27 +73,62 @@ export default function ProfessorHome() {
 
     const userId = authData.user.id;
 
-    const { data: userData, error: userError } = await supabase
+    const { data: userData } = await supabase
       .from("utilizadores")
-      .select("id, nome, email, foto_url, tipo")
+      .select("id, nome, email, foto_url")
       .eq("id", userId)
       .single();
 
-    if (userError || !userData) {
-      console.log("ERRO PROFESSOR HOME:", userError);
-      setLoading(false);
-      return;
-    }
+    setUtilizador((userData as any) || null);
 
-    setUtilizador(userData as any);
-
+    // Verificar se o professor tem área responsável
     const { data: responsavelData } = await supabase
       .from("responsaveis_ensinos_clinicos")
       .select("id")
       .eq("professor_id", userId)
       .limit(1);
 
-    setTemAreaResponsavel((responsavelData || []).length > 0);
+    setTemAreaResponsavel((responsavelData || []).length > 0); // Se houver pelo menos um registro, o professor tem área responsável
+
+    const { data: estagiosData, error: estagiosError } = await supabase
+      .from("inscricoes_estagio")
+      .select(`
+        id,
+        estado_estagio,
+        aluno:utilizadores!inscricoes_estagio_aluno_id_fkey(nome),
+        edicoes_estagio(
+          id,
+          data_inicio,
+          data_fim,
+          ensinos_clinicos(nome),
+          instituicoes(nome),
+          servicos(nome)
+        )
+      `)
+      .eq("professor_id", userId)
+      .neq("estado_estagio", "concluido")
+      .order("id", { ascending: false });
+
+    if (estagiosError) {
+      console.log("ERRO ESTÁGIOS PROFESSOR:", estagiosError);
+      setEstagios([]);
+    } else {
+      setEstagios((estagiosData as any) || []);
+    }
+
+    const { data: reunioesData, error: reunioesError } = await supabase
+      .from("reunioes")
+      .select("id, assunto, data_hora, local")
+      .eq("professor_id", userId)
+      .order("data_hora", { ascending: true })
+      .limit(3);
+
+    if (reunioesError) {
+      console.log("ERRO REUNIÕES PROFESSOR:", reunioesError);
+      setReunioes([]);
+    } else {
+      setReunioes((reunioesData as any) || []);
+    }
 
     setLoading(false);
   }
@@ -85,6 +142,14 @@ export default function ProfessorHome() {
     router.replace("/login/login" as any);
   }
 
+  function formatarData(data: string | null | undefined) {
+    if (!data) return "Sem data";
+    const date = new Date(data);
+    if (Number.isNaN(date.getTime())) return data;
+
+    return date.toLocaleDateString("pt-PT");
+  }
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -92,6 +157,27 @@ export default function ProfessorHome() {
       </View>
     );
   }
+
+  // Função para agrupar os estágios por edição de estágio
+  function estagiosUnicos() {
+  const grupos: EstagioProfessor[] = [];
+
+  estagios.forEach((estagio) => {
+    const edicaoId = estagio.edicoes_estagio?.id;
+
+    const jaExiste = grupos.some(
+      (item) => item.edicoes_estagio?.id === edicaoId
+    );
+
+    if (!jaExiste) {
+      grupos.push(estagio);
+    }
+  });
+
+  return grupos;
+}
+
+  const estagiosAgrupados = estagiosUnicos();
 
   return (
     <View style={styles.page}>
@@ -130,11 +216,7 @@ export default function ProfessorHome() {
                 style={styles.fotoPerfil}
               />
             ) : (
-              <Ionicons
-                name="person-circle-outline"
-                size={70}
-                color="#FDB515"
-              />
+              <Ionicons name="person-circle-outline" size={70} color="#FDB515" />
             )}
           </Pressable>
         </View>
@@ -144,9 +226,7 @@ export default function ProfessorHome() {
         <View style={styles.grid}>
           <Pressable
             style={styles.cardAtalho}
-            onPress={() =>
-              router.push("/professor/alunos/alunos" as any)
-            }
+            onPress={() => router.push("/professor/verAlunos/verAlunos" as any)}
           >
             <Ionicons name="people-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Os meus alunos</Text>
@@ -154,9 +234,7 @@ export default function ProfessorHome() {
 
           <Pressable
             style={styles.cardAtalho}
-            onPress={() =>
-              router.push("/professor/presencas/presencas" as any)
-            }
+            onPress={() => router.push("/professor/presencas/presencas" as any)}
           >
             <Ionicons name="checkmark-done-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Validar presenças</Text>
@@ -164,9 +242,7 @@ export default function ProfessorHome() {
 
           <Pressable
             style={styles.cardAtalho}
-            onPress={() =>
-              router.push("/professor/relatorios/relatorios" as any)
-            }
+            onPress={() => router.push("/professor/relatorios/relatorios" as any)}
           >
             <Ionicons name="document-text-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Relatórios</Text>
@@ -174,12 +250,18 @@ export default function ProfessorHome() {
 
           <Pressable
             style={styles.cardAtalho}
-            onPress={() =>
-              router.push("/professor/avaliacoes/avaliacoes" as any)
-            }
+            onPress={() => router.push("/professor/avaliacoes/avaliacoes" as any)}
           >
             <Ionicons name="star-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Avaliações</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.cardAtalho}
+            onPress={() => router.push("/professor/reunioes/reunioes" as any)}
+          >
+            <Ionicons name="calendar-outline" size={34} color="#FDB515" />
+            <Text style={styles.cardTitulo}>Agendar reuniões</Text>
           </Pressable>
         </View>
 
@@ -189,22 +271,14 @@ export default function ProfessorHome() {
 
             <Pressable
               style={styles.cardResponsavel}
-              onPress={() =>
-                router.push("/professorResponsavel/home" as any)
-              }
+              onPress={() => router.push("/professorResponsavel/home" as any)}
             >
               <View style={styles.responsavelIcone}>
-                <Ionicons
-                  name="shield-checkmark-outline"
-                  size={32}
-                  color="#160909"
-                />
+                <Ionicons name="shield-checkmark-outline" size={32} color="#160909" />
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.responsavelTitulo}>
-                  Professor Responsável
-                </Text>
+                <Text style={styles.responsavelTitulo}>Professor Responsável</Text>
                 <Text style={styles.responsavelTexto}>
                   Gerir alunos dos ensinos clínicos atribuídos.
                 </Text>
@@ -214,6 +288,71 @@ export default function ProfessorHome() {
             </Pressable>
           </>
         ) : null}
+
+        <Text style={styles.secaoTitulo}>Estágios que orienta</Text>
+
+        {estagiosAgrupados.length === 0 ? (
+          <Text style={styles.mensagemVazia}>
+            Ainda não tens alunos associados.
+          </Text>
+        ) : (
+          <View style={styles.listaEstagios}>
+            {estagiosAgrupados.map((estagio) => (
+              <View key={estagio.id} style={styles.estagioCard}>
+                <View style={styles.estagioIcone}>
+                  <Ionicons name="briefcase-outline" size={28} color="#160909" />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.estagioTitulo}>
+                    {estagio.edicoes_estagio?.ensinos_clinicos?.nome ||
+                      "Ensino Clínico"}
+                  </Text>
+
+                  <Text style={styles.estagioTexto}>
+                    {estagio.edicoes_estagio?.instituicoes?.nome || "Instituição"} ·{" "}
+                    {estagio.edicoes_estagio?.servicos?.nome || "Serviço"}
+                  </Text>
+
+                  <Text style={styles.estagioTexto}>
+                    {formatarData(estagio.edicoes_estagio?.data_inicio)} -{" "}
+                    {formatarData(estagio.edicoes_estagio?.data_fim)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <Text style={styles.secaoTitulo}>Próximos eventos</Text>
+
+        {reunioes.length === 0 ? (
+          <Text style={styles.mensagemVazia}>
+            Não existem eventos agendados.
+          </Text>
+        ) : (
+          <View style={styles.eventosLista}>
+            {reunioes.map((reuniao) => (
+              <View key={reuniao.id} style={styles.eventoCard}>
+                <View>
+                  <Text style={styles.eventoTitulo}>
+                    {reuniao.assunto || "Reunião"}
+                  </Text>
+                  <Text style={styles.eventoTexto}>
+                    {reuniao.data_hora
+                      ? new Date(reuniao.data_hora).toLocaleString("pt-PT")
+                      : "Sem data"}
+                  </Text>
+                  <Text style={styles.eventoTexto}>
+                    {reuniao.local || "Sem local"}
+                  </Text>
+                </View>
+
+                <Ionicons name="calendar-outline" size={28} color="#FDB515" />
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {!menuAberto && (
@@ -231,10 +370,7 @@ export default function ProfessorHome() {
           <Pressable
             style={styles.bottomItem}
             onPress={() =>
-              mostrarPopup(
-                "Definições",
-                "Esta página encontra-se em desenvolvimento."
-              )
+              mostrarPopup("Definições", "Esta página encontra-se em desenvolvimento.")
             }
           >
             <Ionicons name="settings-outline" size={25} color="#160909" />
@@ -255,8 +391,8 @@ export default function ProfessorHome() {
               <Text style={styles.sidebarTitulo}>Menu</Text>
 
               <View style={styles.sidebarImagemFixa}>
-                <Ionicons name="school-outline" size={34} color="#160909" />
-              </View>
+              <Image source={require("../../../assets/images/enf.jpg")} style={styles.imagemSidebar} resizeMode="cover"/>             
+               </View>
             </View>
 
             <View style={styles.sidebarBody}>
@@ -264,7 +400,7 @@ export default function ProfessorHome() {
                 style={styles.sidebarItem}
                 onPress={() => {
                   setMenuAberto(false);
-                  router.push("/professor/alunos/alunos" as any);
+                  router.push("/professor/verAlunos/verAlunos" as any);
                 }}
               >
                 <Ionicons name="people-outline" size={25} color="#160909" />
@@ -304,6 +440,17 @@ export default function ProfessorHome() {
                 <Text style={styles.sidebarTexto}>Avaliações</Text>
               </Pressable>
 
+              <Pressable
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setMenuAberto(false);
+                  router.push("/professor/reunioes/reunioes" as any);
+                }}
+              >
+                <Ionicons name="calendar-outline" size={25} color="#160909" />
+                <Text style={styles.sidebarTexto}>Agendar reuniões</Text>
+              </Pressable>
+
               {temAreaResponsavel ? (
                 <Pressable
                   style={styles.sidebarItem}
@@ -312,11 +459,7 @@ export default function ProfessorHome() {
                     router.push("/professorResponsavel/home" as any);
                   }}
                 >
-                  <Ionicons
-                    name="shield-checkmark-outline"
-                    size={25}
-                    color="#160909"
-                  />
+                  <Ionicons name="shield-checkmark-outline" size={25} color="#160909" />
                   <Text style={styles.sidebarTexto}>Área Responsável</Text>
                 </Pressable>
               ) : null}
@@ -336,10 +479,7 @@ export default function ProfessorHome() {
                 style={styles.sidebarItem}
                 onPress={() => {
                   setMenuAberto(false);
-                  mostrarPopup(
-                    "Definições",
-                    "Esta página encontra-se em desenvolvimento."
-                  );
+                  mostrarPopup("Definições", "Esta página encontra-se em desenvolvimento.");
                 }}
               >
                 <Ionicons name="settings-outline" size={25} color="#160909" />
@@ -375,7 +515,7 @@ export default function ProfessorHome() {
           </View>
         </View>
       </Modal>
-                        
+
       <Modal visible={confirmarLogoutVisivel} transparent animationType="fade">
         <View style={styles.popupOverlay}>
           <View style={styles.popupContainer}>
@@ -392,10 +532,7 @@ export default function ProfessorHome() {
                 <Text style={styles.modalBotaoTexto}>Cancelar</Text>
               </Pressable>
 
-              <Pressable
-                style={styles.modalBotaoCriar}
-                onPress={terminarSessao}
-              >
+              <Pressable style={styles.modalBotaoCriar} onPress={terminarSessao}>
                 <Text style={styles.modalBotaoTextoEscuro}>Sair</Text>
               </Pressable>
             </View>
