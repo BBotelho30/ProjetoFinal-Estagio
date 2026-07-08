@@ -53,7 +53,12 @@ type Falta = {
 };
 
 export default function PresencasAluno() {
-  const { from, inscricao_id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+
+  const from = params.from ? String(params.from) : "";
+  const origem = params.origem ? String(params.origem) : "";
+  const inscricaoIdParam = params.inscricaoId ? Number(params.inscricaoId) : null;
+
   const mostrarBottomBar = from === "bottom";
 
   const [estagio, setEstagio] = useState<EstagioAtual | null>(null);
@@ -88,75 +93,104 @@ export default function PresencasAluno() {
   }
 
   async function carregarDados() {
-    setLoading(true);
+  setLoading(true);
 
-    const { data: authData } = await supabase.auth.getUser();
+  const { data: authData } = await supabase.auth.getUser();
 
-    if (!authData.user) {
-      router.replace("/login/login" as any);
-      return;
-    }
+  if (!authData.user) {
+    router.replace("/login/login" as any);
+    return;
+  }
 
-    const { data: estagioData, error: estagioError } = await supabase
-      .from("inscricoes_estagio")
-      .select(`
-        id,
-        edicao_estagio_id,
-        estado_estagio,
-        edicoes_estagio(
-          permite_reposicao_horas,
-          limite_faltas_percentagem,
-          max_horas_dia,
-          data_fim,
-          ensinos_clinicos(nome, horas_estimadas),
-          instituicoes(nome),
-          servicos(nome)
-        )
-      `)
-      .eq("aluno_id", authData.user.id)
+  let query = supabase
+    .from("inscricoes_estagio")
+    .select(`
+      id,
+      edicao_estagio_id,
+      estado_estagio,
+      edicoes_estagio(
+        permite_reposicao_horas,
+        limite_faltas_percentagem,
+        max_horas_dia,
+        data_fim,
+        ensinos_clinicos(nome, horas_estimadas),
+        instituicoes(nome),
+        servicos(nome)
+      )
+    `)
+    .eq("aluno_id", authData.user.id);
+
+  if (inscricaoIdParam) {
+    query = query.eq("id", inscricaoIdParam);
+  } else {
+    query = query
       .neq("estado_estagio", "concluido")
       .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (estagioError) {
-      console.log("ERRO ESTÁGIO PRESENÇAS:", estagioError);
-    }
-
-    setEstagio((estagioData as any) || null);
-
-    if (estagioData) {
-      const inscricaoId = (estagioData as any).id;
-
-      const { data: presencasData, error: presencasError } = await supabase
-        .from("presencas")
-        .select(
-          "id, data, hora_inicio, hora_fim, duracao, horas_reposicao, tipo, estado, observacoes"
-        )
-        .eq("inscricao_id", inscricaoId)
-        .order("data", { ascending: false });
-
-      if (presencasError) {
-        console.log("ERRO PRESENÇAS:", presencasError);
-      }
-
-      setPresencas((presencasData as any) || []);
-
-      const { data: faltasData, error: faltasError } = await supabase
-        .from("faltas")
-        .select("id, data, horas_falta, justificacao_texto, justificacao_url, estado")
-        .eq("inscricao_id", inscricaoId)
-        .order("data", { ascending: false });
-
-      if (faltasError) {
-        console.log("ERRO FALTAS:", faltasError);
-      }
-
-      setFaltas((faltasData as any) || []);
-    }
-
-    setLoading(false);
+      .limit(1);
   }
+
+  const { data: estagioData, error: estagioError } = await query.maybeSingle();
+
+  if (estagioError) {
+    console.log("ERRO ESTÁGIO PRESENÇAS:", estagioError);
+    setEstagio(null);
+    setPresencas([]);
+    setFaltas([]);
+    setLoading(false);
+    return;
+  }
+
+  if (!estagioData) {
+    console.log("NENHUM ESTÁGIO ENCONTRADO PARA:", {
+      inscricaoIdParam,
+      origem,
+      from,
+    });
+
+    setEstagio(null);
+    setPresencas([]);
+    setFaltas([]);
+    setLoading(false);
+    return;
+  }
+
+  setEstagio((estagioData as any) || null);
+
+  const inscricaoId = (estagioData as any).id;
+
+  const { data: presencasData, error: presencasError } = await supabase
+    .from("presencas")
+    .select(
+      "id, data, hora_inicio, hora_fim, duracao, horas_reposicao, tipo, estado, observacoes"
+    )
+    .eq("inscricao_id", inscricaoId)
+    .order("data", { ascending: false });
+
+  if (presencasError) {
+    console.log("ERRO PRESENÇAS:", presencasError);
+    setPresencas([]);
+  } else {
+    setPresencas((presencasData as any) || []);
+  }
+
+  const { data: faltasData, error: faltasError } = await supabase
+    .from("faltas")
+    .select(
+      "id, data, horas_falta, justificacao_texto, justificacao_url, estado"
+    )
+    .eq("inscricao_id", inscricaoId)
+    .order("data", { ascending: false });
+
+  if (faltasError) {
+    console.log("ERRO FALTAS:", faltasError);
+    setFaltas([]);
+  } else {
+    setFaltas((faltasData as any) || []);
+  }
+
+  setLoading(false);
+}
+
 
   useEffect(() => {
     carregarDados();
@@ -492,6 +526,34 @@ export default function PresencasAluno() {
     carregarDados();
   }
 
+  
+  function voltarPaginaAnterior() {
+    if (origem === "estagioPresencas") {
+      router.replace(
+        "/aluno/presencas/estagioPresencas/estagioPresencas" as any
+      );
+      return;
+    }
+
+    if (origem === "detalheEstagio" && estagio) {
+      router.replace({
+        pathname: "/aluno/estagios/detalheEstagio/detalheEstagio" as any,
+        params: {
+          inscricaoId: String(estagio.id),
+          edicaoId: String(estagio.edicao_estagio_id),
+        },
+      });
+      return;
+    }
+
+    if (mostrarBottomBar) {
+      router.replace("/aluno/home" as any);
+      return;
+    }
+
+    router.replace("/aluno/estagios/estagio" as any);
+  }
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -503,11 +565,7 @@ export default function PresencasAluno() {
   return (
     <View style={styles.page}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Pressable
-        style={styles.voltar}
-        onPress={() =>
-          router.push(
-            `/aluno/estagios/detalheEstagio/detalheEstagio?id=${estagio?.id}` as any)}>
+      <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
         <Ionicons name="arrow-back-outline" size={24} color="#160909" />
         <Text style={styles.voltarTexto}>Voltar</Text>
       </Pressable>

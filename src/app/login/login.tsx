@@ -89,7 +89,7 @@ export default function LoginScreen() {
       } else if (perfil.tipo === "orientador") {
         router.push({ pathname: "/orientador/home" } as any);
       } else if (perfil.tipo === "superadmin") {
-        router.push({ pathname: "/superadmin/home" } as any);
+        router.push({ pathname: "/backoffice/superadmin/home" } as any);
       } else {
         setPopupTitle("Erro");
         setPopupMessage("Tipo de utilizador desconhecido.");

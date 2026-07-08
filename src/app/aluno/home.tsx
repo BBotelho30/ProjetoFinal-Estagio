@@ -29,9 +29,12 @@ type Utilizador = {
 
 type EstagioAtual = {
   id: number;
+  edicao_estagio_id: number;
   professor_id: string | null;
   orientador_id: string | null;
+  estado_estagio: string | null;
   edicoes_estagio?: {
+    id: number;
     data_inicio: string | null;
     data_fim: string | null;
     ensinos_clinicos?: {
@@ -57,7 +60,32 @@ type Reuniao = {
   assunto: string | null;
   data_hora: string | null;
   local: string | null;
+  professor?: {
+    nome: string;
+  } | null;
+  orientador?: {
+    nome: string;
+  } | null;
+  edicoes_estagio?: {
+    ensinos_clinicos?: {
+      nome: string;
+    } | null;
+  } | null;
 };
+
+const CORES_ESTAGIOS = [
+  "#2F80ED",
+  "#A7F3D0",
+  "#9B51E0",
+  "#F8BBD0",
+  "#C9A27E",
+  "#800020",
+  "#FDB515",
+  "#8ED6FF",
+  "#EB5757",
+  "#BDBDBD",
+  "#F2994A",
+];
 
 export default function AlunoHome() {
   const [utilizador, setUtilizador] = useState<Utilizador | null>(null);
@@ -66,14 +94,16 @@ export default function AlunoHome() {
   const [loading, setLoading] = useState(true);
 
   const [menuAberto, setMenuAberto] = useState(false);
+
   const [popupVisivel, setPopupVisivel] = useState(false);
   const [popupTitulo, setPopupTitulo] = useState("");
   const [popupMensagem, setPopupMensagem] = useState("");
 
-  const [popupDefinicoesVisivel, setPopupDefinicoesVisivel] = useState(false);
   const [confirmarLogoutVisivel, setConfirmarLogoutVisivel] = useState(false);
 
-
+  useEffect(() => {
+    carregarDados();
+  }, []);
 
   async function carregarDados() {
     setLoading(true);
@@ -107,16 +137,20 @@ export default function AlunoHome() {
       .from("inscricoes_estagio")
       .select(`
         id,
+        edicao_estagio_id,
         professor_id,
         orientador_id,
         estado_estagio,
         edicoes_estagio(
+          id,
           data_inicio,
           data_fim,
           ensinos_clinicos(nome),
           instituicoes(nome),
           servicos(nome)
-        )
+        ),
+        professor:utilizadores!inscricoes_estagio_professor_id_fkey(nome),
+        orientador:utilizadores!inscricoes_estagio_orientador_id_fkey(nome)
       `)
       .eq("aluno_id", userId)
       .neq("estado_estagio", "concluido")
@@ -128,43 +162,25 @@ export default function AlunoHome() {
       console.log("ERRO ESTÁGIO HOME:", estagioError);
     }
 
-    if (estagioData) {
-      let professor = null;
-      let orientador = null;
+    setEstagioAtual((estagioData as any) || null);
 
-      if ((estagioData as any).professor_id) {
-        const { data: professorData } = await supabase
-          .from("utilizadores")
-          .select("nome")
-          .eq("id", (estagioData as any).professor_id)
-          .single();
-
-        professor = professorData;
-      }
-
-      if ((estagioData as any).orientador_id) {
-        const { data: orientadorData } = await supabase
-          .from("utilizadores")
-          .select("nome")
-          .eq("id", (estagioData as any).orientador_id)
-          .single();
-
-        orientador = orientadorData;
-      }
-
-      setEstagioAtual({
-        ...(estagioData as any),
-        professor,
-        orientador,
-      });
-    } else {
-      setEstagioAtual(null);
-    }
+    const agora = new Date().toISOString();
 
     const { data: reunioesData, error: reunioesError } = await supabase
       .from("reunioes")
-      .select("id, assunto, data_hora, local")
+      .select(`
+        id,
+        assunto,
+        data_hora,
+        local,
+        professor:utilizadores!reunioes_professor_id_fkey(nome),
+        orientador:utilizadores!reunioes_orientador_id_fkey(nome),
+        edicoes_estagio(
+          ensinos_clinicos(nome)
+        )
+      `)
       .eq("aluno_id", userId)
+      .gte("data_hora", agora)
       .order("data_hora", { ascending: true })
       .limit(3);
 
@@ -178,9 +194,11 @@ export default function AlunoHome() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
+  function mostrarPopup(titulo: string, mensagem: string) {
+    setPopupTitulo(titulo);
+    setPopupMensagem(mensagem);
+    setPopupVisivel(true);
+  }
 
   function perfilIncompleto() {
     if (!utilizador) return true;
@@ -199,9 +217,76 @@ export default function AlunoHome() {
     if (!data) return "Sem data";
 
     const date = new Date(data);
+
     if (Number.isNaN(date.getTime())) return data;
 
     return date.toLocaleDateString("pt-PT");
+  }
+
+  function formatarDataHora(data: string | null | undefined) {
+    if (!data) return "Sem data";
+
+    const date = new Date(data);
+
+    if (Number.isNaN(date.getTime())) return "Sem data";
+
+    return `${date.toLocaleDateString("pt-PT")} às ${date.toLocaleTimeString(
+      "pt-PT",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    )}`;
+  }
+
+  function formatarHora(data: string | null | undefined) {
+    if (!data) return "Sem hora";
+
+    const date = new Date(data);
+
+    if (Number.isNaN(date.getTime())) return "Sem hora";
+
+    return date.toLocaleTimeString("pt-PT", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function numeroDoEstagio(nomeEstagio?: string) {
+    const nome = nomeEstagio || "";
+
+    const match = nome.match(/Ensino Clínico\s*(\d+)/i);
+
+    if (match?.[1]) {
+      return Number(match[1]);
+    }
+
+    return null;
+  }
+
+  function corDoEstagioAtual() {
+    const numero = numeroDoEstagio(
+      estagioAtual?.edicoes_estagio?.ensinos_clinicos?.nome
+    );
+
+    if (!numero) return "#FDB515";
+
+    return CORES_ESTAGIOS[numero - 1] || "#FDB515";
+  }
+
+  function pessoasReuniao(reuniao: Reuniao) {
+    const professor = reuniao.professor?.nome;
+    const orientador = reuniao.orientador?.nome;
+
+    if (professor && orientador) {
+      return `Professor: ${professor} · Orientador: ${orientador}`;
+    }
+
+    if (professor) return `Professor: ${professor}`;
+
+    if (orientador) return `Orientador: ${orientador}`;
+
+    return "Sem participantes indicados";
   }
 
   async function terminarSessao() {
@@ -217,21 +302,26 @@ export default function AlunoHome() {
     );
   }
 
-    function mostrarPopup(titulo: string, mensagem: string) {
-    setPopupTitulo(titulo);
-    setPopupMensagem(mensagem);
-    setPopupVisivel(true);
-  }
-
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.topIcons}>
           <Pressable onPress={() => setMenuAberto(true)}>
             <Ionicons name="menu-outline" size={34} color="#160909" />
           </Pressable>
 
-          <Pressable onPress={() => mostrarPopup( "Notificações", "Esta funcionalidade será implementada futuramente.")}>
+          <Pressable
+            onPress={() =>
+              mostrarPopup(
+                "Notificações",
+                "Esta funcionalidade será implementada futuramente."
+              )
+            }
+          >
             <Ionicons name="notifications-outline" size={30} color="#160909" />
           </Pressable>
         </View>
@@ -268,12 +358,15 @@ export default function AlunoHome() {
             onPress={() => router.push("/aluno/completar-perfil" as any)}
           >
             <Ionicons name="alert-circle-outline" size={28} color="#160909" />
+
             <View style={{ flex: 1 }}>
               <Text style={styles.avisoTitulo}>Completa o teu perfil</Text>
+
               <Text style={styles.avisoTexto}>
                 Para continuares, preenche os teus dados pessoais.
               </Text>
             </View>
+
             <Ionicons name="chevron-forward-outline" size={24} color="#160909" />
           </Pressable>
         ) : null}
@@ -291,7 +384,11 @@ export default function AlunoHome() {
 
           <Pressable
             style={styles.cardAtalho}
-            onPress={() => router.push("/aluno/presencas" as any)}
+            onPress={() =>
+              router.push(
+                "/aluno/presencas/estagioPresencas/estagioPresencas" as any
+              )
+            }
           >
             <Ionicons name="calendar-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Presenças</Text>
@@ -299,7 +396,11 @@ export default function AlunoHome() {
 
           <Pressable
             style={styles.cardAtalho}
-            onPress={() => router.push("/aluno/avaliacoes" as any)}
+            onPress={() =>
+              router.push(
+                "/aluno/avaliacao/estagioAvaliacoes/estagioAvaliacoes" as any
+              )
+            }
           >
             <Ionicons name="star-outline" size={34} color="#FDB515" />
             <Text style={styles.cardTitulo}>Avaliações</Text>
@@ -314,49 +415,55 @@ export default function AlunoHome() {
           </Pressable>
         </View>
 
-
-
         <Text style={styles.secaoTitulo}>Estágio atual</Text>
 
         {estagioAtual ? (
-          <Pressable
-            style={styles.estagioAtualCard}
-            onPress={() =>
-              router.push(
-                `/aluno/estagios/detalheEstagio/detalheEstagio?id=${estagioAtual.id}` as any
-              )
-            }
-          >
-            <View style={styles.estagioIcone}>
-              <Ionicons name="briefcase-outline" size={30} color="#160909" />
-            </View>
+         <Pressable
+  style={[
+    styles.estagioAtualCard,
+    {
+      borderLeftColor: corDoEstagioAtual(),
+    },
+  ]}
+  onPress={() =>
+    router.push({
+      pathname: "/aluno/estagios/detalheEstagio/detalheEstagio" as any,
+      params: {
+        inscricaoId: String(estagioAtual.id),
+        edicaoId: String(estagioAtual.edicao_estagio_id),
+      },
+    })
+  }
+>
+  <View style={styles.estagioIcone}>
+    <Ionicons name="briefcase-outline" size={30} color="#160909" />
+  </View>
 
-            <View style={{ flex: 1 }}>
-              <Text style={styles.estagioTitulo}>
-                {estagioAtual.edicoes_estagio?.ensinos_clinicos?.nome ||
-                  "Ensino Clínico"}
-              </Text>
+  <View style={{ flex: 1 }}>
+    <Text style={styles.estagioTitulo}>
+      {estagioAtual.edicoes_estagio?.ensinos_clinicos?.nome ||
+        "Ensino Clínico"}
+    </Text>
 
-              <Text style={styles.estagioTexto}>
-                {estagioAtual.edicoes_estagio?.instituicoes?.nome ||
-                  "Instituição"}{" "}
-                · {estagioAtual.edicoes_estagio?.servicos?.nome || "Serviço"}
-              </Text>
+    <Text style={styles.estagioTexto}>
+      {estagioAtual.edicoes_estagio?.instituicoes?.nome || "Instituição"} ·{" "}
+      {estagioAtual.edicoes_estagio?.servicos?.nome || "Serviço"}
+    </Text>
 
-              <Text style={styles.estagioTexto}>
-                {formatarData(estagioAtual.edicoes_estagio?.data_inicio)} -{" "}
-                {formatarData(estagioAtual.edicoes_estagio?.data_fim)}
-              </Text>
+    <Text style={styles.estagioTexto}>
+      {formatarData(estagioAtual.edicoes_estagio?.data_inicio)} -{" "}
+      {formatarData(estagioAtual.edicoes_estagio?.data_fim)}
+    </Text>
 
-              <Text style={styles.estagioTexto}>
-                Professor: {estagioAtual.professor?.nome || "Não indicado"}
-              </Text>
+    <Text style={styles.estagioTexto}>
+      Professor: {estagioAtual.professor?.nome || "Não indicado"}
+    </Text>
 
-              <Text style={styles.estagioTexto}>
-                Orientador: {estagioAtual.orientador?.nome || "Não indicado"}
-              </Text>
-            </View>
-          </Pressable>
+    <Text style={styles.estagioTexto}>
+      Orientador: {estagioAtual.orientador?.nome || "Não indicado"}
+    </Text>
+  </View>
+</Pressable>
         ) : (
           <Text style={styles.mensagemVazia}>
             Ainda não tens estágio atribuído.
@@ -372,20 +479,52 @@ export default function AlunoHome() {
         ) : (
           <View style={styles.eventosLista}>
             {reunioes.map((reuniao) => (
-              <View key={reuniao.id} style={styles.eventoCard}>
-                <View>
-                  <Text style={styles.eventoTitulo}>
-                    {reuniao.assunto || "Reunião"}
-                  </Text>
+              <Pressable
+                key={reuniao.id}
+                style={[
+                  styles.eventoCard,
+                  {
+                    borderLeftColor: "#8ED6FF",
+                  },
+                ]}
+                onPress={() => router.push("/aluno/agenda/agenda" as any)}
+              >
+                <View style={{ flex: 1 }}>
+                  <View style={styles.eventoHeader}>
+                    <Text style={styles.eventoTitulo}>
+                      {reuniao.assunto || "Reunião"}
+                    </Text>
+
+                    <Ionicons
+                      name="calendar-outline"
+                      size={26}
+                      color="#8ED6FF"
+                    />
+                  </View>
+
                   <Text style={styles.eventoTexto}>
-                    {reuniao.data_hora
-                      ? new Date(reuniao.data_hora).toLocaleString("pt-PT")
-                      : "Sem data"}
+                    Assunto: {reuniao.assunto || "Reunião"}
+                  </Text>
+
+                  <Text style={styles.eventoTexto}>
+                    Data: {formatarDataHora(reuniao.data_hora)}
+                  </Text>
+
+                  <Text style={styles.eventoTexto}>
+                    Local: {reuniao.local || "Sem local definido"}
+                  </Text>
+
+                  <Text style={styles.eventoTexto}>
+                    Com quem: {pessoasReuniao(reuniao)}
+                  </Text>
+
+                  <Text style={styles.eventoTexto}>
+                    Estágio:{" "}
+                    {reuniao.edicoes_estagio?.ensinos_clinicos?.nome ||
+                      "Não indicado"}
                   </Text>
                 </View>
-
-                <Ionicons name="calendar-outline" size={28} color="#FDB515" />
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
@@ -398,7 +537,15 @@ export default function AlunoHome() {
             <Text style={styles.bottomTextoAtivo}>Home</Text>
           </Pressable>
 
-        <Pressable style={styles.bottomItem} onPress={() => mostrarPopup( "Definições", "Esta página encontra-se em desenvolvimento.")}>
+          <Pressable
+            style={styles.bottomItem}
+            onPress={() =>
+              mostrarPopup(
+                "Definições",
+                "Esta página encontra-se em desenvolvimento."
+              )
+            }
+          >
             <Ionicons name="settings-outline" size={25} color="#160909" />
             <Text style={styles.bottomTexto}>Definições</Text>
           </Pressable>
@@ -427,8 +574,12 @@ export default function AlunoHome() {
               <Text style={styles.sidebarTitulo}>Menu</Text>
 
               <View style={styles.sidebarImagemFixa}>
-              <Image source={require("../../../assets/images/enf.jpg")} style={styles.imagemSidebar} resizeMode="cover"/>             
-               </View>
+                <Image
+                  source={require("../../../assets/images/enf.jpg")}
+                  style={styles.imagemSidebar}
+                  resizeMode="cover"
+                />
+              </View>
             </View>
 
             <View style={styles.sidebarBody}>
@@ -458,7 +609,9 @@ export default function AlunoHome() {
                 style={styles.sidebarItem}
                 onPress={() => {
                   setMenuAberto(false);
-                  router.push("/aluno/presencas" as any);
+                  router.push(
+                    "/aluno/presencas/estagioPresencas/estagioPresencas" as any
+                  );
                 }}
               >
                 <Ionicons name="clipboard-outline" size={25} color="#160909" />
@@ -469,7 +622,9 @@ export default function AlunoHome() {
                 style={styles.sidebarItem}
                 onPress={() => {
                   setMenuAberto(false);
-                  router.push("/aluno/avaliacoes" as any);
+                  router.push(
+                    "/aluno/avaliacao/estagioAvaliacoes/estagioAvaliacoes" as any
+                  );
                 }}
               >
                 <Ionicons name="star-outline" size={25} color="#160909" />
@@ -515,7 +670,10 @@ export default function AlunoHome() {
 
               <View style={{ flex: 1 }} />
 
-              <Pressable style={styles.logoutButton} onPress={() => setConfirmarLogoutVisivel(true)}>
+              <Pressable
+                style={styles.logoutButton}
+                onPress={() => setConfirmarLogoutVisivel(true)}
+              >
                 <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
                 <Text style={styles.logoutTexto}>Terminar Sessão</Text>
               </Pressable>
@@ -527,9 +685,13 @@ export default function AlunoHome() {
       <Modal visible={popupVisivel} transparent animationType="fade">
         <View style={styles.popupOverlay}>
           <View style={styles.popupContainer}>
-            <Text style={styles.popupTitle}>Em desenvolvimento</Text>
+            <Text style={styles.popupTitle}>
+              {popupTitulo || "Em desenvolvimento"}
+            </Text>
+
             <Text style={styles.popupMessage}>
-              Esta funcionalidade será implementada futuramente.
+              {popupMensagem ||
+                "Esta funcionalidade será implementada futuramente."}
             </Text>
 
             <Pressable
@@ -542,12 +704,11 @@ export default function AlunoHome() {
         </View>
       </Modal>
 
-
-
       <Modal visible={confirmarLogoutVisivel} transparent animationType="fade">
         <View style={styles.popupOverlay}>
           <View style={styles.popupContainer}>
             <Text style={styles.popupTitle}>Terminar Sessão</Text>
+
             <Text style={styles.popupMessage}>
               Tens a certeza que queres terminar sessão?
             </Text>
@@ -560,10 +721,7 @@ export default function AlunoHome() {
                 <Text style={styles.modalBotaoTexto}>Cancelar</Text>
               </Pressable>
 
-              <Pressable
-                style={styles.modalBotaoCriar}
-                onPress={terminarSessao}
-              >
+              <Pressable style={styles.modalBotaoCriar} onPress={terminarSessao}>
                 <Text style={styles.modalBotaoTextoEscuro}>Sair</Text>
               </Pressable>
             </View>

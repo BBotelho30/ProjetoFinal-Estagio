@@ -2,15 +2,20 @@ import { StyleSheet } from "react-native";
 import globalStyles from "../../../styles/globalStyles";
 
 const local = StyleSheet.create({
+  page: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
 
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
 
   loadingContainer: {
@@ -38,7 +43,7 @@ const local = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 18,
+    marginTop: 22,
     marginBottom: 18,
   },
 
@@ -58,7 +63,7 @@ const local = StyleSheet.create({
   diaSemana: {
     width: "14.28%",
     textAlign: "center",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "900",
     color: "#777",
     fontFamily: "serif",
@@ -67,24 +72,24 @@ const local = StyleSheet.create({
   calendario: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 26,
+    marginBottom: 20,
   },
 
   diaVazio: {
     width: "14.28%",
-    height: 52,
+    height: 58,
   },
 
   dia: {
     width: "14.28%",
-    height: 52,
+    height: 58,
     alignItems: "center",
     justifyContent: "center",
   },
 
   diaSelecionado: {
     backgroundColor: "#FFF0C2",
-    borderRadius: 26,
+    borderRadius: 30,
   },
 
   diaTexto: {
@@ -98,7 +103,33 @@ const local = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    marginTop: 3,
+    marginTop: 4,
+  },
+
+  legenda: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 24,
+  },
+
+  legendaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  legendaBolinha: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+
+  legendaTexto: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#777",
+    fontFamily: "serif",
   },
 
   dataSelecionada: {
@@ -106,15 +137,36 @@ const local = StyleSheet.create({
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 12,
+    marginBottom: 14,
   },
 
-  textoVazio: {
-    fontSize: 16,
-    fontWeight: "700",
+  semEventosCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: "#D6D6D6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  semEventosTitulo: {
+    fontSize: 21,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginTop: 10,
+  },
+
+  semEventosTexto: {
+    fontSize: 14,
+    fontWeight: "800",
     color: "#777",
     fontFamily: "serif",
+    textAlign: "center",
     marginTop: 8,
+    lineHeight: 20,
   },
 
   eventosLista: {
@@ -130,26 +182,52 @@ const local = StyleSheet.create({
     borderLeftWidth: 7,
   },
 
+  eventoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  eventoIcone: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  eventoTipo: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#777",
+    fontFamily: "serif",
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+
   eventoTitulo: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
+    lineHeight: 24,
+  },
+
+  infoLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 7,
   },
 
   eventoTexto: {
+    flex: 1,
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#777",
     fontFamily: "serif",
-    marginTop: 6,
-  },
-
-  // Bottom bar styles
-
-    page: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
+    lineHeight: 20,
   },
 
   bottomBar: {

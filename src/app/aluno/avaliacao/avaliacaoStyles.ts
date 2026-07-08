@@ -13,9 +13,16 @@ const local = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
     paddingTop: 60,
     paddingBottom: 120,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   voltar: {
@@ -32,114 +39,196 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-  mediaCard: {
-    backgroundColor: "#E9E9E9",
-    borderRadius: 16,
-    padding: 24,
-    marginTop: 22,
-    marginBottom: 30,
-    minHeight: 150,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 5,
-    elevation: 4,
+  cardEstagio: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderLeftWidth: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 20,
   },
 
-  mediaTitulo: {
-    fontSize: 26,
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 6,
+  },
+
+  cardTitulo: {
+    fontSize: 21,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
+    lineHeight: 25,
   },
 
-  mediaCirculo: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    borderWidth: 9,
-    borderColor: "#FDB515",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  mediaValor: {
-    fontSize: 24,
+  cardSubtitulo: {
+    fontSize: 16,
     fontWeight: "900",
-    color: "#FDB515",
+    color: "#777",
+    fontFamily: "serif",
+    marginTop: 3,
+  },
+
+  badgeEstado: {
+    borderRadius: 20,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    marginTop: 1,
+  },
+
+  badgeTexto: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#1D7A3A",
     fontFamily: "serif",
   },
 
-  textoVazio: {
-    marginTop: 20,
-    textAlign: "center",
+  linhaInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+
+  infoTexto: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#777",
+    fontFamily: "serif",
+    marginTop: 4,
+    lineHeight: 19,
+  },
+
+  notaPrincipalCard: {
+    marginTop: 16,
+    backgroundColor: "#FFF3C4",
+    borderRadius: 18,
+    paddingVertical: 28,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+
+  notaLabel: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "900",
     color: "#777",
     fontFamily: "serif",
   },
 
-  lista: {
-    gap: 22,
+  notaValor: {
+    fontSize: 64,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginTop: 4,
   },
 
-  card: {
+  notaSubtexto: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#777",
+    fontFamily: "serif",
+    marginTop: 2,
+    textAlign: "center",
+  },
+
+  detalhesCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    minHeight: 130,
-    flexDirection: "row",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    padding: 16,
+    marginTop: 16,
+  },
+
+  secaoTitulo: {
+    fontSize: 21,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginBottom: 12,
+  },
+
+  linhaNota: {
+    borderTopWidth: 1,
+    borderTopColor: "#E9E9E9",
+    paddingVertical: 12,
+  },
+
+  linhaNotaLabel: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#777",
+    fontFamily: "serif",
+  },
+
+  linhaNotaValor: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginTop: 4,
+  },
+
+  observacoesCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    padding: 16,
+    marginTop: 16,
+  },
+
+  observacaoTitulo: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginTop: 10,
+  },
+
+  observacaoTexto: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+    marginTop: 4,
+    lineHeight: 20,
+  },
+
+  vazioCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    padding: 24,
     alignItems: "center",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 5,
-    elevation: 4,
+    justifyContent: "center",
+    marginTop: 24,
   },
 
-  barraCard: {
-    width: 38,
-    height: "100%",
-  },
-
-  cardInfo: {
-    flex: 1,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-  },
-
-  cardTitulo: {
+  vazioTitulo: {
     fontSize: 22,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 4,
+    marginTop: 10,
+    textAlign: "center",
   },
 
-  cardTexto: {
-    fontSize: 17,
+  vazioTexto: {
+    fontSize: 15,
     fontWeight: "700",
-    color: "#160909",
+    color: "#777",
     fontFamily: "serif",
-  },
-
-  notaCirculo: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    borderWidth: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 18,
-  },
-
-  notaValor: {
-    fontSize: 18,
-    fontWeight: "900",
-    fontFamily: "serif",
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 21,
   },
 
   bottomBar: {

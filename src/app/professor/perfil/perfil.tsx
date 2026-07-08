@@ -293,10 +293,18 @@ export default function PerfilProfessor() {
 
       {mostrarBottomBar && (
         <View style={styles.bottomBar}>
-          <Pressable style={styles.bottomItem}>
-            <Ionicons name="person-outline" size={25} color="#FDB515" />
-            <Text style={styles.bottomTextoAtivo}>Perfil</Text>
+
+          <Pressable
+            style={styles.bottomItem}
+            onPress={() =>
+              router.push("/professor/home" as any)
+            }
+          >
+            <Ionicons name="person-outline" size={25} color="#000000ff" />
+            <Text style={styles.bottomTexto}>Home</Text>
           </Pressable>
+
+          
 
           <Pressable
             style={styles.bottomItem}
@@ -309,6 +317,11 @@ export default function PerfilProfessor() {
           >
             <Ionicons name="settings-outline" size={25} color="#160909" />
             <Text style={styles.bottomTexto}>Definições</Text>
+          </Pressable>
+
+          <Pressable style={styles.bottomItem}>
+            <Ionicons name="person-outline" size={25} color="#FDB515" />
+            <Text style={styles.bottomTextoAtivo}>Perfil</Text>
           </Pressable>
         </View>
       )}

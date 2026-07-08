@@ -299,7 +299,6 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-                
   imagemSidebar: {
     width: "100%",
     height: "100%",
@@ -307,12 +306,12 @@ const local = StyleSheet.create({
   },
 
   mensagemVazia: {
-  fontSize: 15,
-  fontWeight: "700",
-  color: "#777",
-  fontFamily: "serif",
-  marginBottom: 26,
-},
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#777",
+    fontFamily: "serif",
+    marginBottom: 26,
+  },
 
   listaEstagios: {
     gap: 12,
@@ -327,7 +326,6 @@ const local = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     borderLeftWidth: 6,
-    borderLeftColor: "#FDB515",
   },
 
   estagioIcone: {
@@ -359,12 +357,19 @@ const local = StyleSheet.create({
   },
 
   eventoCard: {
-    backgroundColor: "#E9E9E9",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: "#D6D6D6",
+    borderLeftWidth: 7,
+  },
+
+  eventoHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 6,
   },
 
   eventoTitulo: {
@@ -372,6 +377,7 @@ const local = StyleSheet.create({
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
+    flex: 1,
   },
 
   eventoTexto: {
@@ -380,6 +386,7 @@ const local = StyleSheet.create({
     color: "#666",
     fontFamily: "serif",
     marginTop: 4,
+    lineHeight: 19,
   },
 });
 
