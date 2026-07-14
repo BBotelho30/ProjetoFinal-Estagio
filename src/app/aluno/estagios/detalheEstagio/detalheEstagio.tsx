@@ -399,7 +399,7 @@ export default function DetalheEstagio() {
 
         <Pressable
           style={styles.acaoCard}
-          onPress={() => router.push("/aluno/agenda/agenda" as any)}
+          onPress={() => router.push("/aluno/agenda/agenda?from=detalhes" as any)}
         >
           <Ionicons name="time-outline" size={24} color="#160909" />
           <Text style={styles.acaoTexto}>Agenda</Text>
@@ -433,6 +433,23 @@ export default function DetalheEstagio() {
             color="#160909"
           />
           <Text style={styles.acaoTexto}>Comentários Semanais</Text>
+          <Ionicons name="chevron-forward-outline" size={22} color="#160909" />
+        </Pressable>
+
+                <Pressable
+          style={styles.acaoCard}
+          onPress={() =>
+            router.push(
+            `/aluno/avaliacaoFinal/avaliacaoFinal?inscricaoId=${inscricaoId}&from=detalhes` as any
+          )
+          }
+        >
+          <Ionicons
+            name="star-outline"
+            size={24}
+            color="#160909"
+          />
+          <Text style={styles.acaoTexto}>Avaliação</Text>
           <Ionicons name="chevron-forward-outline" size={22} color="#160909" />
         </Pressable>
       </View>

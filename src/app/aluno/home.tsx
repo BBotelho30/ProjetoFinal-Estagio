@@ -32,6 +32,7 @@ type EstagioAtual = {
   edicao_estagio_id: number;
   professor_id: string | null;
   orientador_id: string | null;
+  estado: string | null;
   estado_estagio: string | null;
   edicoes_estagio?: {
     id: number;
@@ -89,7 +90,7 @@ const CORES_ESTAGIOS = [
 
 export default function AlunoHome() {
   const [utilizador, setUtilizador] = useState<Utilizador | null>(null);
-  const [estagioAtual, setEstagioAtual] = useState<EstagioAtual | null>(null);
+  const [estagiosAtuais, setEstagiosAtuais] = useState<EstagioAtual[]>([]);
   const [reunioes, setReunioes] = useState<Reuniao[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -104,6 +105,44 @@ export default function AlunoHome() {
   useEffect(() => {
     carregarDados();
   }, []);
+
+
+  async function buscarProfessorDaEdicao(edicaoId: number) {
+  const { data, error } = await supabase
+    .from("professores_estagio")
+    .select(`
+      professor:utilizadores!professores_estagio_professor_id_fkey(nome)
+    `)
+    .eq("edicao_estagio_id", edicaoId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.log("ERRO PROFESSOR DA EDIÇÃO HOME:", error);
+    return null;
+  }
+
+  return (data as any)?.professor || null;
+}
+
+async function buscarOrientadorDaEdicao(edicaoId: number) {
+  const { data, error } = await supabase
+    .from("orientadores_estagio")
+    .select(`
+      orientador:utilizadores!orientadores_estagio_orientador_id_fkey(nome)
+    `)
+    .eq("edicao_estagio_id", edicaoId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.log("ERRO ORIENTADOR DA EDIÇÃO HOME:", error);
+    return null;
+  }
+
+  return (data as any)?.orientador || null;
+}
+
 
   async function carregarDados() {
     setLoading(true);
@@ -133,13 +172,14 @@ export default function AlunoHome() {
 
     setUtilizador(userData as any);
 
-    const { data: estagioData, error: estagioError } = await supabase
+    const { data: estagiosData, error: estagiosError } = await supabase
       .from("inscricoes_estagio")
       .select(`
         id,
         edicao_estagio_id,
         professor_id,
         orientador_id,
+        estado,
         estado_estagio,
         edicoes_estagio(
           id,
@@ -153,16 +193,42 @@ export default function AlunoHome() {
         orientador:utilizadores!inscricoes_estagio_orientador_id_fkey(nome)
       `)
       .eq("aluno_id", userId)
-      .neq("estado_estagio", "concluido")
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("id", { ascending: false });
 
-    if (estagioError) {
-      console.log("ERRO ESTÁGIO HOME:", estagioError);
-    }
+    if (estagiosError) {
+      console.log("ERRO ESTÁGIOS HOME:", estagiosError);
+      setEstagiosAtuais([]);
+    } else {
+      const lista = ((estagiosData as any) || []).filter(
+        (estagio: EstagioAtual) =>
+          estagio.estado_estagio !== "concluido"
+      ) as EstagioAtual[];
 
-    setEstagioAtual((estagioData as any) || null);
+      const listaCorrigida = await Promise.all(
+        lista.map(async (estagio) => {
+          const edicaoId = estagio.edicoes_estagio?.id;
+
+          let professorFinal = estagio.professor || null;
+          let orientadorFinal = estagio.orientador || null;
+
+          if (edicaoId && !professorFinal) {
+            professorFinal = await buscarProfessorDaEdicao(edicaoId);
+          }
+
+          if (edicaoId && !orientadorFinal) {
+            orientadorFinal = await buscarOrientadorDaEdicao(edicaoId);
+          }
+
+          return {
+            ...estagio,
+            professor: professorFinal,
+            orientador: orientadorFinal,
+          };
+        })
+      );
+
+      setEstagiosAtuais(listaCorrigida);
+}
 
     const agora = new Date().toISOString();
 
@@ -200,6 +266,7 @@ export default function AlunoHome() {
     setPopupVisivel(true);
   }
 
+  // perfilIncompleto verifica se o perfil do utilizador está completo
   function perfilIncompleto() {
     if (!utilizador) return true;
 
@@ -264,9 +331,9 @@ export default function AlunoHome() {
     return null;
   }
 
-  function corDoEstagioAtual() {
+  function corDoEstagioAtual(estagio: EstagioAtual) {
     const numero = numeroDoEstagio(
-      estagioAtual?.edicoes_estagio?.ensinos_clinicos?.nome
+      estagio.edicoes_estagio?.ensinos_clinicos?.nome
     );
 
     if (!numero) return "#FDB515";
@@ -415,60 +482,64 @@ export default function AlunoHome() {
           </Pressable>
         </View>
 
-        <Text style={styles.secaoTitulo}>Estágio atual</Text>
+  <Text style={styles.secaoTitulo}>Estágios atuais</Text>
 
-        {estagioAtual ? (
-         <Pressable
-  style={[
-    styles.estagioAtualCard,
-    {
-      borderLeftColor: corDoEstagioAtual(),
-    },
-  ]}
-  onPress={() =>
-    router.push({
-      pathname: "/aluno/estagios/detalheEstagio/detalheEstagio" as any,
-      params: {
-        inscricaoId: String(estagioAtual.id),
-        edicaoId: String(estagioAtual.edicao_estagio_id),
-      },
-    })
-  }
->
-  <View style={styles.estagioIcone}>
-    <Ionicons name="briefcase-outline" size={30} color="#160909" />
-  </View>
+  {estagiosAtuais.length > 0 ? (
+    <View style={styles.eventosLista}>
+      {estagiosAtuais.map((estagio) => (
+        <Pressable key={estagio.id}
+          style={[
+            styles.estagioAtualCard,
+            {
+              borderLeftColor: corDoEstagioAtual(estagio),
+            },
+          ]}
+          onPress={() =>
+            router.push({
+              pathname: "/aluno/estagios/detalheEstagio/detalheEstagio" as any,
+              params: {
+                inscricaoId: String(estagio.id),
+                edicaoId: String(estagio.edicao_estagio_id),
+              },
+            })
+          }
+        >
+          <View style={styles.estagioIcone}>
+            <Ionicons name="briefcase-outline" size={30} color="#160909" />
+          </View>
 
-  <View style={{ flex: 1 }}>
-    <Text style={styles.estagioTitulo}>
-      {estagioAtual.edicoes_estagio?.ensinos_clinicos?.nome ||
-        "Ensino Clínico"}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.estagioTitulo}>
+              {estagio.edicoes_estagio?.ensinos_clinicos?.nome ||
+                "Ensino Clínico"}
+            </Text>
+
+            <Text style={styles.estagioTexto}>
+              {estagio.edicoes_estagio?.instituicoes?.nome || "Instituição"} ·{" "}
+              {estagio.edicoes_estagio?.servicos?.nome || "Serviço"}
+            </Text>
+
+            <Text style={styles.estagioTexto}>
+              {formatarData(estagio.edicoes_estagio?.data_inicio)} -{" "}
+              {formatarData(estagio.edicoes_estagio?.data_fim)}
+            </Text>
+
+            <Text style={styles.estagioTexto}>
+              Professor: {estagio.professor?.nome || "Não indicado"}
+            </Text>
+
+            <Text style={styles.estagioTexto}>
+              Orientador: {estagio.orientador?.nome || "Não indicado"}
+            </Text>
+          </View>
+        </Pressable>
+      ))}
+    </View>
+  ) : (
+    <Text style={styles.mensagemVazia}>
+      Ainda não tens estágio atribuído.
     </Text>
-
-    <Text style={styles.estagioTexto}>
-      {estagioAtual.edicoes_estagio?.instituicoes?.nome || "Instituição"} ·{" "}
-      {estagioAtual.edicoes_estagio?.servicos?.nome || "Serviço"}
-    </Text>
-
-    <Text style={styles.estagioTexto}>
-      {formatarData(estagioAtual.edicoes_estagio?.data_inicio)} -{" "}
-      {formatarData(estagioAtual.edicoes_estagio?.data_fim)}
-    </Text>
-
-    <Text style={styles.estagioTexto}>
-      Professor: {estagioAtual.professor?.nome || "Não indicado"}
-    </Text>
-
-    <Text style={styles.estagioTexto}>
-      Orientador: {estagioAtual.orientador?.nome || "Não indicado"}
-    </Text>
-  </View>
-</Pressable>
-        ) : (
-          <Text style={styles.mensagemVazia}>
-            Ainda não tens estágio atribuído.
-          </Text>
-        )}
+  )}
 
         <Text style={styles.secaoTitulo}>Próximos eventos</Text>
 
@@ -598,7 +669,7 @@ export default function AlunoHome() {
                 style={styles.sidebarItem}
                 onPress={() => {
                   setMenuAberto(false);
-                  router.push("/aluno/agenda/agenda" as any);
+                  router.push("/aluno/agenda/agenda?from=home" as any);
                 }}
               >
                 <Ionicons name="calendar-outline" size={25} color="#160909" />

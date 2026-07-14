@@ -278,6 +278,142 @@ const local = StyleSheet.create({
     color: "#160909",
     fontFamily: "serif",
   },
+  inputBotao: {
+  width: "100%",
+  height: 56,
+  backgroundColor: "#E9E9E9",
+  borderRadius: 10,
+  paddingHorizontal: 14,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+},
+
+inputBotaoTexto: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+inputBotaoPlaceholder: {
+  color: "#8c8787",
+},
+
+calendarioContainer: {
+  width: "100%",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 18,
+},
+
+calendarioTitulo: {
+  fontSize: 24,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  textAlign: "center",
+  marginBottom: 14,
+},
+
+calendarioAnoLinha: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+},
+
+calendarioAnoBotao: {
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: "#FFF3C4",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+calendarioSeta: {
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: "#FFF3C4",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+calendarioMesTexto: {
+  flex: 1,
+  textAlign: "center",
+  fontSize: 18,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  textTransform: "capitalize",
+},
+
+diasSemanaLinha: {
+  flexDirection: "row",
+  marginBottom: 8,
+},
+
+diaSemanaTexto: {
+  width: "14.28%",
+  textAlign: "center",
+  fontSize: 13,
+  fontWeight: "900",
+  color: "#777",
+  fontFamily: "serif",
+},
+
+calendarioGrid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+},
+
+diaVazio: {
+  width: "14.28%",
+  aspectRatio: 1,
+},
+
+diaBotao: {
+  width: "14.28%",
+  aspectRatio: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 12,
+  marginBottom: 4,
+},
+
+diaSelecionado: {
+  backgroundColor: "#FDB515",
+},
+
+diaTexto: {
+  fontSize: 15,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+diaTextoSelecionado: {
+  color: "#160909",
+},
+
+botaoCancelarCalendario: {
+  height: 48,
+  backgroundColor: "#160909",
+  borderRadius: 10,
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 14,
+},
+
+textoCancelarCalendario: {
+  fontSize: 16,
+  fontWeight: "900",
+  color: "#FFFFFF",
+  fontFamily: "serif",
+},
 });
 
 const styles = {

@@ -173,10 +173,12 @@ const local = StyleSheet.create({
   botaoVoltarHome: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: "#FDB515",
+    borderRadius: 12,
+    backgroundColor: "#FFF7E0",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FDB515",
   },
 
   titulo: {
@@ -198,14 +200,15 @@ const local = StyleSheet.create({
     height: 48,
     borderRadius: 12,
     backgroundColor: "#FDB515",
-    paddingHorizontal: 17,
+    paddingHorizontal: 18,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
 
   botaoCriarTexto: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
@@ -221,7 +224,8 @@ const local = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 14,
-    zIndex: 50,
+    zIndex: 100,
+    overflow: "visible",
 
     shadowColor: "#000",
     shadowOpacity: 0.04,
@@ -232,7 +236,7 @@ const local = StyleSheet.create({
 
   searchContainer: {
     flex: 1,
-    height: 52,
+    height: 50,
     backgroundColor: "#F2F4F7",
     borderRadius: 10,
     flexDirection: "row",
@@ -245,7 +249,7 @@ const local = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
     color: "#160909",
     fontFamily: "serif",
@@ -253,21 +257,21 @@ const local = StyleSheet.create({
   },
 
   filtroBox: {
-    width: 250,
+    width: 230,
     position: "relative",
-    zIndex: 80,
+    zIndex: 200,
   },
 
   filtroLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 7,
+    marginBottom: 6,
   },
 
   selectToggle: {
-    height: 52,
+    height: 50,
     backgroundColor: "#F2F4F7",
     borderRadius: 10,
     borderWidth: 1,
@@ -279,15 +283,16 @@ const local = StyleSheet.create({
   },
 
   selectToggleText: {
-    fontSize: 14,
-    fontWeight: "900",
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "800",
     color: "#160909",
     fontFamily: "serif",
   },
 
   dropdown: {
     position: "absolute",
-    top: 78,
+    top: 76,
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",
@@ -295,7 +300,7 @@ const local = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E4E7EC",
     padding: 6,
-    zIndex: 200,
+    zIndex: 300,
 
     shadowColor: "#000",
     shadowOpacity: 0.08,
@@ -311,7 +316,7 @@ const local = StyleSheet.create({
   },
 
   dropdownText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
     color: "#160909",
     fontFamily: "serif",
@@ -363,19 +368,27 @@ const local = StyleSheet.create({
     backgroundColor: "#225943",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 10,
+    paddingHorizontal: 14,
+    gap: 7,
+  },
+
+  linhaContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#E4E7EC",
   },
 
   tabelaLinha: {
-    minHeight: 76,
+    minHeight: 74,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     backgroundColor: "#FFFFFF",
-    gap: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEF2F6",
+    gap: 7,
+  },
+
+  tabelaLinhaInativa: {
+    opacity: 0.58,
+    backgroundColor: "#F9FAFB",
   },
 
   th: {
@@ -401,52 +414,84 @@ const local = StyleSheet.create({
   },
 
   colEnsino: {
-    flex: 2.2,
-    minWidth: 260,
+    flex: 1.75,
+    minWidth: 0,
   },
 
   colLocal: {
-    flex: 1.45,
-    minWidth: 170,
+    flex: 1.15,
+    minWidth: 0,
   },
 
   colAno: {
-    flex: 0.45,
-    minWidth: 55,
+    width: 42,
+    minWidth: 42,
+    maxWidth: 42,
   },
 
   colVagas: {
-    flex: 0.55,
-    minWidth: 65,
+    width: 50,
+    minWidth: 50,
+    maxWidth: 50,
   },
 
   colEquipa: {
-    flex: 1,
-    minWidth: 135,
+    width: 108,
+    minWidth: 108,
+    maxWidth: 108,
+  },
+
+  colEstado: {
+    width: 86,
+    minWidth: 86,
+    maxWidth: 86,
   },
 
   colDistribuicao: {
-    flex: 1.35,
-    minWidth: 170,
+    flex: 0.95,
+    minWidth: 0,
   },
 
-    colEstado: {
-    flex: 0.75,
-    minWidth: 95,
-    },
+  colAcoes: {
+    width: 166,
+    minWidth: 166,
+    maxWidth: 166,
+  },
 
-    colAcoes: {
-    width: 198,
-    minWidth: 198,
-    maxWidth: 198,
-    },
-
-  badgeDistribuicao: {
+  estadoBadge: {
     alignSelf: "flex-start",
     backgroundColor: "#E8F7EF",
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  estadoBadgeInativo: {
+    backgroundColor: "#FEE2E2",
+  },
+
+  estadoBadgeTexto: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#225943",
+    fontFamily: "serif",
+  },
+
+  estadoBadgeTextoInativo: {
+    color: "#B42318",
+  },
+
+  badgeDistribuicao: {
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+    backgroundColor: "#E8F7EF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  badgeDistribuicaoPendente: {
+    backgroundColor: "#FFF7E0",
   },
 
   badgeDistribuicaoTexto: {
@@ -456,16 +501,39 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
+  badgeDistribuicaoTextoPendente: {
+    color: "#B77900",
+  },
+
   acoes: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "flex-start",
+    gap: 6,
     flexWrap: "nowrap",
   },
 
   acaoBotao: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#FDB515",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  acaoBotaoEscuro: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#160909",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  acaoBotaoAtivar: {
+    width: 36,
+    height: 36,
     borderRadius: 10,
     backgroundColor: "#FDB515",
     alignItems: "center",
@@ -473,42 +541,59 @@ const local = StyleSheet.create({
   },
 
   acaoBotaoPerigo: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     backgroundColor: "#E74C3C",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  detalhesBox: {
-    backgroundColor: "#F8FAFC",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEF2F6",
-    padding: 18,
-    flexDirection: "row",
-    gap: 28,
+  detalhesLinha: {
+    backgroundColor: "#F7F8FA",
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E4E7EC",
+    gap: 18,
   },
 
-  detalheColuna: {
+  detalhesLinhaSuperior: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 18,
+  },
+
+  detalhesPessoasLinha: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 18,
+  },
+
+  detalheItem: {
     flex: 1,
+    minWidth: 0,
+  },
+
+  detalhePessoaBloco: {
+    flex: 1,
+    minWidth: 0,
   },
 
   detalheLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginTop: 8,
-    marginBottom: 4,
+    marginBottom: 6,
   },
 
   detalheValor: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
     color: "#667085",
     fontFamily: "serif",
-    lineHeight: 20,
+    lineHeight: 22,
   },
 
   footerTabela: {
@@ -620,12 +705,29 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-botoesFinais: {
-  marginTop: 18,
-  flexDirection: "row",
-  justifyContent: "flex-end",
-  gap: 12,
-},
+  botoesFinais: {
+    marginTop: 18,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+  },
+
+  botaoTodosInativos: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#160909",
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  botaoTodosInativosTexto: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    fontFamily: "serif",
+  },
 
   botaoApagarTudo: {
     height: 48,
@@ -665,83 +767,16 @@ botoesFinais: {
     ...backofficeStyles.popupTextoPerigo,
   },
 
+  popupBotaoConfirmar: {
+    ...backofficeStyles.popupOkButton,
+    flex: 1,
+    height: 42,
+  },
 
-
-tabelaLinhaInativa: {
-  opacity: 0.58,
-  backgroundColor: "#F9FAFB",
-},
-
-estadoBadge: {
-  alignSelf: "flex-start",
-  backgroundColor: "#E8F7EF",
-  borderRadius: 999,
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-},
-
-estadoBadgeInativo: {
-  backgroundColor: "#FEE2E2",
-},
-
-estadoBadgeTexto: {
-  fontSize: 12,
-  fontWeight: "900",
-  color: "#225943",
-  fontFamily: "serif",
-},
-
-estadoBadgeTextoInativo: {
-  color: "#B42318",
-},
-
-acaoBotaoEscuro: {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  backgroundColor: "#160909",
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-acaoBotaoAtivar: {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  backgroundColor: "#FDB515",
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-
-
-botaoTodosInativos: {
-  height: 48,
-  borderRadius: 12,
-  backgroundColor: "#160909",
-  paddingHorizontal: 18,
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 8,
-},
-
-botaoTodosInativosTexto: {
-  fontSize: 15,
-  fontWeight: "900",
-  color: "#FFFFFF",
-  fontFamily: "serif",
-},
-
-popupBotaoConfirmar: {
-  ...backofficeStyles.popupOkButton,
-  flex: 1,
-  height: 42,
-},
-
-popupTextoConfirmar: {
-  ...backofficeStyles.popupOkText,
-  fontSize: 15,
-},
+  popupTextoConfirmar: {
+    ...backofficeStyles.popupOkText,
+    fontSize: 15,
+  },
 });
 
 const styles = {

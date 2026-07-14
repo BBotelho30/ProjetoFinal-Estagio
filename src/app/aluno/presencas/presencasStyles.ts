@@ -407,6 +407,257 @@ avisoReprovacaoTexto: {
   color: "#160909",
   fontFamily: "serif",
 },
+
+calendarioCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: "#D9D9D9",
+  padding: 14,
+  marginBottom: 16,
+},
+
+calendarioModalContainer: {
+  width: "100%",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 18,
+},
+
+calendarioHeader: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+},
+
+calendarioSeta: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: "#FFF3C4",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+calendarioTitulo: {
+  flex: 1,
+  textAlign: "center",
+  fontSize: 20,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  textTransform: "capitalize",
+},
+
+diasSemanaLinha: {
+  flexDirection: "row",
+  marginBottom: 8,
+},
+
+diaSemanaTexto: {
+  width: "14.28%",
+  textAlign: "center",
+  fontSize: 13,
+  fontWeight: "900",
+  color: "#777",
+  fontFamily: "serif",
+},
+
+calendarioGrid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+},
+
+diaVazio: {
+  width: "14.28%",
+  aspectRatio: 1,
+},
+
+diaBotao: {
+  width: "14.28%",
+  aspectRatio: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 12,
+  marginBottom: 4,
+},
+
+diaSelecionado: {
+  backgroundColor: "#FFF3C4",
+},
+
+diaForaEstagio: {
+  opacity: 0.25,
+},
+
+diaTexto: {
+  fontSize: 15,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+diaTextoSelecionado: {
+  color: "#160909",
+},
+
+diaTextoForaEstagio: {
+  color: "#999",
+},
+
+diaDot: {
+  width: 7,
+  height: 7,
+  borderRadius: 4,
+  marginTop: 3,
+},
+
+legendaLinha: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  gap: 12,
+  marginTop: 12,
+},
+
+legendaItem: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+},
+
+legendaDot: {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
+},
+
+legendaTexto: {
+  fontSize: 12,
+  fontWeight: "800",
+  color: "#777",
+  fontFamily: "serif",
+},
+
+detalhesDiaCard: {
+  backgroundColor: "#E9E9E9",
+  borderRadius: 14,
+  padding: 14,
+  marginBottom: 18,
+},
+
+detalhesDiaTitulo: {
+  fontSize: 18,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  marginBottom: 8,
+},
+
+detalhesDiaTexto: {
+  fontSize: 14,
+  fontWeight: "700",
+  color: "#777",
+  fontFamily: "serif",
+  lineHeight: 20,
+},
+
+registoDiaBox: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  padding: 12,
+  marginTop: 8,
+},
+
+registoDiaTitulo: {
+  fontSize: 15,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+registoDiaTexto: {
+  fontSize: 14,
+  fontWeight: "700",
+  color: "#777",
+  fontFamily: "serif",
+  marginTop: 4,
+},
+
+inputBotao: {
+  width: "100%",
+  height: 54,
+  backgroundColor: "#E9E9E9",
+  borderRadius: 9,
+  paddingHorizontal: 14,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 12,
+},
+
+inputBotaoTexto: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+inputBotaoPlaceholder: {
+  color: "#8c8787",
+},
+
+relogioContainer: {
+  width: "100%",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 22,
+},
+
+relogioTitulo: {
+  fontSize: 24,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  textAlign: "center",
+  marginBottom: 18,
+},
+
+relogioDisplay: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 16,
+  marginBottom: 18,
+},
+
+relogioColuna: {
+  alignItems: "center",
+},
+
+relogioBotao: {
+  width: 54,
+  height: 44,
+  borderRadius: 14,
+  backgroundColor: "#FFF3C4",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+relogioNumero: {
+  fontSize: 48,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  marginVertical: 8,
+},
+
+relogioSeparador: {
+  fontSize: 48,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
 });
 
 const styles = {

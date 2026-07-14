@@ -116,7 +116,7 @@ const local = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
-    marginBottom: 22,
+    marginBottom: 14,
   },
 
   resumoBox: {
@@ -161,12 +161,18 @@ const local = StyleSheet.create({
     marginBottom: 22,
   },
 
+  observacaoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+
   observacaoTitulo: {
     fontSize: 15,
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 7,
   },
 
   observacaoTexto: {

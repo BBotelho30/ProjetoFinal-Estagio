@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./distribuirAlunosStyles";
 
 type Utilizador = {
@@ -71,6 +72,7 @@ type OrientadorEstagio = {
 
 export default function DistribuirAlunos() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [inscricoes, setInscricoes] = useState<Inscricao[]>([]);
   const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
@@ -110,8 +112,12 @@ export default function DistribuirAlunos() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "apagar" | "inativarTudo" | "apagarTudo" =
-      "normal"
+    tipo:
+      | "normal"
+      | "sair"
+      | "apagar"
+      | "inativarTudo"
+      | "apagarTudo" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -138,7 +144,7 @@ export default function DistribuirAlunos() {
         distribuido_por,
         utilizador_distribuicao_id,
         data_distribuicao
-      `
+      `,
       )
       .order("id", { ascending: false });
 
@@ -158,12 +164,15 @@ export default function DistribuirAlunos() {
         ensinos_clinicos(nome, ano_curricular),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .order("id", { ascending: false });
 
     if (inscricoesError || utilizadoresError || edicoesError) {
-      console.log("ERRO:", inscricoesError || utilizadoresError || edicoesError);
+      console.log(
+        "ERRO:",
+        inscricoesError || utilizadoresError || edicoesError,
+      );
       abrirPopup("Erro", "Não foi possível carregar as distribuições.");
       setLoading(false);
       return;
@@ -191,18 +200,21 @@ export default function DistribuirAlunos() {
       if (professoresEstagioError || orientadoresEstagioError) {
         console.log(
           "ERRO EQUIPAS:",
-          professoresEstagioError || orientadoresEstagioError
+          professoresEstagioError || orientadoresEstagioError,
         );
-        abrirPopup("Erro", "Não foi possível carregar as equipas dos estágios.");
+        abrirPopup(
+          "Erro",
+          "Não foi possível carregar as equipas dos estágios.",
+        );
         setLoading(false);
         return;
       }
 
-      listaProfessoresEstagio =
-        ((professoresEstagioData as any) || []) as ProfessorEstagio[];
+      listaProfessoresEstagio = ((professoresEstagioData as any) ||
+        []) as ProfessorEstagio[];
 
-      listaOrientadoresEstagio =
-        ((orientadoresEstagioData as any) || []) as OrientadorEstagio[];
+      listaOrientadoresEstagio = ((orientadoresEstagioData as any) ||
+        []) as OrientadorEstagio[];
     }
 
     const todasInscricoes = ((inscricoesData as any) || []) as Inscricao[];
@@ -244,7 +256,7 @@ export default function DistribuirAlunos() {
 
   function professoresDaEdicao(edicaoId: number) {
     const professores = professoresEstagio.filter(
-      (item) => item.edicao_estagio_id === edicaoId
+      (item) => item.edicao_estagio_id === edicaoId,
     );
 
     return professores
@@ -254,7 +266,7 @@ export default function DistribuirAlunos() {
 
   function orientadoresDaEdicao(edicaoId: number) {
     const orientadores = orientadoresEstagio.filter(
-      (item) => item.edicao_estagio_id === edicaoId
+      (item) => item.edicao_estagio_id === edicaoId,
     );
 
     return orientadores
@@ -329,7 +341,7 @@ export default function DistribuirAlunos() {
     abrirPopup(
       "Apagar distribuição",
       "Tens a certeza que queres apagar a distribuição deste aluno? A inscrição no estágio será mantida.",
-      "apagar"
+      "apagar",
     );
   }
 
@@ -368,7 +380,7 @@ export default function DistribuirAlunos() {
     abrirPopup(
       "Colocar tudo inativo",
       "Tens a certeza que queres colocar todas as distribuições filtradas como inativas?",
-      "inativarTudo"
+      "inativarTudo",
     );
   }
 
@@ -397,7 +409,7 @@ export default function DistribuirAlunos() {
 
     abrirPopup(
       "Sucesso",
-      "As distribuições filtradas foram colocadas como inativas."
+      "As distribuições filtradas foram colocadas como inativas.",
     );
     carregarDados();
   }
@@ -406,7 +418,7 @@ export default function DistribuirAlunos() {
     abrirPopup(
       "Apagar tudo",
       "Tens a certeza que queres apagar todas as distribuições filtradas? As inscrições serão mantidas.",
-      "apagarTudo"
+      "apagarTudo",
     );
   }
 
@@ -457,12 +469,10 @@ export default function DistribuirAlunos() {
       const distribuidor = getUser(inscricao.utilizador_distribuicao_id);
       const edicao = getEdicao(inscricao.edicao_estagio_id);
 
-      const professores = textoProfessoresDaEdicao(
-        inscricao.edicao_estagio_id
-      );
+      const professores = textoProfessoresDaEdicao(inscricao.edicao_estagio_id);
 
       const orientadores = textoOrientadoresDaEdicao(
-        inscricao.edicao_estagio_id
+        inscricao.edicao_estagio_id,
       );
 
       const texto = pesquisa.toLowerCase().trim();
@@ -502,7 +512,7 @@ export default function DistribuirAlunos() {
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(inscricoesFiltradas.length / itensPorPagina)
+    Math.ceil(inscricoesFiltradas.length / itensPorPagina),
   );
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -575,19 +585,22 @@ export default function DistribuirAlunos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Aprovar Contas</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Aprovar Contas</Text>
+            )}
+            <ContasPendentesBadge count={contasPendentes} />
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -599,7 +612,7 @@ export default function DistribuirAlunos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -621,19 +634,21 @@ export default function DistribuirAlunos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
             <Ionicons name="school-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Ensinos Clínicos</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Ensinos Clínicos</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -647,7 +662,7 @@ export default function DistribuirAlunos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -661,7 +676,7 @@ export default function DistribuirAlunos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -673,7 +688,7 @@ export default function DistribuirAlunos() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -703,7 +718,7 @@ export default function DistribuirAlunos() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -713,7 +728,10 @@ export default function DistribuirAlunos() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -735,7 +753,7 @@ export default function DistribuirAlunos() {
             style={styles.botaoCriarHeader}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/criarDistribuicao" as any
+                "/backoffice/superadmin/distribuirAlunos/criarDistribuicao" as any,
               )
             }
           >
@@ -775,7 +793,9 @@ export default function DistribuirAlunos() {
 
                 <Ionicons
                   name={
-                    showFiltroAno ? "chevron-up-outline" : "chevron-down-outline"
+                    showFiltroAno
+                      ? "chevron-up-outline"
+                      : "chevron-down-outline"
                   }
                   size={18}
                   color="#160909"
@@ -837,7 +857,7 @@ export default function DistribuirAlunos() {
                 const aluno = getUser(inscricao.aluno_id);
                 const responsavel = getUser(inscricao.professor_responsavel_id);
                 const distribuidor = getUser(
-                  inscricao.utilizador_distribuicao_id
+                  inscricao.utilizador_distribuicao_id,
                 );
                 const edicao = getEdicao(inscricao.edicao_estagio_id);
 
@@ -847,7 +867,9 @@ export default function DistribuirAlunos() {
                   <View key={inscricao.id} style={styles.linhaContainer}>
                     <View style={styles.tabelaLinha}>
                       <View style={styles.colAluno}>
-                        <Text style={styles.tdNome}>{aluno?.nome || "Aluno"}</Text>
+                        <Text style={styles.tdNome}>
+                          {aluno?.nome || "Aluno"}
+                        </Text>
                         <Text style={styles.tdSub}>{aluno?.email || ""}</Text>
                       </View>
 
@@ -859,8 +881,8 @@ export default function DistribuirAlunos() {
                         {aluno?.ano_curricular
                           ? `${aluno.ano_curricular}.º`
                           : edicao?.ensinos_clinicos?.ano_curricular
-                          ? `${edicao.ensinos_clinicos.ano_curricular}.º`
-                          : "N/A"}
+                            ? `${edicao.ensinos_clinicos.ano_curricular}.º`
+                            : "N/A"}
                       </Text>
 
                       <Text style={[styles.td, styles.colHospital]}>
@@ -876,7 +898,8 @@ export default function DistribuirAlunos() {
                           style={[
                             styles.estadoBadge,
                             !distribuido && styles.estadoBadgePendente,
-                            estaInativa(inscricao) && styles.estadoBadgePendente,
+                            estaInativa(inscricao) &&
+                              styles.estadoBadgePendente,
                           ]}
                         >
                           {textoEstado(inscricao)}
@@ -905,7 +928,7 @@ export default function DistribuirAlunos() {
                           style={styles.acaoBotao}
                           onPress={() =>
                             router.push(
-                              `/backoffice/superadmin/distribuirAlunos/criarDistribuicao?inscricaoId=${inscricao.id}` as any
+                              `/backoffice/superadmin/distribuirAlunos/criarDistribuicao?inscricaoId=${inscricao.id}` as any,
                             )
                           }
                         >
@@ -932,7 +955,9 @@ export default function DistribuirAlunos() {
                     {aberto && (
                       <View style={styles.detalhesLinha}>
                         <View style={styles.detalheItemFull}>
-                          <Text style={styles.detalheLabel}>Ensino clínico</Text>
+                          <Text style={styles.detalheLabel}>
+                            Ensino clínico
+                          </Text>
                           <Text style={styles.detalheValor}>
                             {edicao?.ensinos_clinicos?.nome || "Não indicado"}
                           </Text>
@@ -946,14 +971,18 @@ export default function DistribuirAlunos() {
                         </View>
 
                         <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>Estado inscrição</Text>
+                          <Text style={styles.detalheLabel}>
+                            Estado inscrição
+                          </Text>
                           <Text style={styles.detalheValor}>
                             {inscricao.estado || "Não indicado"}
                           </Text>
                         </View>
 
                         <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>Estado estágio</Text>
+                          <Text style={styles.detalheLabel}>
+                            Estado estágio
+                          </Text>
                           <Text style={styles.detalheValor}>
                             {inscricao.estado_estagio || "Não indicado"}
                           </Text>
@@ -963,7 +992,7 @@ export default function DistribuirAlunos() {
                           <Text style={styles.detalheLabel}>Professor</Text>
                           <Text style={styles.detalheValor}>
                             {textoProfessoresDaEdicao(
-                              inscricao.edicao_estagio_id
+                              inscricao.edicao_estagio_id,
                             )}
                           </Text>
                         </View>
@@ -972,7 +1001,7 @@ export default function DistribuirAlunos() {
                           <Text style={styles.detalheLabel}>Orientador</Text>
                           <Text style={styles.detalheValor}>
                             {textoOrientadoresDaEdicao(
-                              inscricao.edicao_estagio_id
+                              inscricao.edicao_estagio_id,
                             )}
                           </Text>
                         </View>
@@ -987,7 +1016,9 @@ export default function DistribuirAlunos() {
                         </View>
 
                         <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>Distribuído por</Text>
+                          <Text style={styles.detalheLabel}>
+                            Distribuído por
+                          </Text>
                           <Text style={styles.detalheValor}>
                             {textoOrigem(inscricao)}
                           </Text>
@@ -1052,7 +1083,9 @@ export default function DistribuirAlunos() {
                           style={styles.porPaginaOpcao}
                           onPress={() => mudarItensPorPagina(valor)}
                         >
-                          <Text style={styles.porPaginaOpcaoTexto}>{valor}</Text>
+                          <Text style={styles.porPaginaOpcaoTexto}>
+                            {valor}
+                          </Text>
                         </Pressable>
                       ))}
                     </View>
@@ -1106,7 +1139,10 @@ export default function DistribuirAlunos() {
                 <Text style={styles.textoBotaoFinal}>Colocar tudo inativo</Text>
               </Pressable>
 
-              <Pressable style={styles.botaoApagarTudo} onPress={pedirApagarTudo}>
+              <Pressable
+                style={styles.botaoApagarTudo}
+                onPress={pedirApagarTudo}
+              >
                 <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
                 <Text style={styles.textoBotaoFinal}>Apagar tudo</Text>
               </Pressable>
@@ -1135,7 +1171,10 @@ export default function DistribuirAlunos() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>

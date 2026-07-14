@@ -205,9 +205,8 @@ export default function EquipasEstagioProfessorResponsavel() {
     const listaEdicoes = ((edicoesData as any) || []) as Edicao[];
     const edicoesIds = listaEdicoes.map((edicao) => edicao.id);
 
-    setEdicoes(listaEdicoes);
-
     if (edicoesIds.length === 0) {
+      setEdicoes([]);
       setProfessoresEstagio([]);
       setOrientadoresEstagio([]);
       setInscricoes([]);
@@ -273,28 +272,29 @@ export default function EquipasEstagioProfessorResponsavel() {
       return;
     }
 
-        const listaProfessores = ((professoresData as any) || []) as ProfessorEstagio[];
-        const listaOrientadores = ((orientadoresData as any) || []) as OrientadorEstagio[];
-        const listaInscricoes = ((inscricoesData as any) || []) as Inscricao[];
+    const listaProfessores = ((professoresData as any) ||
+      []) as ProfessorEstagio[];
+    const listaOrientadores = ((orientadoresData as any) ||
+      []) as OrientadorEstagio[];
+    const listaInscricoes = ((inscricoesData as any) || []) as Inscricao[];
 
-        const edicoesComEquipa = listaEdicoes.filter((edicao) => {
-        const temProfessor = listaProfessores.some(
-            (professor) => professor.edicao_estagio_id === edicao.id
-        );
+    const edicoesComEquipa = listaEdicoes.filter((edicao) => {
+      const temProfessor = listaProfessores.some(
+        (professor) => professor.edicao_estagio_id === edicao.id
+      );
 
-        const temOrientador = listaOrientadores.some(
-            (orientador) => orientador.edicao_estagio_id === edicao.id
-        );
+      const temOrientador = listaOrientadores.some(
+        (orientador) => orientador.edicao_estagio_id === edicao.id
+      );
 
-        return temProfessor || temOrientador;
-        });
+      return temProfessor || temOrientador;
+    });
 
-        setEdicoes(edicoesComEquipa);
-        setProfessoresEstagio(listaProfessores);
-        setOrientadoresEstagio(listaOrientadores);
-        setInscricoes(listaInscricoes);
-
-        setLoading(false);
+    setEdicoes(edicoesComEquipa);
+    setProfessoresEstagio(listaProfessores);
+    setOrientadoresEstagio(listaOrientadores);
+    setInscricoes(listaInscricoes);
+    setLoading(false);
   }
 
   function estaInativo(edicao: Edicao) {
@@ -415,25 +415,7 @@ export default function EquipasEstagioProfessorResponsavel() {
   }
 
   function textoOrientador(orientador: OrientadorEstagio) {
-    const nome = orientador.utilizadores?.nome || "Orientador";
-    const hospital = orientador.utilizadores?.instituicoes?.nome;
-    const servico = orientador.utilizadores?.servicos?.nome;
-
-    if (hospital && servico) {
-      return `${nome} — ${hospital} / ${servico} — limite ${
-        orientador.max_alunos || 8
-      }`;
-    }
-
-    if (hospital) {
-      return `${nome} — ${hospital} — limite ${orientador.max_alunos || 8}`;
-    }
-
-    if (servico) {
-      return `${nome} — ${servico} — limite ${orientador.max_alunos || 8}`;
-    }
-
-    return `${nome} — local não definido — limite ${
+    return `${orientador.utilizadores?.nome || "Orientador"} — limite ${
       orientador.max_alunos || 8
     }`;
   }
@@ -514,6 +496,7 @@ export default function EquipasEstagioProfessorResponsavel() {
 
   function abrirApagarEquipa(edicaoId: number) {
     setEdicaoSelecionada(edicaoId);
+
     abrirPopup(
       "Apagar equipa",
       "Tens a certeza que queres apagar os professores e orientadores desta equipa?",
@@ -787,6 +770,7 @@ export default function EquipasEstagioProfessorResponsavel() {
         <View style={styles.filtrosCard}>
           <View style={styles.searchContainer}>
             <Ionicons name="search-outline" size={22} color="#667085" />
+
             <TextInput
               style={styles.searchInput}
               placeholder="Pesquisar ensino, hospital, serviço, professor, orientador ou origem..."
@@ -809,6 +793,7 @@ export default function EquipasEstagioProfessorResponsavel() {
               <Text style={styles.selectToggleText}>
                 {filtroAno === "todos" ? "Todos" : `${filtroAno}.º ano`}
               </Text>
+
               <Ionicons
                 name={
                   filtroAnoAberto ? "chevron-up-outline" : "chevron-down-outline"
@@ -862,7 +847,9 @@ export default function EquipasEstagioProfessorResponsavel() {
               size={30}
               color="#FDB515"
             />
+
             <Text style={styles.vazioTitulo}>Sem equipas para mostrar</Text>
+
             <Text style={styles.vazioTexto}>
               Ainda não existem edições de estágio associadas aos ensinos que
               coordenas, ou não existem resultados para a pesquisa atual.
@@ -887,59 +874,64 @@ export default function EquipasEstagioProfessorResponsavel() {
               const aberta = edicaoAberta === edicao.id;
               const totalDistribuidos = totalAlunosDistribuidos(edicao.id);
               const disponiveis = vagasDisponiveis(edicao);
+              const inativo = estaInativo(edicao);
+              const resumoOrigem = origemDistribuicaoResumo(edicao.id);
+              const semDistribuicao = resumoOrigem === "Sem distribuição";
 
               return (
-                <View key={edicao.id}>
+                <View key={edicao.id} style={styles.linhaContainer}>
                   <View
                     style={[
                       styles.tabelaLinha,
-                      estaInativo(edicao) && styles.tabelaLinhaInativa,
+                      inativo && styles.tabelaLinhaInativa,
                     ]}
                   >
-                    <View style={styles.colEnsino}>
-                      <Text style={styles.tdPrincipal}>
-                        {edicao.ensinos_clinicos?.nome || "Ensino Clínico"}
-                      </Text>
-                    </View>
+                    <Text
+                      style={[styles.tdPrincipal, styles.colEnsino]}
+                      numberOfLines={1}
+                    >
+                      {edicao.ensinos_clinicos?.nome || "Ensino Clínico"}
+                    </Text>
 
                     <View style={styles.colLocal}>
-                      <Text style={styles.tdPrincipal}>
+                      <Text style={styles.tdPrincipal} numberOfLines={1}>
                         {edicao.instituicoes?.nome || "Instituição"}
                       </Text>
-                      <Text style={styles.tdSecundario}>
+
+                      <Text style={styles.tdSecundario} numberOfLines={1}>
                         {edicao.servicos?.nome || "Serviço"}
                       </Text>
                     </View>
 
-                    <View style={styles.colAno}>
-                      <Text style={styles.tdPrincipal}>
-                        {edicao.ensinos_clinicos?.ano_curricular || "N/A"}.º
-                      </Text>
-                    </View>
+                    <Text style={[styles.tdPrincipal, styles.colAno]}>
+                      {edicao.ensinos_clinicos?.ano_curricular
+                        ? `${edicao.ensinos_clinicos.ano_curricular}.º`
+                        : "N/A"}
+                    </Text>
 
-                    <View style={styles.colVagas}>
-                      <Text style={styles.tdPrincipal}>{edicao.vagas}</Text>
-                    </View>
+                    <Text style={[styles.tdPrincipal, styles.colVagas]}>
+                      {edicao.vagas}
+                    </Text>
 
-                    <View style={styles.colEquipa}>
-                      <Text style={styles.tdPrincipal}>
-                        {professoresDaEdicao(edicao.id).length} prof. /{" "}
-                        {orientadoresDaEdicao(edicao.id).length} orient.
-                      </Text>
-                    </View>
+                    <Text
+                      style={[styles.tdPrincipal, styles.colEquipa]}
+                      numberOfLines={1}
+                    >
+                      {professoresDaEdicao(edicao.id).length} prof. /{" "}
+                      {orientadoresDaEdicao(edicao.id).length} orient.
+                    </Text>
 
                     <View style={styles.colEstado}>
                       <View
                         style={[
                           styles.estadoBadge,
-                          estaInativo(edicao) && styles.estadoBadgeInativo,
+                          inativo && styles.estadoBadgeInativo,
                         ]}
                       >
                         <Text
                           style={[
                             styles.estadoBadgeTexto,
-                            estaInativo(edicao) &&
-                              styles.estadoBadgeTextoInativo,
+                            inativo && styles.estadoBadgeTextoInativo,
                           ]}
                         >
                           {estadoTexto(edicao.estado)}
@@ -948,9 +940,21 @@ export default function EquipasEstagioProfessorResponsavel() {
                     </View>
 
                     <View style={styles.colDistribuicao}>
-                      <View style={styles.badgeDistribuicao}>
-                        <Text style={styles.badgeDistribuicaoTexto}>
-                          {origemDistribuicaoResumo(edicao.id)}
+                      <View
+                        style={[
+                          styles.badgeDistribuicao,
+                          semDistribuicao && styles.badgeDistribuicaoPendente,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.badgeDistribuicaoTexto,
+                            semDistribuicao &&
+                              styles.badgeDistribuicaoTextoPendente,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {resumoOrigem}
                         </Text>
                       </View>
                     </View>
@@ -968,7 +972,7 @@ export default function EquipasEstagioProfessorResponsavel() {
                               ? "chevron-up-outline"
                               : "chevron-down-outline"
                           }
-                          size={21}
+                          size={20}
                           color="#160909"
                         />
                       </Pressable>
@@ -987,27 +991,23 @@ export default function EquipasEstagioProfessorResponsavel() {
                       >
                         <Ionicons
                           name="pencil-outline"
-                          size={21}
+                          size={20}
                           color="#160909"
                         />
                       </Pressable>
 
                       <Pressable
                         style={
-                          estaInativo(edicao)
+                          inativo
                             ? styles.acaoBotaoAtivar
                             : styles.acaoBotaoEscuro
                         }
                         onPress={() => abrirAlterarEstado(edicao)}
                       >
                         <Ionicons
-                          name={
-                            estaInativo(edicao)
-                              ? "checkmark-outline"
-                              : "ban-outline"
-                          }
-                          size={21}
-                          color={estaInativo(edicao) ? "#160909" : "#FFFFFF"}
+                          name={inativo ? "checkmark-outline" : "ban-outline"}
+                          size={20}
+                          color={inativo ? "#160909" : "#FFFFFF"}
                         />
                       </Pressable>
 
@@ -1017,7 +1017,7 @@ export default function EquipasEstagioProfessorResponsavel() {
                       >
                         <Ionicons
                           name="trash-outline"
-                          size={21}
+                          size={20}
                           color="#FFFFFF"
                         />
                       </Pressable>
@@ -1025,64 +1025,77 @@ export default function EquipasEstagioProfessorResponsavel() {
                   </View>
 
                   {aberta && (
-                    <View style={styles.detalhesBox}>
-                      <View style={styles.detalheColuna}>
-                        <Text style={styles.detalheLabel}>Ano letivo</Text>
-                        <Text style={styles.detalheValor}>
-                          {edicao.ano_letivo || "Sem ano letivo"}
-                        </Text>
+                    <View style={styles.detalhesLinha}>
+                      <View style={styles.detalhesLinhaSuperior}>
+                        <View style={styles.detalheItem}>
+                          <Text style={styles.detalheLabel}>Ano letivo</Text>
+                          <Text style={styles.detalheValor}>
+                            {edicao.ano_letivo || "Sem ano letivo"}
+                          </Text>
+                        </View>
 
-                        <Text style={styles.detalheLabel}>
-                          Origem da distribuição
-                        </Text>
-                        <Text style={styles.detalheValor}>
-                          {origemDistribuicaoDetalhe(edicao.id)}
-                        </Text>
+                        <View style={styles.detalheItem}>
+                          <Text style={styles.detalheLabel}>Alunos</Text>
+                          <Text style={styles.detalheValor}>
+                            {totalDistribuidos} atribuído(s) · {disponiveis}{" "}
+                            disponível(eis)
+                          </Text>
+                        </View>
 
-                        <Text style={styles.detalheLabel}>Professores</Text>
-                        {professoresDaEdicao(edicao.id).length === 0 ? (
-                          <Text style={styles.detalheValor}>Sem professor</Text>
-                        ) : (
-                          professoresDaEdicao(edicao.id).map((professor) => (
-                            <Text key={professor.id} style={styles.detalheValor}>
-                              • {textoProfessor(professor)}
-                            </Text>
-                          ))
-                        )}
+                        <View style={styles.detalheItem}>
+                          <Text style={styles.detalheLabel}>
+                            Última distribuição
+                          </Text>
+                          <Text style={styles.detalheValor}>
+                            {ultimaDistribuicao(edicao.id)}
+                          </Text>
+                        </View>
 
-                        <Text style={styles.detalheLabel}>Orientadores</Text>
-                        {orientadoresDaEdicao(edicao.id).length === 0 ? (
-                          <Text style={styles.detalheValor}>Sem orientador</Text>
-                        ) : (
-                          orientadoresDaEdicao(edicao.id).map((orientador) => (
-                            <Text
-                              key={orientador.id}
-                              style={styles.detalheValor}
-                            >
-                              • {textoOrientador(orientador)}
-                            </Text>
-                          ))
-                        )}
+                        <View style={styles.detalheItem}>
+                          <Text style={styles.detalheLabel}>
+                            Origem da distribuição
+                          </Text>
+                          <Text style={styles.detalheValor}>
+                            {origemDistribuicaoDetalhe(edicao.id)}
+                          </Text>
+                        </View>
                       </View>
 
-                      <View style={styles.detalheColuna}>
-                        <Text style={styles.detalheLabel}>Alunos</Text>
-                        <Text style={styles.detalheValor}>
-                          {totalDistribuidos} atribuído(s) · {disponiveis}{" "}
-                          disponível(eis)
-                        </Text>
+                      <View style={styles.detalhesPessoasLinha}>
+                        <View style={styles.detalhePessoaBloco}>
+                          <Text style={styles.detalheLabel}>Professores</Text>
 
-                        <Text style={styles.detalheLabel}>
-                          Última distribuição
-                        </Text>
-                        <Text style={styles.detalheValor}>
-                          {ultimaDistribuicao(edicao.id)}
-                        </Text>
+                          {professoresDaEdicao(edicao.id).length === 0 ? (
+                            <Text style={styles.detalheValor}>Sem professor</Text>
+                          ) : (
+                            professoresDaEdicao(edicao.id).map((professor) => (
+                              <Text key={professor.id} style={styles.detalheValor}>
+                                • {textoProfessor(professor)}
+                              </Text>
+                            ))
+                          )}
+                        </View>
 
-                        <Text style={styles.detalheLabel}>Estado</Text>
-                        <Text style={styles.detalheValor}>
-                          {estadoTexto(edicao.estado)}
-                        </Text>
+                        <View style={styles.detalhePessoaBloco}>
+                          <Text style={styles.detalheLabel}>Orientadores</Text>
+
+                          {orientadoresDaEdicao(edicao.id).length === 0 ? (
+                            <Text style={styles.detalheValor}>
+                              Sem orientador
+                            </Text>
+                          ) : (
+                            orientadoresDaEdicao(edicao.id).map(
+                              (orientador) => (
+                                <Text
+                                  key={orientador.id}
+                                  style={styles.detalheValor}
+                                >
+                                  • {textoOrientador(orientador)}
+                                </Text>
+                              )
+                            )
+                          )}
+                        </View>
                       </View>
                     </View>
                   )}
@@ -1109,6 +1122,7 @@ export default function EquipasEstagioProfessorResponsavel() {
                   onPress={() => setItensDropdownAberto(!itensDropdownAberto)}
                 >
                   <Text style={styles.itensSelectTexto}>{itensPorPagina}</Text>
+
                   <Ionicons
                     name={
                       itensDropdownAberto

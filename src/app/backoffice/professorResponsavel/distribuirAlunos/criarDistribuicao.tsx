@@ -90,6 +90,8 @@ export default function CriarDistribuicaoProfessorResponsavel() {
   const [alunosSelecionados, setAlunosSelecionados] = useState<string[]>([]);
 
   const [pesquisaAluno, setPesquisaAluno] = useState("");
+  const [filtroAnoAluno, setFiltroAnoAluno] = useState("estagio");
+  const [filtroAnoAberto, setFiltroAnoAberto] = useState(false);
 
   const [edicoesOpen, setEdicoesOpen] = useState(false);
   const [alunosOpen, setAlunosOpen] = useState(true);
@@ -284,6 +286,14 @@ export default function CriarDistribuicaoProfessorResponsavel() {
     );
   }, [inscricoes, edicaoSelecionada]);
 
+  const anosAlunosDisponiveis = useMemo(() => {
+    const anos = alunos
+      .map((aluno) => aluno.ano_curricular)
+      .filter((ano): ano is number => Boolean(ano));
+
+    return Array.from(new Set(anos)).sort((a, b) => a - b);
+  }, [alunos]);
+
   function alunoJaDistribuido(alunoId: string) {
     return inscricoesDaEdicao.some(
       (inscricao) =>
@@ -342,6 +352,22 @@ export default function CriarDistribuicaoProfessorResponsavel() {
     return `${alunosSelecionados.length} alunos selecionados`;
   }
 
+  function textoFiltroAnoAluno() {
+    if (filtroAnoAluno === "estagio") {
+      if (edicaoAtual?.ensinos_clinicos?.ano_curricular) {
+        return `${edicaoAtual.ensinos_clinicos.ano_curricular}.º ano`;
+      }
+
+      return "Ano Curricular";
+    }
+
+    if (filtroAnoAluno === "todos") {
+      return "Todos";
+    }
+
+    return `${filtroAnoAluno}.º ano`;
+  }
+
   function textoEstagiosAluno(alunoId: string) {
     const lista = inscricoesAlunosTodas.filter(
       (inscricao) =>
@@ -381,10 +407,6 @@ export default function CriarDistribuicaoProfessorResponsavel() {
     }
   }
 
-  function limparAlunosSelecionados() {
-    setAlunosSelecionados([]);
-  }
-
   const alunosFiltrados = useMemo(() => {
     const termo = pesquisaAluno.toLowerCase().trim();
 
@@ -399,16 +421,28 @@ export default function CriarDistribuicaoProfessorResponsavel() {
 
       const passaPesquisa = !termo || texto.includes(termo);
 
-      const passaAno =
-        !edicaoAtual ||
-        !edicaoAtual.ensinos_clinicos?.ano_curricular ||
-        !aluno.ano_curricular ||
-        Number(aluno.ano_curricular) ===
-          Number(edicaoAtual.ensinos_clinicos.ano_curricular);
+      let passaAno = true;
+
+      if (filtroAnoAluno === "estagio") {
+        passaAno =
+          !edicaoAtual ||
+          !edicaoAtual.ensinos_clinicos?.ano_curricular ||
+          !aluno.ano_curricular ||
+          Number(aluno.ano_curricular) ===
+            Number(edicaoAtual.ensinos_clinicos.ano_curricular);
+      } else if (filtroAnoAluno !== "todos") {
+        passaAno = Number(aluno.ano_curricular) === Number(filtroAnoAluno);
+      }
 
       return passaPesquisa && passaAno;
     });
-  }, [alunos, pesquisaAluno, edicaoAtual, inscricoesAlunosTodas]);
+  }, [
+    alunos,
+    pesquisaAluno,
+    filtroAnoAluno,
+    edicaoAtual,
+    inscricoesAlunosTodas,
+  ]);
 
   async function guardarDistribuicao() {
     if (aGuardar) return;
@@ -684,6 +718,7 @@ export default function CriarDistribuicaoProfessorResponsavel() {
                         onPress={() => {
                           setEdicaoSelecionada(edicao.id);
                           setAlunosSelecionados([]);
+                          setFiltroAnoAluno("estagio");
                           setEdicoesOpen(false);
                           setAlunosOpen(true);
                         }}
@@ -743,17 +778,7 @@ export default function CriarDistribuicaoProfessorResponsavel() {
               </View>
             )}
 
-            <View style={styles.labelLinha}>
-              <Text style={styles.label}>Alunos</Text>
-
-              <Pressable
-                style={styles.limparBotao}
-                onPress={limparAlunosSelecionados}
-              >
-                <Ionicons name="close-outline" size={17} color="#160909" />
-                <Text style={styles.limparBotaoTexto}>Limpar</Text>
-              </Pressable>
-            </View>
+            <Text style={styles.label}>Alunos</Text>
 
             <Pressable
               style={styles.selectToggle}
@@ -771,15 +796,89 @@ export default function CriarDistribuicaoProfessorResponsavel() {
 
             {alunosOpen && (
               <View style={styles.alunosBox}>
-                <View style={styles.searchContainer}>
-                  <Ionicons name="search-outline" size={21} color="#667085" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Pesquisar aluno por nome, email, número ou estágio..."
-                    placeholderTextColor="#8c8787"
-                    value={pesquisaAluno}
-                    onChangeText={setPesquisaAluno}
-                  />
+                <View style={styles.searchFiltroLinha}>
+                  <View style={styles.searchContainerComFiltro}>
+                    <Ionicons name="search-outline" size={21} color="#667085" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Pesquisar aluno por nome, email, número ou estágio..."
+                      placeholderTextColor="#8c8787"
+                      value={pesquisaAluno}
+                      onChangeText={setPesquisaAluno}
+                    />
+
+                    {pesquisaAluno.length > 0 && (
+                      <Pressable onPress={() => setPesquisaAluno("")}>
+                        <Ionicons
+                          name="close-circle-outline"
+                          size={20}
+                          color="#667085"
+                        />
+                      </Pressable>
+                    )}
+                  </View>
+
+                  <View style={styles.filtroAnoBox}>
+                    <Pressable
+                      style={styles.filtroAnoToggle}
+                      onPress={() => setFiltroAnoAberto(!filtroAnoAberto)}
+                    >
+                      <Text style={styles.filtroAnoTexto}>
+                        {textoFiltroAnoAluno()}
+                      </Text>
+
+                      <Ionicons
+                        name={
+                          filtroAnoAberto
+                            ? "chevron-up-outline"
+                            : "chevron-down-outline"
+                        }
+                        size={18}
+                        color="#160909"
+                      />
+                    </Pressable>
+
+                    {filtroAnoAberto && (
+                      <View style={styles.filtroAnoDropdown}>
+                        <Pressable
+                          style={styles.filtroAnoOpcao}
+                          onPress={() => {
+                            setFiltroAnoAluno("estagio");
+                            setFiltroAnoAberto(false);
+                          }}
+                        >
+                          <Text style={styles.filtroAnoOpcaoTexto}>
+                            Ano do estágio
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          style={styles.filtroAnoOpcao}
+                          onPress={() => {
+                            setFiltroAnoAluno("todos");
+                            setFiltroAnoAberto(false);
+                          }}
+                        >
+                          <Text style={styles.filtroAnoOpcaoTexto}>Todos</Text>
+                        </Pressable>
+
+                        {anosAlunosDisponiveis.map((ano) => (
+                          <Pressable
+                            key={ano}
+                            style={styles.filtroAnoOpcao}
+                            onPress={() => {
+                              setFiltroAnoAluno(String(ano));
+                              setFiltroAnoAberto(false);
+                            }}
+                          >
+                            <Text style={styles.filtroAnoOpcaoTexto}>
+                              {ano}.º ano
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 </View>
 
                 <ScrollView style={styles.pickerListaAlunos} nestedScrollEnabled>

@@ -220,6 +220,17 @@ const local = StyleSheet.create({
     textAlign: "center",
   },
 
+  formGridDuasColunas: {
+    flexDirection: "row",
+    gap: 18,
+    alignItems: "flex-start",
+  },
+
+  formColuna: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   label: {
     fontSize: 15,
     fontWeight: "900",
@@ -252,14 +263,92 @@ const local = StyleSheet.create({
     marginRight: 8,
   },
 
-  pickerLista: {
-    maxHeight: 210,
+  pickerListaGrande: {
+    maxHeight: 250,
     marginBottom: 14,
   },
 
-  pickerListaGrande: {
-    maxHeight: 320,
-    marginBottom: 14,
+  pickerListaPessoa: {
+    maxHeight: 220,
+  },
+
+  dropdownPessoaBox: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    borderRadius: 12,
+    padding: 10,
+    marginTop: -4,
+    marginBottom: 12,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
+
+  searchPessoaContainer: {
+    height: 44,
+    backgroundColor: "#F2F4F7",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  searchComFiltroLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  searchPessoaContainerComFiltro: {
+    flex: 1,
+    height: 44,
+    backgroundColor: "#F2F4F7",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  searchPessoaInput: {
+    flex: 1,
+    height: 44,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#160909",
+    fontFamily: "serif",
+    marginLeft: 8,
+    outlineStyle: "none" as any,
+  },
+
+  mostrarTodosBotaoPesquisa: {
+    width: 96,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: "#FFF7E0",
+    borderWidth: 1,
+    borderColor: "#FDB515",
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  mostrarTodosTexto: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
   },
 
   opcao: {
@@ -272,9 +361,24 @@ const local = StyleSheet.create({
     borderColor: "#D0D5DD",
   },
 
+  opcaoPessoaCompacta: {
+    backgroundColor: "#F2F4F7",
+    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    marginBottom: 7,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+  },
+
   opcaoSelecionada: {
     backgroundColor: "#FDB515",
     borderColor: "#160909",
+  },
+
+  opcaoOrientadorCombina: {
+    borderColor: "#225943",
+    backgroundColor: "#E8F7EF",
   },
 
   opcaoLinha: {
@@ -322,44 +426,65 @@ const local = StyleSheet.create({
     borderColor: "#D0D5DD",
   },
 
-  botoesFinaisLinha: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 14,
-  },
-
-  botaoTudoInativo: {
-    flex: 1,
-    height: 48,
-    backgroundColor: "#160909",
-    borderRadius: 10,
+  localBoxCompacto: {
+    backgroundColor: "#FFF7E0",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FDB515",
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    marginTop: 4,
+    marginBottom: 14,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    gap: 10,
   },
 
-  botaoApagarTudo: {
+  localTextoCompacto: {
     flex: 1,
-    height: 48,
-    backgroundColor: "#e74c3c",
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-
-  textoBotaoFinal: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#7A4F00",
     fontFamily: "serif",
+    lineHeight: 18,
+  },
+
+  localOrientadorTexto: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#B77900",
+    fontFamily: "serif",
+    marginTop: 5,
+  },
+
+  localOrientadorTextoCombina: {
+    color: "#225943",
+  },
+
+  avisoOrientadoresBox: {
+    backgroundColor: "#FFF7E0",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FDB515",
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 8,
+  },
+
+  avisoOrientadoresTexto: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#7A4F00",
+    fontFamily: "serif",
+    lineHeight: 19,
   },
 
   popupBotoesLinha: {
     ...backofficeStyles.popupBotoesLinha,
-    marginTop: 10,
+    marginTop: 14,
   },
 
   popupBotaoCancelar: {
@@ -388,100 +513,6 @@ const local = StyleSheet.create({
     ...backofficeStyles.popupOkText,
     fontSize: 15,
   },
-
-  labelLinha: {
-  marginTop: 6,
-  marginBottom: 6,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-},
-
-localBox: {
-  backgroundColor: "#FFF7E0",
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: "#FDB515",
-  padding: 14,
-  marginTop: 4,
-  marginBottom: 12,
-  flexDirection: "row",
-  alignItems: "flex-start",
-  gap: 10,
-},
-
-localTitulo: {
-  fontSize: 14,
-  fontWeight: "900",
-  color: "#160909",
-  fontFamily: "serif",
-  marginBottom: 3,
-},
-
-localTexto: {
-  fontSize: 13,
-  fontWeight: "800",
-  color: "#7A4F00",
-  fontFamily: "serif",
-  marginTop: 2,
-},
-
-mostrarTodosBotao: {
-  height: 34,
-  borderRadius: 10,
-  backgroundColor: "#FFF7E0",
-  borderWidth: 1,
-  borderColor: "#FDB515",
-  paddingHorizontal: 10,
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 6,
-},
-
-mostrarTodosTexto: {
-  fontSize: 13,
-  fontWeight: "900",
-  color: "#160909",
-  fontFamily: "serif",
-},
-
-opcaoOrientadorCombina: {
-  borderColor: "#225943",
-  backgroundColor: "#E8F7EF",
-},
-
-localOrientadorTexto: {
-  fontSize: 13,
-  fontWeight: "900",
-  color: "#B77900",
-  fontFamily: "serif",
-  marginTop: 6,
-},
-
-localOrientadorTextoCombina: {
-  color: "#225943",
-},
-
-avisoOrientadoresBox: {
-  backgroundColor: "#FFF7E0",
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: "#FDB515",
-  padding: 14,
-  flexDirection: "row",
-  alignItems: "flex-start",
-  gap: 10,
-  marginBottom: 10,
-},
-
-avisoOrientadoresTexto: {
-  flex: 1,
-  fontSize: 14,
-  fontWeight: "800",
-  color: "#7A4F00",
-  fontFamily: "serif",
-  lineHeight: 20,
-},
 });
 
 const styles = {

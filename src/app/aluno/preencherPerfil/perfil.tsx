@@ -1,17 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View,} from "react-native";
 import { supabase } from "../../../lib/supabase";
 import styles from "./perfilStyles";
 
@@ -37,15 +28,103 @@ export default function PerfilAluno() {
   const [popupMensagem, setPopupMensagem] = useState("");
   const [confirmarSair, setConfirmarSair] = useState(false);
   const [mostrarAnos, setMostrarAnos] = useState(false);
+  const [calendarioVisivel, setCalendarioVisivel] = useState(false);
+  const [mesCalendario, setMesCalendario] = useState(() => {
+  const hoje = new Date(); return new Date(hoje.getFullYear() - 22, hoje.getMonth(), 1);});
+
 
   const { from } = useLocalSearchParams();
   const mostrarBottomBar = from === "bottom";
+
+
+  const diasCalendario = useMemo(() => {
+  const ano = mesCalendario.getFullYear();
+  const mes = mesCalendario.getMonth();
+
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes + 1, 0);
+
+  const inicioSemana = primeiroDia.getDay();
+  const totalDias = ultimoDia.getDate();
+
+  const vazios = inicioSemana === 0 ? 6 : inicioSemana - 1;
+
+  const lista: (Date | null)[] = [];
+
+  for (let i = 0; i < vazios; i++) {
+    lista.push(null);
+  }
+
+  for (let dia = 1; dia <= totalDias; dia++) {
+    lista.push(new Date(ano, mes, dia));
+  }
+
+  return lista;
+}, [mesCalendario]);
+
 
   function mostrarPopup(titulo: string, mensagem: string) {
     setPopupTitulo(titulo);
     setPopupMensagem(mensagem);
     setPopupVisivel(true);
   }
+
+  function dataParaISO(date: Date) {
+  const ano = date.getFullYear();
+  const mes = String(date.getMonth() + 1).padStart(2, "0");
+  const dia = String(date.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+function dataParaTexto(dataISO: string | null | undefined) {
+  if (!dataISO) return "";
+
+  const partes = dataISO.split("-");
+
+  if (partes.length !== 3) return dataISO;
+
+  return `${partes[2]}-${partes[1]}-${partes[0]}`;
+}
+
+function nomeMes(date: Date) {
+  return date.toLocaleDateString("pt-PT", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function alterarMes(valor: number) {
+  setMesCalendario((atual) => {
+    const novo = new Date(atual);
+    novo.setMonth(novo.getMonth() + valor);
+    return novo;
+  });
+}
+
+function alterarAno(valor: number) {
+  setMesCalendario((atual) => {
+    const novo = new Date(atual);
+    novo.setFullYear(novo.getFullYear() + valor);
+    return novo;
+  });
+}
+
+function escolherData(date: Date) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const escolhida = new Date(date);
+  escolhida.setHours(0, 0, 0, 0);
+
+  if (escolhida > hoje) {
+    mostrarPopup("Data inválida", "A data de nascimento não pode ser futura.");
+    return;
+  }
+
+  setDataNascimento(dataParaISO(date));
+  setCalendarioVisivel(false);
+}
 
   async function carregarPerfil() {
     setLoading(true);
@@ -77,6 +156,16 @@ export default function PerfilAluno() {
     setTelefone(data.telefone || "");
     setMorada(data.morada || "");
     setDataNascimento(data.data_nascimento || "");
+
+    if (data.data_nascimento) {
+      const partes = data.data_nascimento.split("-");
+      const ano = Number(partes[0]);
+      const mes = Number(partes[1]) - 1;
+
+    if (!Number.isNaN(ano) && !Number.isNaN(mes)) {
+      setMesCalendario(new Date(ano, mes, 1));
+    }
+  }
     setGrau(data.grau || "Licenciatura");
     setCurso(data.curso || "Enfermagem");
     setFotoUrl(data.foto_url || null);
@@ -304,15 +393,24 @@ export default function PerfilAluno() {
             editable={editar}
           />
 
-          <Text style={styles.label}>Data de nascimento</Text>
-          <TextInput
-            style={[styles.input, !editar && styles.inputBloqueado]}
-            value={dataNascimento}
-            onChangeText={setDataNascimento}
-            editable={editar}
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor="#8c8787"
-          />
+        <Text style={styles.label}>Data de nascimento</Text>
+
+        <Pressable
+          style={[styles.inputBotao, !editar && styles.inputBloqueado]}
+          disabled={!editar}
+          onPress={() => setCalendarioVisivel(true)}
+        >
+          <Text
+            style={[
+              styles.inputBotaoTexto,
+              !dataNascimento && styles.inputBotaoPlaceholder,
+            ]}
+          >
+            {dataNascimento ? dataParaTexto(dataNascimento) : "Selecionar data"}
+          </Text>
+
+          <Ionicons name="calendar-outline" size={22} color="#160909" />
+        </Pressable>
 
           {!editar ? (
             <Pressable
@@ -407,6 +505,98 @@ export default function PerfilAluno() {
           </Pressable>
         </View>
       )}
+
+      <Modal visible={calendarioVisivel} transparent animationType="fade">
+  <View style={styles.popupOverlay}>
+    <View style={styles.calendarioContainer}>
+      <Text style={styles.calendarioTitulo}>Data de nascimento</Text>
+
+      <View style={styles.calendarioAnoLinha}>
+        <Pressable
+          style={styles.calendarioAnoBotao}
+          onPress={() => alterarAno(-1)}
+        >
+          <Ionicons name="play-back-outline" size={20} color="#160909" />
+        </Pressable>
+
+        <Pressable
+          style={styles.calendarioSeta}
+          onPress={() => alterarMes(-1)}
+        >
+          <Ionicons name="chevron-back-outline" size={22} color="#160909" />
+        </Pressable>
+
+        <Text style={styles.calendarioMesTexto}>
+          {nomeMes(mesCalendario)}
+        </Text>
+
+        <Pressable
+          style={styles.calendarioSeta}
+          onPress={() => alterarMes(1)}
+        >
+          <Ionicons
+            name="chevron-forward-outline"
+            size={22}
+            color="#160909"
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.calendarioAnoBotao}
+          onPress={() => alterarAno(1)}
+        >
+          <Ionicons name="play-forward-outline" size={20} color="#160909" />
+        </Pressable>
+      </View>
+
+      <View style={styles.diasSemanaLinha}>
+        {["S", "T", "Q", "Q", "S", "S", "D"].map((dia, index) => (
+          <Text key={`${dia}-${index}`} style={styles.diaSemanaTexto}>
+            {dia}
+          </Text>
+        ))}
+      </View>
+
+      <View style={styles.calendarioGrid}>
+        {diasCalendario.map((dia, index) => {
+          if (!dia) {
+            return <View key={`vazio-${index}`} style={styles.diaVazio} />;
+          }
+
+          const dataISO = dataParaISO(dia);
+          const selecionado = dataNascimento === dataISO;
+
+          return (
+            <Pressable
+              key={dataISO}
+              style={[
+                styles.diaBotao,
+                selecionado && styles.diaSelecionado,
+              ]}
+              onPress={() => escolherData(dia)}
+            >
+              <Text
+                style={[
+                  styles.diaTexto,
+                  selecionado && styles.diaTextoSelecionado,
+                ]}
+              >
+                {dia.getDate()}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Pressable
+        style={styles.botaoCancelarCalendario}
+        onPress={() => setCalendarioVisivel(false)}
+      >
+        <Text style={styles.textoCancelarCalendario}>Cancelar</Text>
+      </Pressable>
+    </View>
+  </View>
+</Modal>
 
       <Modal visible={popupVisivel} transparent animationType="fade">
         <View style={styles.popupOverlay}>

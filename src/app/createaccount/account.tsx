@@ -7,7 +7,7 @@ import {
   Pressable,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
 import styles from "./accountStyles";
@@ -26,14 +26,13 @@ export default function CreateAccountScreen() {
   const [password, setPassword] = useState("");
   const [numeroIdentificacao, setNumeroIdentificacao] = useState("");
 
-  //aluno por defeito.
+  // aluno por defeito
   const [tipo, setTipo] = useState("aluno");
 
-  // Função para criar conta
   function showPopup(
     title: string,
     message: string,
-    onClose: (() => void) | null = null,
+    onClose: (() => void) | null = null
   ) {
     setPopupTitle(title);
     setPopupMessage(message);
@@ -41,7 +40,6 @@ export default function CreateAccountScreen() {
     setPopupVisible(true);
   }
 
-  // Funçãode fechar popup
   function handlePopupClose() {
     setPopupVisible(false);
     const cb = popupOnClose;
@@ -49,23 +47,86 @@ export default function CreateAccountScreen() {
     if (cb) cb();
   }
 
+  function traduzirErroSupabase(mensagem: string) {
+    const msg = mensagem.toLowerCase();
+
+    if (
+      msg.includes("user already registered") ||
+      msg.includes("already registered") ||
+      msg.includes("already been registered") ||
+      msg.includes("email already")
+    ) {
+      return "Este email já está registado. Inicia sessão ou utiliza outro email.";
+    }
+
+    if (msg.includes("invalid email")) {
+      return "O email inserido não é válido.";
+    }
+
+    if (msg.includes("password")) {
+      return "A palavra-passe não cumpre os requisitos necessários.";
+    }
+
+    if (msg.includes("duplicate") || msg.includes("unique")) {
+      return "Já existe uma conta com estes dados.";
+    }
+
+    return mensagem;
+  }
+
+  async function emailJaExiste(emailFormatado: string) {
+    const { data, error } = await supabase
+      .from("utilizadores")
+      .select("id")
+      .eq("email", emailFormatado)
+      .maybeSingle();
+
+    if (error) {
+      console.log("ERRO AO VERIFICAR EMAIL:", error);
+      return false;
+    }
+
+    return Boolean(data);
+  }
+
+  async function numeroIdentificacaoJaExiste(numero: string) {
+    if (!numero.trim()) return false;
+
+    const { data, error } = await supabase
+      .from("utilizadores")
+      .select("id, tipo")
+      .eq("numero_identificacao", numero.trim())
+      .maybeSingle();
+
+    if (error) {
+      console.log("ERRO AO VERIFICAR NÚMERO:", error);
+      return false;
+    }
+
+    return Boolean(data);
+  }
+
   async function criarConta() {
     if (loading) return;
 
-    if (!nome || !email || !password) {
+    const nomeFormatado = nome.trim();
+    const emailFormatado = email.trim().toLowerCase();
+    const numeroFormatado = numeroIdentificacao.trim();
+
+    if (!nomeFormatado || !emailFormatado || !password) {
       showPopup("Erro", "Preenche todos os campos.");
       return;
     }
 
     if (
       (tipo === "aluno" || tipo === "professor") &&
-      !numeroIdentificacao.trim()
+      !numeroFormatado
     ) {
       showPopup(
         "Erro",
         tipo === "aluno"
           ? "Preenche o número de aluno."
-          : "Preenche o número de professor.",
+          : "Preenche o número de professor."
       );
       return;
     }
@@ -77,20 +138,42 @@ export default function CreateAccountScreen() {
 
     setLoading(true);
 
-    // Criar conta no Supabase Auth
     try {
+      const existeEmail = await emailJaExiste(emailFormatado);
+
+      if (existeEmail) {
+        showPopup(
+          "Conta já registada",
+          "Este email já está registado. Inicia sessão ou utiliza outro email."
+        );
+        return;
+      }
+
+      const existeNumero = await numeroIdentificacaoJaExiste(numeroFormatado);
+
+      if (existeNumero) {
+        showPopup(
+          "Número já registado",
+          tipo === "aluno"
+            ? "Este número de aluno já está associado a uma conta."
+            : tipo === "professor"
+              ? "Este número de professor já está associado a uma conta."
+              : "Este número profissional já está associado a uma conta."
+        );
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: emailFormatado,
         password: password,
       });
 
       if (error) {
         console.log("ERRO SIGNUP:", error);
-        showPopup("Erro", error.message);
+        showPopup("Erro", traduzirErroSupabase(error.message));
         return;
       }
 
-      // Inserir perfil na tabela "utilizadores"
       const user = data.user;
 
       if (!user) {
@@ -103,24 +186,40 @@ export default function CreateAccountScreen() {
         .insert([
           {
             id: user.id,
-            nome: nome,
-            email: email.trim(), // Guardar email em minúsculas
+            nome: nomeFormatado,
+            email: emailFormatado,
             tipo: tipo,
             estado: "pendente",
-            numero_identificacao: numeroIdentificacao.trim() || null,
+            numero_identificacao: numeroFormatado || null,
           },
         ]);
 
       if (insertError) {
         console.log("ERRO PERFIL:", insertError);
-        showPopup("Erro ao guardar perfil", insertError.message);
+
+        if (
+          insertError.code === "23505" ||
+          insertError.message.toLowerCase().includes("duplicate") ||
+          insertError.message.toLowerCase().includes("unique")
+        ) {
+          showPopup(
+            "Conta já existente",
+            "Já existe uma conta registada com este email ou número de identificação."
+          );
+          return;
+        }
+
+        showPopup(
+          "Erro ao guardar perfil",
+          traduzirErroSupabase(insertError.message)
+        );
         return;
       }
 
       showPopup(
         "Conta criada",
         "A tua conta foi criada e está a aguardar aprovação do Administrador.",
-        () => router.push("/login/login"),
+        () => router.push("/login/login")
       );
     } finally {
       setLoading(false);
@@ -141,7 +240,7 @@ export default function CreateAccountScreen() {
       <View style={styles.inputContainer}>
         <Ionicons name="person-outline" size={32} color="#1f1f1f" />
         <TextInput
-          placeholder="Nome"
+          placeholder="Nome e Apelido"
           placeholderTextColor="#8c8787"
           style={styles.input}
           value={nome}

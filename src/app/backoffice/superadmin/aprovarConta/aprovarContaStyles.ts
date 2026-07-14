@@ -181,35 +181,6 @@ const local = StyleSheet.create({
     marginTop: 6,
   },
 
-  filtrosCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-  },
-
-  searchRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  searchInput: {
-    flex: 1,
-    height: 50,
-    backgroundColor: "#F2F4F7",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#160909",
-    fontFamily: "serif",
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-  },
 
   filterToggle: {
     height: 50,
@@ -575,6 +546,300 @@ const local = StyleSheet.create({
     ...backofficeStyles.popupOkText,
     fontSize: 15,
   },
+
+  headerTitleRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 14,
+},
+
+botaoVoltarHome: {
+  width: 44,
+  height: 44,
+  borderRadius: 12,
+  backgroundColor: "#FFF7E0",
+  alignItems: "center",
+  justifyContent: "center",
+  borderWidth: 1,
+  borderColor: "#FDB515",
+},
+
+filtrosCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 18,
+  marginBottom: 20,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  zIndex: 1000,
+  overflow: "visible",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.04,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 20,
+},
+
+searchRow: {
+  width: "100%",
+  flexDirection: "row",
+  alignItems: "flex-end",
+  gap: 14,
+  zIndex: 1000,
+  overflow: "visible",
+},
+
+searchContainer: {
+  flex: 2,
+  height: 50,
+  backgroundColor: "#F2F4F7",
+  borderRadius: 10,
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 14,
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+},
+
+searchInput: {
+  flex: 1,
+  height: 50,
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#160909",
+  fontFamily: "serif",
+  marginLeft: 10,
+},
+
+filtroBox: {
+  flex: 1,
+  position: "relative",
+  zIndex: 1000,
+},
+
+filtroLabel: {
+  fontSize: 14,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  marginBottom: 6,
+},
+
+selectToggle: {
+  height: 50,
+  backgroundColor: "#F2F4F7",
+  borderRadius: 10,
+  paddingHorizontal: 14,
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+},
+
+selectToggleText: {
+  flex: 1,
+  fontSize: 15,
+  fontWeight: "800",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+dropdown: {
+  position: "absolute",
+  top: 76,
+  left: 0,
+  right: 0,
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  padding: 6,
+  zIndex: 2000,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 30,
+},
+
+dropdownOption: {
+  minHeight: 40,
+  borderRadius: 8,
+  justifyContent: "center",
+  paddingHorizontal: 10,
+},
+
+dropdownOptionText: {
+  fontSize: 15,
+  fontWeight: "800",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+menuIconWrapper: {
+  width: 24,
+  height: 24,
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+},
+
+notificacaoBadge: {
+  position: "absolute",
+  top: -8,
+  right: -10,
+  minWidth: 18,
+  height: 18,
+  borderRadius: 9,
+  backgroundColor: "#EF4444",
+  alignItems: "center",
+  justifyContent: "center",
+  paddingHorizontal: 4,
+  borderWidth: 1,
+  borderColor: "#225943",
+},
+
+notificacaoTexto: {
+  fontSize: 10,
+  fontWeight: "900",
+  color: "#FFFFFF",
+  fontFamily: "serif",
+},
+
+menuTextoComBadge: {
+  flex: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 8,
+},
+
+notificacaoBadgeTexto: {
+  minWidth: 22,
+  height: 22,
+  borderRadius: 11,
+  backgroundColor: "#EF4444",
+  alignItems: "center",
+  justifyContent: "center",
+  paddingHorizontal: 6,
+},
+
+tabelaCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  overflow: "hidden",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.04,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
+
+tabelaHeader: {
+  minHeight: 54,
+  backgroundColor: "#225943",
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 16,
+},
+
+th: {
+  fontSize: 15,
+  fontWeight: "900",
+  color: "#FFFFFF",
+  fontFamily: "serif",
+},
+
+tabelaLinha: {
+  minHeight: 64,
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 16,
+  backgroundColor: "#FFFFFF",
+  borderBottomWidth: 1,
+  borderBottomColor: "#E4E7EC",
+},
+
+tdNome: {
+  fontSize: 17,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+td: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#555",
+  fontFamily: "serif",
+},
+
+colNome: {
+  flex: 1.5,
+},
+
+colTipo: {
+  flex: 1,
+},
+
+colNumero: {
+  flex: 1.2,
+},
+
+colEmail: {
+  flex: 1.8,
+},
+
+colEstado: {
+  flex: 0.9,
+},
+
+colAcoes: {
+  flex: 1,
+},
+
+estadoBadgeTabela: {
+  alignSelf: "flex-start",
+  backgroundColor: "#FFF7E0",
+  color: "#B77900",
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: "900",
+  fontFamily: "serif",
+  overflow: "hidden",
+},
+
+acoes: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+},
+
+acaoBotaoAprovar: {
+  width: 36,
+  height: 36,
+  borderRadius: 9,
+  backgroundColor: "#45a02cff",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+acaoBotaoRejeitar: {
+  width: 36,
+  height: 36,
+  borderRadius: 9,
+  backgroundColor: "#ef1a1aff",
+  alignItems: "center",
+  justifyContent: "center",
+},
 });
 
 const styles = {

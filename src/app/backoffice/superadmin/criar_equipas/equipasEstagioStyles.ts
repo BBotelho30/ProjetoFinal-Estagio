@@ -247,76 +247,6 @@ const local = StyleSheet.create({
     borderColor: "#D0D5DD",
   },
 
-filtrosLinha: {
-  width: 230,
-  position: "relative",
-  zIndex: 200,
-},
-
-filtroBox: {
-  width: "100%",
-  position: "relative",
-  zIndex: 200,
-},
-
-  colEstado: {
-    flex: 0.9,
-  },
-
-  estadoBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FFF7E0",
-    color: "#B77900",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    fontSize: 13,
-    fontWeight: "900",
-    fontFamily: "serif",
-    overflow: "hidden",
-  },
-
-  estadoBadgeInativo: {
-    backgroundColor: "#FEE4E2",
-    color: "#B42318",
-  },
-
-  botoesFinaisLinha: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 12,
-    marginTop: 18,
-  },
-
-  botaoTudoInativo: {
-    height: 46,
-    backgroundColor: "#160909",
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-
-  botaoApagarTudo: {
-    height: 46,
-    backgroundColor: "#e74c3c",
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-
-  textoBotaoFinal: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    fontFamily: "serif",
-  },
-
   searchInput: {
     flex: 1,
     fontSize: 16,
@@ -326,7 +256,17 @@ filtroBox: {
     marginLeft: 10,
   },
 
+  filtrosLinha: {
+    width: 230,
+    position: "relative",
+    zIndex: 200,
+  },
 
+  filtroBox: {
+    width: "100%",
+    position: "relative",
+    zIndex: 200,
+  },
 
   filtroLabel: {
     fontSize: 14,
@@ -455,84 +395,113 @@ filtroBox: {
     marginTop: 3,
   },
 
-colEnsino: {
-  flex: 2.1,
-  minWidth: 260,
-},
+  colEnsino: {
+    flex: 2.1,
+    minWidth: 260,
+  },
 
-colLocal: {
-  flex: 1.5,
-  minWidth: 190,
-},
+  colLocal: {
+    flex: 1.5,
+    minWidth: 190,
+  },
 
-colAno: {
-  flex: 0.45,
-  minWidth: 55,
-},
+  colAno: {
+    flex: 0.45,
+    minWidth: 55,
+  },
 
-colVagas: {
-  flex: 0.55,
-  minWidth: 70,
-},
+  colVagas: {
+    flex: 0.55,
+    minWidth: 70,
+  },
 
-colEquipa: {
-  flex: 1,
-  minWidth: 135,
-},
+  colEquipa: {
+    flex: 1,
+    minWidth: 135,
+  },
 
-colDistribuicao: {
-  flex: 1.25,
-  minWidth: 160,
-},
+  colDistribuicao: {
+    flex: 1.25,
+    minWidth: 160,
+  },
 
-colAcoes: {
-  width: 150,
-  minWidth: 150,
-  maxWidth: 150,
-},
+  colAcoes: {
+    width: 150,
+    minWidth: 150,
+    maxWidth: 150,
+  },
 
-acoes: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  gap: 8,
-  flexWrap: "nowrap",
-},
+  acoes: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 8,
+    flexWrap: "nowrap",
+  },
 
-acaoBotao: {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  backgroundColor: "#FDB515",
-  alignItems: "center",
-  justifyContent: "center",
-},
+  acaoBotao: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#FDB515",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-acaoBotaoPerigo: {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  backgroundColor: "#e74c3c",
-  alignItems: "center",
-  justifyContent: "center",
-},
+  acaoBotaoPerigo: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#e74c3c",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  origemBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E6F4EA",
+    color: "#225943",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: "900",
+    fontFamily: "serif",
+    overflow: "hidden",
+  },
+
+  origemBadgePendente: {
+    backgroundColor: "#FFF7E0",
+    color: "#B77900",
+  },
 
   detalhesLinha: {
     backgroundColor: "#F7F8FA",
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E4E7EC",
+    gap: 18,
+  },
+
+  detalhesLinhaSuperior: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
+    alignItems: "flex-start",
+    gap: 18,
+  },
+
+  detalhesLinhaInferior: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 18,
   },
 
   detalheItem: {
-    minWidth: 210,
     flex: 1,
   },
 
-  detalheItemFull: {
-    width: "100%",
+  detalheItemGrande: {
+    flex: 1,
   },
 
   detalheLabel: {
@@ -540,15 +509,15 @@ acaoBotaoPerigo: {
     fontWeight: "900",
     color: "#160909",
     fontFamily: "serif",
-    marginBottom: 4,
+    marginBottom: 6,
   },
 
   detalheValor: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#667085",
     fontFamily: "serif",
-    lineHeight: 23,
+    lineHeight: 22,
   },
 
   vazioContainer: {
@@ -688,23 +657,40 @@ acaoBotaoPerigo: {
     fontFamily: "serif",
   },
 
-
-  origemBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#E6F4EA",
-    color: "#225943",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: "900",
-    fontFamily: "serif",
-    overflow: "hidden",
+  botoesFinaisLinha: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+    marginTop: 18,
   },
 
-  origemBadgePendente: {
-    backgroundColor: "#FFF7E0",
-    color: "#B77900",
+  botaoTudoInativo: {
+    height: 46,
+    backgroundColor: "#160909",
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  botaoApagarTudo: {
+    height: 46,
+    backgroundColor: "#e74c3c",
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  textoBotaoFinal: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    fontFamily: "serif",
   },
 
   popupBotoesLinha: {

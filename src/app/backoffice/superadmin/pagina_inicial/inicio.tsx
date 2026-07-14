@@ -37,9 +37,7 @@ export default function InicioBackoffice() {
           <Ionicons name="arrow-forward" size={28} color="#160909" />
         </Pressable>
 
-        <Pressable onPress={() => router.push("/pagina_inicial/inicio" as any)}>
-          <Text style={styles.voltar}>Voltar à aplicação móvel</Text>
-        </Pressable>
+     
       </View>
     </ImageBackground>
   );

@@ -262,6 +262,107 @@ const local = StyleSheet.create({
     padding: 8,
   },
 
+  alunosBox: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    padding: 10,
+    marginTop: 4,
+    overflow: "visible",
+    zIndex: 100,
+  },
+
+  searchFiltroLinha: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+    zIndex: 200,
+    overflow: "visible",
+  },
+
+  searchContainerComFiltro: {
+    flex: 1,
+    height: 50,
+    backgroundColor: "#F2F4F7",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+  },
+
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#160909",
+    fontFamily: "serif",
+    outlineStyle: "none" as any,
+  },
+
+  filtroAnoBox: {
+    width: 190,
+    position: "relative",
+    zIndex: 300,
+  },
+
+  filtroAnoToggle: {
+    height: 50,
+    backgroundColor: "#F2F4F7",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  filtroAnoTexto: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    marginRight: 8,
+  },
+
+  filtroAnoDropdown: {
+    position: "absolute",
+    top: 56,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    padding: 6,
+    zIndex: 400,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+
+  filtroAnoOpcao: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+
+  filtroAnoOpcaoTexto: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#160909",
+    fontFamily: "serif",
+  },
+
   opcao: {
     backgroundColor: "#F2F4F7",
     borderRadius: 10,
@@ -359,12 +460,6 @@ const local = StyleSheet.create({
     lineHeight: 18,
   },
 
-  botoesFinaisLinha: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 14,
-  },
-
   popupBotoesLinha: {
     ...backofficeStyles.popupBotoesLinha,
     marginTop: 20,
@@ -396,6 +491,11 @@ const local = StyleSheet.create({
     ...backofficeStyles.popupOkText,
     fontSize: 15,
   },
+
+  pickerListaAlunos: {
+  maxHeight: 380,
+  marginTop: 10,
+},
 });
 
 const styles = {

@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./editarEstagioStyles";
 
 type EdicaoEstagio = {
@@ -58,6 +59,7 @@ type ServicoOption = {
 
 export default function Estagios() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [edicoes, setEdicoes] = useState<EdicaoEstagio[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,13 +96,13 @@ export default function Estagios() {
   const [servicos, setServicos] = useState<ServicoOption[]>([]);
 
   const [ensinoSelecionado, setEnsinoSelecionado] = useState<number | null>(
-    null
+    null,
   );
   const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<
     number | null
   >(null);
   const [servicoSelecionado, setServicoSelecionado] = useState<number | null>(
-    null
+    null,
   );
 
   const [ensinoOpen, setEnsinoOpen] = useState(false);
@@ -131,7 +133,7 @@ export default function Estagios() {
       | "apagar"
       | "inativar"
       | "ativar"
-      | "todosInativos" = "normal"
+      | "todosInativos" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -162,7 +164,7 @@ export default function Estagios() {
         ensinos_clinicos(id, nome, ano_curricular),
         instituicoes(id, nome),
         servicos(id, nome)
-      `
+      `,
       )
       .order("id", { ascending: false });
 
@@ -254,7 +256,7 @@ export default function Estagios() {
     if (!limiteFaltas.trim() || !maxHorasDia.trim()) {
       abrirPopup(
         "Erro",
-        "Preenche o limite de faltas e o máximo de horas por dia."
+        "Preenche o limite de faltas e o máximo de horas por dia.",
       );
       return;
     }
@@ -301,13 +303,13 @@ export default function Estagios() {
       abrirPopup(
         "Ativar edição",
         "Tens a certeza que queres voltar a ativar esta edição de estágio?",
-        "ativar"
+        "ativar",
       );
     } else {
       abrirPopup(
         "Inativar edição",
         "Tens a certeza que queres colocar esta edição de estágio como inativa?",
-        "inativar"
+        "inativar",
       );
     }
   }
@@ -334,7 +336,7 @@ export default function Estagios() {
       "Sucesso",
       novoEstado === "ativo"
         ? "Edição ativada com sucesso."
-        : "Edição colocada como inativa."
+        : "Edição colocada como inativa.",
     );
 
     setEdicaoSelecionada(null);
@@ -347,7 +349,7 @@ export default function Estagios() {
     abrirPopup(
       "Apagar edição",
       "Tens a certeza que queres apagar esta edição de estágio? Esta ação não pode ser desfeita.",
-      "apagar"
+      "apagar",
     );
   }
 
@@ -376,7 +378,7 @@ export default function Estagios() {
     abrirPopup(
       "Colocar todos inativos",
       "Tens a certeza que queres colocar todas as edições de estágio como inativas?",
-      "todosInativos"
+      "todosInativos",
     );
   }
 
@@ -419,8 +421,8 @@ export default function Estagios() {
         filtroEstado === "todos"
           ? true
           : filtroEstado === "ativos"
-          ? !estaInativo(edicao)
-          : estaInativo(edicao);
+            ? !estaInativo(edicao)
+            : estaInativo(edicao);
 
       const correspondeAno =
         filtroAno === "todos"
@@ -433,7 +435,7 @@ export default function Estagios() {
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(edicoesFiltradas.length / itensPorPagina)
+    Math.ceil(edicoesFiltradas.length / itensPorPagina),
   );
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -507,7 +509,7 @@ export default function Estagios() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
@@ -515,13 +517,14 @@ export default function Estagios() {
             {sidebarAberta && (
               <Text style={styles.menuText}>Aprovar Contas</Text>
             )}
+            <ContasPendentesBadge count={contasPendentes} />
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -533,7 +536,7 @@ export default function Estagios() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -555,7 +558,7 @@ export default function Estagios() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -569,7 +572,7 @@ export default function Estagios() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -585,7 +588,7 @@ export default function Estagios() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -599,7 +602,7 @@ export default function Estagios() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -611,7 +614,7 @@ export default function Estagios() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -639,7 +642,7 @@ export default function Estagios() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -649,7 +652,10 @@ export default function Estagios() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -662,7 +668,8 @@ export default function Estagios() {
             <View>
               <Text style={styles.titulo}>Edições de Estágio</Text>
               <Text style={styles.subtitulo}>
-                Consultar e gerir vagas por ensino clínico, instituição e serviço.
+                Consultar e gerir vagas por ensino clínico, instituição e
+                serviço.
               </Text>
             </View>
           </View>
@@ -671,7 +678,7 @@ export default function Estagios() {
             style={styles.botaoCriarHeader}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/criar-estagio" as any
+                "/backoffice/superadmin/editarEstagio/criar-estagio" as any,
               )
             }
           >
@@ -683,6 +690,7 @@ export default function Estagios() {
         <View style={styles.filtrosCard}>
           <View style={styles.searchContainer}>
             <Ionicons name="search-outline" size={22} color="#777" />
+
             <TextInput
               placeholder="Pesquisar por ensino, instituição, serviço ou ano letivo..."
               placeholderTextColor="#8c8787"
@@ -705,14 +713,15 @@ export default function Estagios() {
                 onPress={() => {
                   setShowFiltroEstado(!showFiltroEstado);
                   setShowFiltroAno(false);
+                  setShowPorPagina(false);
                 }}
               >
                 <Text style={styles.selectToggleText}>
                   {filtroEstado === "ativos"
                     ? "Ativos"
                     : filtroEstado === "inativos"
-                    ? "Inativos"
-                    : "Todos"}
+                      ? "Inativos"
+                      : "Todos"}
                 </Text>
 
                 <Ionicons
@@ -772,6 +781,7 @@ export default function Estagios() {
                 onPress={() => {
                   setShowFiltroAno(!showFiltroAno);
                   setShowFiltroEstado(false);
+                  setShowPorPagina(false);
                 }}
               >
                 <Text style={styles.selectToggleText}>
@@ -802,49 +812,19 @@ export default function Estagios() {
                     <Text style={styles.dropdownOptionText}>Todos</Text>
                   </Pressable>
 
-                  <Pressable
-                    style={styles.dropdownOption}
-                    onPress={() => {
-                      setFiltroAno("1");
-                      setPaginaAtual(1);
-                      setShowFiltroAno(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownOptionText}>1.º ano</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={styles.dropdownOption}
-                    onPress={() => {
-                      setFiltroAno("2");
-                      setPaginaAtual(1);
-                      setShowFiltroAno(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownOptionText}>2.º ano</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={styles.dropdownOption}
-                    onPress={() => {
-                      setFiltroAno("3");
-                      setPaginaAtual(1);
-                      setShowFiltroAno(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownOptionText}>3.º ano</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={styles.dropdownOption}
-                    onPress={() => {
-                      setFiltroAno("4");
-                      setPaginaAtual(1);
-                      setShowFiltroAno(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownOptionText}>4.º ano</Text>
-                  </Pressable>
+                  {["1", "2", "3", "4"].map((ano) => (
+                    <Pressable
+                      key={ano}
+                      style={styles.dropdownOption}
+                      onPress={() => {
+                        setFiltroAno(ano);
+                        setPaginaAtual(1);
+                        setShowFiltroAno(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownOptionText}>{ano}.º ano</Text>
+                    </Pressable>
+                  ))}
                 </View>
               )}
             </View>
@@ -872,9 +852,7 @@ export default function Estagios() {
                   Ensino Clínico
                 </Text>
                 <Text style={[styles.th, styles.colAnoCurricular]}>Ano</Text>
-                <Text style={[styles.th, styles.colAnoLetivo]}>
-                  Ano letivo
-                </Text>
+                <Text style={[styles.th, styles.colAnoLetivo]}>Ano letivo</Text>
                 <Text style={[styles.th, styles.colVagas]}>Vagas</Text>
                 <Text style={[styles.th, styles.colEstado]}>Estado</Text>
                 <Text style={[styles.th, styles.colAcoes]}>Ações</Text>
@@ -887,7 +865,10 @@ export default function Estagios() {
                 return (
                   <View key={edicao.id} style={styles.linhaContainer}>
                     <View style={styles.tabelaLinha}>
-                      <Text style={[styles.tdNome, styles.colEnsino]}>
+                      <Text
+                        style={[styles.tdNome, styles.colEnsino]}
+                        numberOfLines={1}
+                      >
                         {edicao.ensinos_clinicos?.nome || "Ensino Clínico"}
                       </Text>
 
@@ -950,9 +931,7 @@ export default function Estagios() {
                           onPress={() => pedirAlterarEstado(edicao)}
                         >
                           <Ionicons
-                            name={
-                              inativo ? "refresh-outline" : "ban-outline"
-                            }
+                            name={inativo ? "refresh-outline" : "ban-outline"}
                             size={19}
                             color="#160909"
                           />
@@ -1041,7 +1020,11 @@ export default function Estagios() {
 
                   <Pressable
                     style={styles.porPaginaBotao}
-                    onPress={() => setShowPorPagina(!showPorPagina)}
+                    onPress={() => {
+                      setShowPorPagina(!showPorPagina);
+                      setShowFiltroEstado(false);
+                      setShowFiltroAno(false);
+                    }}
                   >
                     <Text style={styles.porPaginaTexto}>{itensPorPagina}</Text>
                     <Ionicons
@@ -1057,26 +1040,17 @@ export default function Estagios() {
 
                   {showPorPagina && (
                     <View style={styles.porPaginaDropdown}>
-                      <Pressable
-                        style={styles.porPaginaOpcao}
-                        onPress={() => mudarItensPorPagina(10)}
-                      >
-                        <Text style={styles.porPaginaOpcaoTexto}>10</Text>
-                      </Pressable>
-
-                      <Pressable
-                        style={styles.porPaginaOpcao}
-                        onPress={() => mudarItensPorPagina(15)}
-                      >
-                        <Text style={styles.porPaginaOpcaoTexto}>15</Text>
-                      </Pressable>
-
-                      <Pressable
-                        style={styles.porPaginaOpcao}
-                        onPress={() => mudarItensPorPagina(20)}
-                      >
-                        <Text style={styles.porPaginaOpcaoTexto}>20</Text>
-                      </Pressable>
+                      {[10, 15, 20].map((valor) => (
+                        <Pressable
+                          key={valor}
+                          style={styles.porPaginaOpcao}
+                          onPress={() => mudarItensPorPagina(valor)}
+                        >
+                          <Text style={styles.porPaginaOpcaoTexto}>
+                            {valor}
+                          </Text>
+                        </Pressable>
+                      ))}
                     </View>
                   )}
                 </View>
@@ -1105,8 +1079,7 @@ export default function Estagios() {
                 <Pressable
                   style={[
                     styles.paginaBotao,
-                    paginaAtual === totalPaginas &&
-                      styles.paginaBotaoDisabled,
+                    paginaAtual === totalPaginas && styles.paginaBotaoDisabled,
                   ]}
                   onPress={irPaginaSeguinte}
                   disabled={paginaAtual === totalPaginas}
@@ -1170,9 +1143,7 @@ export default function Estagios() {
                 </Text>
                 <Ionicons
                   name={
-                    ensinoOpen
-                      ? "chevron-up-outline"
-                      : "chevron-down-outline"
+                    ensinoOpen ? "chevron-up-outline" : "chevron-down-outline"
                   }
                   size={22}
                   color="#160909"
@@ -1271,9 +1242,7 @@ export default function Estagios() {
                 </Text>
                 <Ionicons
                   name={
-                    servicoOpen
-                      ? "chevron-up-outline"
-                      : "chevron-down-outline"
+                    servicoOpen ? "chevron-up-outline" : "chevron-down-outline"
                   }
                   size={22}
                   color="#160909"
@@ -1449,7 +1418,10 @@ export default function Estagios() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>
@@ -1462,7 +1434,10 @@ export default function Estagios() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={confirmarApagar}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={confirmarApagar}
+                >
                   <Text style={styles.popupTextoSair}>Apagar</Text>
                 </Pressable>
               </View>

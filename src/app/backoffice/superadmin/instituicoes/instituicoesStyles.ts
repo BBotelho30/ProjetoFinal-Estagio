@@ -391,8 +391,8 @@ const local = StyleSheet.create({
 
   estadoBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFF7E0",
-    color: "#B77900",
+    backgroundColor: "#e0f9dcff",
+    color: "#4bcf37ff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,

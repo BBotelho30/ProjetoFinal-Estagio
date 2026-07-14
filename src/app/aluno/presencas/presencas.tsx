@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -21,6 +21,7 @@ type EstagioAtual = {
     permite_reposicao_horas: boolean;
     limite_faltas_percentagem: number;
     max_horas_dia: number;
+    data_inicio: string | null;
     data_fim: string | null;
     ensinos_clinicos?: {
       nome: string;
@@ -51,6 +52,9 @@ type Falta = {
   justificacao_url: string | null;
   estado: string;
 };
+
+type TipoSeletorData = "presenca" | "falta";
+type TipoSeletorHora = "inicio" | "fim";
 
 export default function PresencasAluno() {
   const params = useLocalSearchParams();
@@ -86,6 +90,59 @@ export default function PresencasAluno() {
   const [popupTitulo, setPopupTitulo] = useState("");
   const [popupMensagem, setPopupMensagem] = useState("");
 
+  const [mesCalendario, setMesCalendario] = useState(new Date());
+  const [diaSelecionado, setDiaSelecionado] = useState("");
+  const [seletorDataVisivel, setSeletorDataVisivel] = useState(false);
+  const [tipoSeletorData, setTipoSeletorData] =
+    useState<TipoSeletorData>("presenca");
+
+  const [seletorHoraVisivel, setSeletorHoraVisivel] = useState(false);
+  const [tipoSeletorHora, setTipoSeletorHora] =
+    useState<TipoSeletorHora>("inicio");
+  const [horaTemp, setHoraTemp] = useState(8);
+  const [minutoTemp, setMinutoTemp] = useState(0);
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  const diasCalendario = useMemo(() => {
+    const ano = mesCalendario.getFullYear();
+    const mes = mesCalendario.getMonth();
+
+    const primeiroDia = new Date(ano, mes, 1);
+    const ultimoDia = new Date(ano, mes + 1, 0);
+
+    const inicioSemana = primeiroDia.getDay();
+    const totalDias = ultimoDia.getDate();
+
+    const vazios = inicioSemana === 0 ? 6 : inicioSemana - 1;
+
+    const lista: (Date | null)[] = [];
+
+    for (let i = 0; i < vazios; i++) {
+      lista.push(null);
+    }
+
+    for (let dia = 1; dia <= totalDias; dia++) {
+      lista.push(new Date(ano, mes, dia));
+    }
+
+    return lista;
+  }, [mesCalendario]);
+
+  const presencasDiaSelecionado = useMemo(() => {
+    if (!diaSelecionado) return [];
+
+    return presencas.filter((presenca) => presenca.data === diaSelecionado);
+  }, [diaSelecionado, presencas]);
+
+  const faltasDiaSelecionado = useMemo(() => {
+    if (!diaSelecionado) return [];
+
+    return faltas.filter((falta) => falta.data === diaSelecionado);
+  }, [diaSelecionado, faltas]);
+
   function mostrarPopup(titulo: string, mensagem: string) {
     setPopupTitulo(titulo);
     setPopupMensagem(mensagem);
@@ -93,108 +150,326 @@ export default function PresencasAluno() {
   }
 
   async function carregarDados() {
-  setLoading(true);
+    setLoading(true);
 
-  const { data: authData } = await supabase.auth.getUser();
+    const { data: authData } = await supabase.auth.getUser();
 
-  if (!authData.user) {
-    router.replace("/login/login" as any);
-    return;
-  }
+    if (!authData.user) {
+      router.replace("/login/login" as any);
+      return;
+    }
 
-  let query = supabase
-    .from("inscricoes_estagio")
-    .select(`
-      id,
-      edicao_estagio_id,
-      estado_estagio,
-      edicoes_estagio(
-        permite_reposicao_horas,
-        limite_faltas_percentagem,
-        max_horas_dia,
-        data_fim,
-        ensinos_clinicos(nome, horas_estimadas),
-        instituicoes(nome),
-        servicos(nome)
+    let query = supabase
+      .from("inscricoes_estagio")
+      .select(`
+        id,
+        edicao_estagio_id,
+        estado_estagio,
+        edicoes_estagio(
+          permite_reposicao_horas,
+          limite_faltas_percentagem,
+          max_horas_dia,
+          data_inicio,
+          data_fim,
+          ensinos_clinicos(nome, horas_estimadas),
+          instituicoes(nome),
+          servicos(nome)
+        )
+      `)
+      .eq("aluno_id", authData.user.id);
+
+    if (inscricaoIdParam) {
+      query = query.eq("id", inscricaoIdParam);
+    } else {
+      query = query
+        .neq("estado_estagio", "concluido")
+        .order("id", { ascending: false })
+        .limit(1);
+    }
+
+    const { data: estagioData, error: estagioError } = await query.maybeSingle();
+
+    if (estagioError) {
+      console.log("ERRO ESTÁGIO PRESENÇAS:", estagioError);
+      setEstagio(null);
+      setPresencas([]);
+      setFaltas([]);
+      setLoading(false);
+      return;
+    }
+
+    if (!estagioData) {
+      setEstagio(null);
+      setPresencas([]);
+      setFaltas([]);
+      setLoading(false);
+      return;
+    }
+
+    setEstagio((estagioData as any) || null);
+
+    const inscricaoId = (estagioData as any).id;
+
+    const { data: presencasData, error: presencasError } = await supabase
+      .from("presencas")
+      .select(
+        "id, data, hora_inicio, hora_fim, duracao, horas_reposicao, tipo, estado, observacoes"
       )
-    `)
-    .eq("aluno_id", authData.user.id);
+      .eq("inscricao_id", inscricaoId)
+      .order("data", { ascending: false });
 
-  if (inscricaoIdParam) {
-    query = query.eq("id", inscricaoIdParam);
-  } else {
-    query = query
-      .neq("estado_estagio", "concluido")
-      .order("id", { ascending: false })
-      .limit(1);
-  }
+    if (presencasError) {
+      console.log("ERRO PRESENÇAS:", presencasError);
+      setPresencas([]);
+    } else {
+      setPresencas((presencasData as any) || []);
+    }
 
-  const { data: estagioData, error: estagioError } = await query.maybeSingle();
+    const { data: faltasData, error: faltasError } = await supabase
+      .from("faltas")
+      .select(
+        "id, data, horas_falta, justificacao_texto, justificacao_url, estado"
+      )
+      .eq("inscricao_id", inscricaoId)
+      .order("data", { ascending: false });
 
-  if (estagioError) {
-    console.log("ERRO ESTÁGIO PRESENÇAS:", estagioError);
-    setEstagio(null);
-    setPresencas([]);
-    setFaltas([]);
+    if (faltasError) {
+      console.log("ERRO FALTAS:", faltasError);
+      setFaltas([]);
+    } else {
+      setFaltas((faltasData as any) || []);
+    }
+
+    const hojeISO = dataParaISO(new Date());
+
+    if (!diaSelecionado) {
+      setDiaSelecionado(hojeISO);
+    }
+
     setLoading(false);
-    return;
   }
 
-  if (!estagioData) {
-    console.log("NENHUM ESTÁGIO ENCONTRADO PARA:", {
-      inscricaoIdParam,
-      origem,
-      from,
+  function dataParaISO(date: Date) {
+    const ano = date.getFullYear();
+    const mes = String(date.getMonth() + 1).padStart(2, "0");
+    const dia = String(date.getDate()).padStart(2, "0");
+
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  function dataParaTexto(dataISO: string | null | undefined) {
+    if (!dataISO) return "Sem data";
+
+    const partes = dataISO.split("-");
+
+    if (partes.length !== 3) return "Sem data";
+
+    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+  }
+
+  function nomeMes(date: Date) {
+    return date.toLocaleDateString("pt-PT", {
+      month: "long",
+      year: "numeric",
     });
-
-    setEstagio(null);
-    setPresencas([]);
-    setFaltas([]);
-    setLoading(false);
-    return;
   }
 
-  setEstagio((estagioData as any) || null);
-
-  const inscricaoId = (estagioData as any).id;
-
-  const { data: presencasData, error: presencasError } = await supabase
-    .from("presencas")
-    .select(
-      "id, data, hora_inicio, hora_fim, duracao, horas_reposicao, tipo, estado, observacoes"
-    )
-    .eq("inscricao_id", inscricaoId)
-    .order("data", { ascending: false });
-
-  if (presencasError) {
-    console.log("ERRO PRESENÇAS:", presencasError);
-    setPresencas([]);
-  } else {
-    setPresencas((presencasData as any) || []);
+  function alterarMes(valor: number) {
+    setMesCalendario((atual) => {
+      const novo = new Date(atual);
+      novo.setMonth(novo.getMonth() + valor);
+      return novo;
+    });
   }
 
-  const { data: faltasData, error: faltasError } = await supabase
-    .from("faltas")
-    .select(
-      "id, data, horas_falta, justificacao_texto, justificacao_url, estado"
-    )
-    .eq("inscricao_id", inscricaoId)
-    .order("data", { ascending: false });
-
-  if (faltasError) {
-    console.log("ERRO FALTAS:", faltasError);
-    setFaltas([]);
-  } else {
-    setFaltas((faltasData as any) || []);
+  function dataInicioEstagio() {
+    return estagio?.edicoes_estagio?.data_inicio || null;
   }
 
-  setLoading(false);
-}
+  function dataFimEstagio() {
+    return estagio?.edicoes_estagio?.data_fim || null;
+  }
 
+  function dataDentroDoEstagio(dataISO: string) {
+    const inicio = dataInicioEstagio();
+    const fim = dataFimEstagio();
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
+    if (inicio && dataISO < inicio) return false;
+    if (fim && dataISO > fim) return false;
+
+    return true;
+  }
+
+  function validarDataDentroEstagio(dataISO: string) {
+    const inicio = dataInicioEstagio();
+    const fim = dataFimEstagio();
+
+    if (inicio && dataISO < inicio) {
+      mostrarPopup(
+        "Data inválida",
+        `O estágio só começa em ${dataParaTexto(inicio)}.`
+      );
+      return false;
+    }
+
+    if (fim && dataISO > fim) {
+      mostrarPopup(
+        "Data inválida",
+        `O estágio termina em ${dataParaTexto(fim)}.`
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  function estadoDoDia(dataISO: string) {
+    const presencasDoDia = presencas.filter(
+      (presenca) => presenca.data === dataISO
+    );
+
+    const faltasDoDia = faltas.filter((falta) => falta.data === dataISO);
+
+    if (faltasDoDia.length > 0) {
+      return "falta";
+    }
+
+    if (
+      presencasDoDia.some(
+        (presenca) =>
+          presenca.estado === "validada" || presenca.estado === "validado"
+      )
+    ) {
+      return "validada";
+    }
+
+    if (presencasDoDia.length > 0) {
+      return "pendente";
+    }
+
+    return "vazio";
+  }
+
+  function corDoDia(dataISO: string) {
+    const estado = estadoDoDia(dataISO);
+
+    if (estado === "falta") return "#e74c3c";
+    if (estado === "validada") return "#2ECC71";
+    if (estado === "pendente") return "#FDB515";
+
+    return "transparent";
+  }
+
+  function selecionarDiaCalendario(date: Date) {
+    const dataISO = dataParaISO(date);
+
+    setDiaSelecionado(dataISO);
+  }
+
+  function abrirSeletorData(tipoSeletor: TipoSeletorData) {
+    setTipoSeletorData(tipoSeletor);
+
+    const dataAtual = tipoSeletor === "presenca" ? data : dataFalta;
+
+    if (dataAtual) {
+      const partes = dataAtual.split("-");
+      const ano = Number(partes[0]);
+      const mes = Number(partes[1]) - 1;
+      const dia = Number(partes[2]);
+
+      if (!Number.isNaN(ano) && !Number.isNaN(mes) && !Number.isNaN(dia)) {
+        setMesCalendario(new Date(ano, mes, dia));
+      }
+    }
+
+    setSeletorDataVisivel(true);
+  }
+
+  function escolherDiaModal(date: Date) {
+    const dataISO = dataParaISO(date);
+
+    if (!validarDataDentroEstagio(dataISO)) return;
+
+    if (tipoSeletorData === "presenca") {
+      setData(dataISO);
+    } else {
+      setDataFalta(dataISO);
+    }
+
+    setDiaSelecionado(dataISO);
+    setSeletorDataVisivel(false);
+  }
+
+  function abrirSeletorHora(tipoHora: TipoSeletorHora) {
+    setTipoSeletorHora(tipoHora);
+
+    const valor = tipoHora === "inicio" ? horaInicio : horaFim;
+    const [h, m] = valor ? valor.split(":").map(Number) : [8, 0];
+
+    setHoraTemp(Number.isNaN(h) ? 8 : h);
+    setMinutoTemp(Number.isNaN(m) ? 0 : m);
+
+    setSeletorHoraVisivel(true);
+  }
+
+  function confirmarHora() {
+    const horaTexto = String(horaTemp).padStart(2, "0");
+    const minutoTexto = String(minutoTemp).padStart(2, "0");
+    const valor = `${horaTexto}:${minutoTexto}`;
+
+    if (tipoSeletorHora === "inicio") {
+      setHoraInicio(valor);
+    } else {
+      setHoraFim(valor);
+    }
+
+    setSeletorHoraVisivel(false);
+  }
+
+  function alterarHora(valor: number) {
+    setHoraTemp((atual) => {
+      const novo = atual + valor;
+
+      if (novo < 0) return 23;
+      if (novo > 23) return 0;
+
+      return novo;
+    });
+  }
+
+  function alterarMinuto(valor: number) {
+    setMinutoTemp((atual) => {
+      const novo = atual + valor;
+
+      if (novo < 0) return 55;
+      if (novo > 55) return 0;
+
+      return novo;
+    });
+  }
+
+  function abrirModalPresenca() {
+    const hoje = dataParaISO(new Date());
+
+    if (!data && dataDentroDoEstagio(hoje)) {
+      setData(hoje);
+    }
+
+    if (!horaInicio) setHoraInicio("08:00");
+    if (!horaFim) setHoraFim("15:00");
+
+    setModalVisivel(true);
+  }
+
+  function abrirModalFalta() {
+    const hoje = dataParaISO(new Date());
+
+    if (!dataFalta && dataDentroDoEstagio(hoje)) {
+      setDataFalta(hoje);
+    }
+
+    setModalFaltaVisivel(true);
+  }
 
   function calcularDuracao(inicio: string, fim: string) {
     const [hi, mi] = inicio.split(":").map(Number);
@@ -301,123 +576,123 @@ export default function PresencasAluno() {
   }
 
   function textoEstado(valor: string) {
-    if (valor === "validada") return "Validada";
-    if (valor === "rejeitada") return "Rejeitada";
+    if (valor === "validada" || valor === "validado") return "Validada";
+    if (valor === "rejeitada" || valor === "rejeitado") return "Rejeitada";
     return "Pendente";
   }
 
   function corEstado(valor: string) {
-    if (valor === "validada") return "#CDEFD6";
-    if (valor === "rejeitada") return "#F8C8C8";
+    if (valor === "validada" || valor === "validado") return "#CDEFD6";
+    if (valor === "rejeitada" || valor === "rejeitado") return "#F8C8C8";
     return "#FDE8B4";
   }
 
   async function guardarPresenca() {
-  if (aGuardar) return;
+    if (aGuardar) return;
 
-  if (!estagio) {
-    mostrarPopup("Erro", "Não existe estágio ativo.");
-    return;
-  }
+    if (!estagio) {
+      mostrarPopup("Erro", "Não existe estágio ativo.");
+      return;
+    }
 
-  if (!data || !horaInicio || !horaFim) {
-    mostrarPopup("Erro", "Preenche data, hora de início e hora de fim.");
-    return;
-  }
+    if (!data || !horaInicio || !horaFim) {
+      mostrarPopup("Erro", "Preenche data, hora de início e hora de fim.");
+      return;
+    }
 
-  const duracao = calcularDuracao(horaInicio, horaFim);
+    if (!validarDataDentroEstagio(data)) return;
 
-  if (duracao <= 0) {
-    mostrarPopup("Erro", "A hora de fim tem de ser superior à hora de início.");
-    return;
-  }
+    const duracao = calcularDuracao(horaInicio, horaFim);
 
-  const maxHorasDia = estagio.edicoes_estagio?.max_horas_dia || 7;
-  const minHorasDia = 7;
-  const permiteReposicao =
-    estagio.edicoes_estagio?.permite_reposicao_horas || false;
+    if (duracao <= 0) {
+      mostrarPopup("Erro", "A hora de fim tem de ser superior à hora de início.");
+      return;
+    }
 
-  let horasReposicao = 0;
-  const horasEmFaltaDia = Number((minHorasDia - duracao).toFixed(2));
+    const maxHorasDia = estagio.edicoes_estagio?.max_horas_dia || 7;
+    const minHorasDia = 7;
+    const permiteReposicao =
+      estagio.edicoes_estagio?.permite_reposicao_horas || false;
 
-  if (duracao < minHorasDia) {
-    const faltaDoDia = faltas.find(
-      (f) =>
-        f.data === data &&
-        Number(f.horas_falta) >= horasEmFaltaDia
-    );
+    let horasReposicao = 0;
+    const horasEmFaltaDia = Number((minHorasDia - duracao).toFixed(2));
 
-    if (!faltaDoDia) {
+    if (duracao < minHorasDia) {
+      const faltaDoDia = faltas.find(
+        (f) => f.data === data && Number(f.horas_falta) >= horasEmFaltaDia
+      );
+
+      if (!faltaDoDia) {
+        mostrarPopup(
+          "Presença não registada",
+          `Registaste apenas ${duracao}h. Faltam ${horasEmFaltaDia}h. Primeiro tens de registar uma falta justificada para este dia.`
+        );
+        return;
+      }
+    }
+
+    if (!permiteReposicao && duracao > maxHorasDia) {
       mostrarPopup(
-        "Presença não registada",
-        `Registaste apenas ${duracao}h. Faltam ${horasEmFaltaDia}h. Primeiro tens de registar uma falta justificada para este dia.`
+        "Erro",
+        `Este estágio permite no máximo ${maxHorasDia} horas por dia.`
       );
       return;
     }
+
+    if (permiteReposicao && duracao > maxHorasDia) {
+      horasReposicao = Number((duracao - maxHorasDia).toFixed(2));
+    }
+
+    setAGuardar(true);
+
+    const { error } = await supabase.from("presencas").insert([
+      {
+        inscricao_id: estagio.id,
+        data,
+        hora_inicio: horaInicio,
+        hora_fim: horaFim,
+        duracao,
+        horas_reposicao: horasReposicao,
+        tipo,
+        estado: "pendente",
+        observacoes: observacoes.trim() || null,
+      },
+    ]);
+
+    setAGuardar(false);
+
+    if (error) {
+      mostrarPopup("Erro", error.message);
+      return;
+    }
+
+    setModalVisivel(false);
+    setData("");
+    setHoraInicio("");
+    setHoraFim("");
+    setTipo("contacto");
+    setObservacoes("");
+
+    await carregarDados();
+
+    if (duracao < minHorasDia) {
+      mostrarPopup(
+        "Presença registada",
+        `Presença registada com ${duracao}h. A falta de ${horasEmFaltaDia}h já está associada a este dia.`
+      );
+      return;
+    }
+
+    if (horasReposicao > 0) {
+      mostrarPopup(
+        "Presença registada",
+        `Presença registada com sucesso. Foram contabilizadas ${horasReposicao}h como reposição.`
+      );
+      return;
+    }
+
+    mostrarPopup("Sucesso", "Presença registada com sucesso.");
   }
-
-  if (!permiteReposicao && duracao > maxHorasDia) {
-    mostrarPopup(
-      "Erro",
-      `Este estágio permite no máximo ${maxHorasDia} horas por dia.`
-    );
-    return;
-  }
-
-  if (permiteReposicao && duracao > maxHorasDia) {
-    horasReposicao = Number((duracao - maxHorasDia).toFixed(2));
-  }
-
-  setAGuardar(true);
-
-  const { error } = await supabase.from("presencas").insert([
-    {
-      inscricao_id: estagio.id,
-      data,
-      hora_inicio: horaInicio,
-      hora_fim: horaFim,
-      duracao,
-      horas_reposicao: horasReposicao,
-      tipo,
-      estado: "pendente",
-      observacoes: observacoes.trim() || null,
-    },
-  ]);
-
-  setAGuardar(false);
-
-  if (error) {
-    mostrarPopup("Erro", error.message);
-    return;
-  }
-
-  setModalVisivel(false);
-  setData("");
-  setHoraInicio("");
-  setHoraFim("");
-  setTipo("contacto");
-  setObservacoes("");
-
-  await carregarDados();
-
-  if (duracao < minHorasDia) {
-    mostrarPopup(
-      "Presença registada",
-      `Presença registada com ${duracao}h. A falta de ${horasEmFaltaDia}h já está associada a este dia.`
-    );
-    return;
-  }
-
-  if (horasReposicao > 0) {
-    mostrarPopup(
-      "Presença registada",
-      `Presença registada com sucesso. Foram contabilizadas ${horasReposicao}h como reposição.`
-    );
-    return;
-  }
-
-  mostrarPopup("Sucesso", "Presença registada com sucesso.");
-}
 
   async function escolherDocumento() {
     const result = await DocumentPicker.getDocumentAsync({
@@ -442,6 +717,8 @@ export default function PresencasAluno() {
       mostrarPopup("Erro", "Preenche a data e as horas de falta.");
       return;
     }
+
+    if (!validarDataDentroEstagio(dataFalta)) return;
 
     if (!justificacaoTexto.trim() && !documento) {
       mostrarPopup(
@@ -526,7 +803,6 @@ export default function PresencasAluno() {
     carregarDados();
   }
 
-  
   function voltarPaginaAnterior() {
     if (origem === "estagioPresencas") {
       router.replace(
@@ -565,10 +841,10 @@ export default function PresencasAluno() {
   return (
     <View style={styles.page}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
-        <Ionicons name="arrow-back-outline" size={24} color="#160909" />
-        <Text style={styles.voltarTexto}>Voltar</Text>
-      </Pressable>
+        <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
+          <Ionicons name="arrow-back-outline" size={24} color="#160909" />
+          <Text style={styles.voltarTexto}>Voltar</Text>
+        </Pressable>
 
         <Text style={styles.titulo}>Presenças</Text>
 
@@ -650,19 +926,160 @@ export default function PresencasAluno() {
             ) : null}
 
             <View style={styles.botoesRegistoLinha}>
-              <Pressable
-                style={styles.botaoCriar}
-                onPress={() => setModalVisivel(true)}
-              >
+              <Pressable style={styles.botaoCriar} onPress={abrirModalPresenca}>
                 <Text style={styles.textoBotaoCriar}>+ Presença</Text>
               </Pressable>
 
-              <Pressable
-                style={styles.botaoFalta}
-                onPress={() => setModalFaltaVisivel(true)}
-              >
+              <Pressable style={styles.botaoFalta} onPress={abrirModalFalta}>
                 <Text style={styles.textoBotaoFalta}>+ Falta</Text>
               </Pressable>
+            </View>
+
+            <Text style={styles.secaoTitulo}>Calendário de Presenças</Text>
+
+            <View style={styles.calendarioCard}>
+              <View style={styles.calendarioHeader}>
+                <Pressable
+                  style={styles.calendarioSeta}
+                  onPress={() => alterarMes(-1)}
+                >
+                  <Ionicons name="chevron-back-outline" size={22} color="#160909" />
+                </Pressable>
+
+                <Text style={styles.calendarioTitulo}>
+                  {nomeMes(mesCalendario)}
+                </Text>
+
+                <Pressable
+                  style={styles.calendarioSeta}
+                  onPress={() => alterarMes(1)}
+                >
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
+              </View>
+
+              <View style={styles.diasSemanaLinha}>
+                {["S", "T", "Q", "Q", "S", "S", "D"].map((dia, index) => (
+                  <Text key={`${dia}-${index}`} style={styles.diaSemanaTexto}>
+                    {dia}
+                  </Text>
+                ))}
+              </View>
+
+              <View style={styles.calendarioGrid}>
+                {diasCalendario.map((dia, index) => {
+                  if (!dia) {
+                    return <View key={`vazio-${index}`} style={styles.diaVazio} />;
+                  }
+
+                  const dataISO = dataParaISO(dia);
+                  const selecionado = diaSelecionado === dataISO;
+                  const dentroEstagio = dataDentroDoEstagio(dataISO);
+                  const cor = corDoDia(dataISO);
+
+                  return (
+                    <Pressable
+                      key={dataISO}
+                      style={[
+                        styles.diaBotao,
+                        selecionado && styles.diaSelecionado,
+                        !dentroEstagio && styles.diaForaEstagio,
+                      ]}
+                      onPress={() => selecionarDiaCalendario(dia)}
+                    >
+                      <Text
+                        style={[
+                          styles.diaTexto,
+                          selecionado && styles.diaTextoSelecionado,
+                          !dentroEstagio && styles.diaTextoForaEstagio,
+                        ]}
+                      >
+                        {dia.getDate()}
+                      </Text>
+
+                      <View
+                        style={[
+                          styles.diaDot,
+                          {
+                            backgroundColor: cor,
+                          },
+                        ]}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={styles.legendaLinha}>
+                <View style={styles.legendaItem}>
+                  <View style={[styles.legendaDot, { backgroundColor: "#FDB515" }]} />
+                  <Text style={styles.legendaTexto}>Pendente</Text>
+                </View>
+
+                <View style={styles.legendaItem}>
+                  <View style={[styles.legendaDot, { backgroundColor: "#2ECC71" }]} />
+                  <Text style={styles.legendaTexto}>Validada</Text>
+                </View>
+
+                <View style={styles.legendaItem}>
+                  <View style={[styles.legendaDot, { backgroundColor: "#e74c3c" }]} />
+                  <Text style={styles.legendaTexto}>Falta</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.detalhesDiaCard}>
+              <Text style={styles.detalhesDiaTitulo}>
+                {diaSelecionado
+                  ? dataParaTexto(diaSelecionado)
+                  : "Seleciona um dia"}
+              </Text>
+
+              {presencasDiaSelecionado.length === 0 &&
+              faltasDiaSelecionado.length === 0 ? (
+                <Text style={styles.detalhesDiaTexto}>
+                  Não existe presença nem falta registada neste dia.
+                </Text>
+              ) : (
+                <>
+                  {presencasDiaSelecionado.map((presenca) => (
+                    <View key={`p-${presenca.id}`} style={styles.registoDiaBox}>
+                      <Text style={styles.registoDiaTitulo}>Presença</Text>
+
+                      <Text style={styles.registoDiaTexto}>
+                        {presenca.hora_inicio.slice(0, 5)} -{" "}
+                        {presenca.hora_fim.slice(0, 5)} · {presenca.duracao}h
+                      </Text>
+
+                      <Text style={styles.registoDiaTexto}>
+                        Tipo: {textoTipo(presenca.tipo)}
+                      </Text>
+
+                      <Text style={styles.registoDiaTexto}>
+                        Estado: {textoEstado(presenca.estado)}
+                      </Text>
+                    </View>
+                  ))}
+
+                  {faltasDiaSelecionado.map((falta) => (
+                    <View key={`f-${falta.id}`} style={styles.registoDiaBox}>
+                      <Text style={styles.registoDiaTitulo}>Falta</Text>
+
+                      <Text style={styles.registoDiaTexto}>
+                        {falta.horas_falta}h de falta
+                      </Text>
+
+                      <Text style={styles.registoDiaTexto}>
+                        Estado: {textoEstado(falta.estado)}
+                      </Text>
+                    </View>
+                  ))}
+                </>
+              )}
             </View>
 
             <Text style={styles.secaoTitulo}>Histórico de Presenças</Text>
@@ -677,7 +1094,9 @@ export default function PresencasAluno() {
                   <View key={presenca.id} style={styles.cardPresenca}>
                     <View style={styles.cardTopo}>
                       <View>
-                        <Text style={styles.dataTexto}>Data: {presenca.data}</Text>
+                        <Text style={styles.dataTexto}>
+                          Data: {dataParaTexto(presenca.data)}
+                        </Text>
                         <Text style={styles.horarioTexto}>
                           Horas: {presenca.hora_inicio.slice(0, 5)} -{" "}
                           {presenca.hora_fim.slice(0, 5)}
@@ -739,7 +1158,10 @@ export default function PresencasAluno() {
                   <View key={falta.id} style={styles.cardFalta}>
                     <View style={styles.cardTopo}>
                       <View>
-                        <Text style={styles.dataTexto}>Data: {falta.data}</Text>
+                        <Text style={styles.dataTexto}>
+                          Data: {dataParaTexto(falta.data)}
+                        </Text>
+
                         <Text style={styles.horarioTexto}>
                           Horas: {falta.horas_falta}h de falta
                         </Text>
@@ -832,29 +1254,59 @@ export default function PresencasAluno() {
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitulo}>Registar Presença</Text>
 
-            <TextInput
-              placeholder="Data: AAAA-MM-DD"
-              placeholderTextColor="#8c8787"
-              style={styles.input}
-              value={data}
-              onChangeText={setData}
-            />
+            <Text style={styles.label}>Data</Text>
 
-            <TextInput
-              placeholder="Hora início: 08:00"
-              placeholderTextColor="#8c8787"
-              style={styles.input}
-              value={horaInicio}
-              onChangeText={setHoraInicio}
-            />
+            <Pressable
+              style={styles.inputBotao}
+              onPress={() => abrirSeletorData("presenca")}
+            >
+              <Text
+                style={[
+                  styles.inputBotaoTexto,
+                  !data && styles.inputBotaoPlaceholder,
+                ]}
+              >
+                {data ? dataParaTexto(data) : "Selecionar data"}
+              </Text>
 
-            <TextInput
-              placeholder="Hora fim: 16:00"
-              placeholderTextColor="#8c8787"
-              style={styles.input}
-              value={horaFim}
-              onChangeText={setHoraFim}
-            />
+              <Ionicons name="calendar-outline" size={22} color="#160909" />
+            </Pressable>
+
+            <Text style={styles.label}>Hora início</Text>
+
+            <Pressable
+              style={styles.inputBotao}
+              onPress={() => abrirSeletorHora("inicio")}
+            >
+              <Text
+                style={[
+                  styles.inputBotaoTexto,
+                  !horaInicio && styles.inputBotaoPlaceholder,
+                ]}
+              >
+                {horaInicio || "Selecionar hora"}
+              </Text>
+
+              <Ionicons name="time-outline" size={22} color="#160909" />
+            </Pressable>
+
+            <Text style={styles.label}>Hora fim</Text>
+
+            <Pressable
+              style={styles.inputBotao}
+              onPress={() => abrirSeletorHora("fim")}
+            >
+              <Text
+                style={[
+                  styles.inputBotaoTexto,
+                  !horaFim && styles.inputBotaoPlaceholder,
+                ]}
+              >
+                {horaFim || "Selecionar hora"}
+              </Text>
+
+              <Ionicons name="time-outline" size={22} color="#160909" />
+            </Pressable>
 
             <Text style={styles.label}>Tipo</Text>
 
@@ -911,13 +1363,23 @@ export default function PresencasAluno() {
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitulo}>Registar Falta</Text>
 
-            <TextInput
-              placeholder="Data: AAAA-MM-DD"
-              placeholderTextColor="#8c8787"
-              style={styles.input}
-              value={dataFalta}
-              onChangeText={setDataFalta}
-            />
+            <Text style={styles.label}>Data</Text>
+
+            <Pressable
+              style={styles.inputBotao}
+              onPress={() => abrirSeletorData("falta")}
+            >
+              <Text
+                style={[
+                  styles.inputBotaoTexto,
+                  !dataFalta && styles.inputBotaoPlaceholder,
+                ]}
+              >
+                {dataFalta ? dataParaTexto(dataFalta) : "Selecionar data"}
+              </Text>
+
+              <Ionicons name="calendar-outline" size={22} color="#160909" />
+            </Pressable>
 
             <TextInput
               placeholder="Horas de falta"
@@ -956,6 +1418,156 @@ export default function PresencasAluno() {
                 <Text style={styles.textoGuardar}>
                   {aGuardarFalta ? "A guardar..." : "Guardar"}
                 </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={seletorDataVisivel} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.calendarioModalContainer}>
+            <View style={styles.calendarioHeader}>
+              <Pressable
+                style={styles.calendarioSeta}
+                onPress={() => alterarMes(-1)}
+              >
+                <Ionicons name="chevron-back-outline" size={22} color="#160909" />
+              </Pressable>
+
+              <Text style={styles.calendarioTitulo}>
+                {nomeMes(mesCalendario)}
+              </Text>
+
+              <Pressable
+                style={styles.calendarioSeta}
+                onPress={() => alterarMes(1)}
+              >
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={22}
+                  color="#160909"
+                />
+              </Pressable>
+            </View>
+
+            <View style={styles.diasSemanaLinha}>
+              {["S", "T", "Q", "Q", "S", "S", "D"].map((dia, index) => (
+                <Text key={`${dia}-modal-${index}`} style={styles.diaSemanaTexto}>
+                  {dia}
+                </Text>
+              ))}
+            </View>
+
+            <View style={styles.calendarioGrid}>
+              {diasCalendario.map((dia, index) => {
+                if (!dia) {
+                  return <View key={`modal-vazio-${index}`} style={styles.diaVazio} />;
+                }
+
+                const dataISO = dataParaISO(dia);
+                const selecionado =
+                  tipoSeletorData === "presenca"
+                    ? data === dataISO
+                    : dataFalta === dataISO;
+
+                const dentroEstagio = dataDentroDoEstagio(dataISO);
+
+                return (
+                  <Pressable
+                    key={`modal-${dataISO}`}
+                    style={[
+                      styles.diaBotao,
+                      selecionado && styles.diaSelecionado,
+                      !dentroEstagio && styles.diaForaEstagio,
+                    ]}
+                    onPress={() => escolherDiaModal(dia)}
+                  >
+                    <Text
+                      style={[
+                        styles.diaTexto,
+                        selecionado && styles.diaTextoSelecionado,
+                        !dentroEstagio && styles.diaTextoForaEstagio,
+                      ]}
+                    >
+                      {dia.getDate()}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Pressable
+              style={styles.popupOkButton}
+              onPress={() => setSeletorDataVisivel(false)}
+            >
+              <Text style={styles.popupOkText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={seletorHoraVisivel} transparent animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.relogioContainer}>
+            <Text style={styles.relogioTitulo}>
+              {tipoSeletorHora === "inicio" ? "Hora início" : "Hora fim"}
+            </Text>
+
+            <View style={styles.relogioDisplay}>
+              <View style={styles.relogioColuna}>
+                <Pressable
+                  style={styles.relogioBotao}
+                  onPress={() => alterarHora(1)}
+                >
+                  <Ionicons name="chevron-up-outline" size={24} color="#160909" />
+                </Pressable>
+
+                <Text style={styles.relogioNumero}>
+                  {String(horaTemp).padStart(2, "0")}
+                </Text>
+
+                <Pressable
+                  style={styles.relogioBotao}
+                  onPress={() => alterarHora(-1)}
+                >
+                  <Ionicons name="chevron-down-outline" size={24} color="#160909" />
+                </Pressable>
+              </View>
+
+              <Text style={styles.relogioSeparador}>:</Text>
+
+              <View style={styles.relogioColuna}>
+                <Pressable
+                  style={styles.relogioBotao}
+                  onPress={() => alterarMinuto(5)}
+                >
+                  <Ionicons name="chevron-up-outline" size={24} color="#160909" />
+                </Pressable>
+
+                <Text style={styles.relogioNumero}>
+                  {String(minutoTemp).padStart(2, "0")}
+                </Text>
+
+                <Pressable
+                  style={styles.relogioBotao}
+                  onPress={() => alterarMinuto(-5)}
+                >
+                  <Ionicons name="chevron-down-outline" size={24} color="#160909" />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.modalBotoes}>
+              <Pressable
+                style={styles.botaoCancelar}
+                onPress={() => setSeletorHoraVisivel(false)}
+              >
+                <Text style={styles.textoCancelar}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable style={styles.botaoGuardar} onPress={confirmarHora}>
+                <Text style={styles.textoGuardar}>Confirmar</Text>
               </Pressable>
             </View>
           </View>

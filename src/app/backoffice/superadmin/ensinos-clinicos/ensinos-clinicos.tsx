@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./clinicosStyle";
 
 type EnsinoClinico = {
@@ -27,6 +28,7 @@ type EnsinoClinico = {
 
 export default function EnsinosClinicos() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [ensinos, setEnsinos] = useState<EnsinoClinico[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export default function EnsinosClinicos() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "apagar" | "inativar" | "ativar" = "normal"
+    tipo: "normal" | "sair" | "apagar" | "inativar" | "ativar" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -88,7 +90,7 @@ export default function EnsinosClinicos() {
     const { data, error } = await supabase
       .from("ensinos_clinicos")
       .select(
-        "id, nome, ano_curricular, semestre, tipo, horas_estimadas, descricao, ativo"
+        "id, nome, ano_curricular, semestre, tipo, horas_estimadas, descricao, ativo",
       )
       .order("ano_curricular", { ascending: true })
       .order("semestre", { ascending: true })
@@ -208,7 +210,7 @@ export default function EnsinosClinicos() {
       "Sucesso",
       editingId
         ? "Ensino clínico atualizado com sucesso."
-        : "Ensino clínico criado com sucesso."
+        : "Ensino clínico criado com sucesso.",
     );
 
     carregarEnsinosClinicos();
@@ -221,13 +223,13 @@ export default function EnsinosClinicos() {
       abrirPopup(
         "Ativar ensino clínico",
         `Tens a certeza que queres ativar "${ensino.nome}"?`,
-        "ativar"
+        "ativar",
       );
     } else {
       abrirPopup(
         "Inativar ensino clínico",
         `Tens a certeza que queres colocar "${ensino.nome}" como inativo?`,
-        "inativar"
+        "inativar",
       );
     }
   }
@@ -246,7 +248,10 @@ export default function EnsinosClinicos() {
 
     if (error) {
       console.log("ERRO AO ALTERAR ESTADO:", error);
-      abrirPopup("Erro", "Não foi possível alterar o estado do ensino clínico.");
+      abrirPopup(
+        "Erro",
+        "Não foi possível alterar o estado do ensino clínico.",
+      );
       return;
     }
 
@@ -254,7 +259,7 @@ export default function EnsinosClinicos() {
       "Sucesso",
       novoEstado
         ? "Ensino clínico ativado com sucesso."
-        : "Ensino clínico colocado como inativo."
+        : "Ensino clínico colocado como inativo.",
     );
 
     setEnsinoSelecionado(null);
@@ -267,7 +272,7 @@ export default function EnsinosClinicos() {
     abrirPopup(
       "Apagar ensino clínico",
       `Tens a certeza que queres apagar "${ensino.nome}"? Esta ação não pode ser desfeita.`,
-      "apagar"
+      "apagar",
     );
   }
 
@@ -317,8 +322,8 @@ export default function EnsinosClinicos() {
         filtroAtivo === "todos"
           ? true
           : filtroAtivo === "ativos"
-          ? ensino.ativo !== false
-          : ensino.ativo === false;
+            ? ensino.ativo !== false
+            : ensino.ativo === false;
 
       return correspondePesquisa && correspondeAno && correspondeAtivo;
     });
@@ -326,7 +331,7 @@ export default function EnsinosClinicos() {
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(ensinosFiltrados.length / itensPorPagina)
+    Math.ceil(ensinosFiltrados.length / itensPorPagina),
   );
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -400,7 +405,7 @@ export default function EnsinosClinicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
@@ -408,13 +413,14 @@ export default function EnsinosClinicos() {
             {sidebarAberta && (
               <Text style={styles.menuText}>Aprovar Contas</Text>
             )}
+            <ContasPendentesBadge count={contasPendentes} />
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -426,7 +432,7 @@ export default function EnsinosClinicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -448,7 +454,7 @@ export default function EnsinosClinicos() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -464,7 +470,7 @@ export default function EnsinosClinicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -478,7 +484,7 @@ export default function EnsinosClinicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -492,7 +498,7 @@ export default function EnsinosClinicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -504,7 +510,7 @@ export default function EnsinosClinicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -532,7 +538,7 @@ export default function EnsinosClinicos() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -542,7 +548,10 @@ export default function EnsinosClinicos() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -683,8 +692,8 @@ export default function EnsinosClinicos() {
                   {filtroAtivo === "ativos"
                     ? "Ativos"
                     : filtroAtivo === "inativos"
-                    ? "Inativos"
-                    : "Todos"}
+                      ? "Inativos"
+                      : "Todos"}
                 </Text>
 
                 <Ionicons
@@ -1095,8 +1104,8 @@ export default function EnsinosClinicos() {
                         ? "A gravar..."
                         : "A criar..."
                       : editingId
-                      ? "Guardar"
-                      : "Criar"}
+                        ? "Guardar"
+                        : "Criar"}
                   </Text>
                 </Pressable>
               </View>
@@ -1125,7 +1134,10 @@ export default function EnsinosClinicos() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>
@@ -1138,7 +1150,10 @@ export default function EnsinosClinicos() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={confirmarApagar}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={confirmarApagar}
+                >
                   <Text style={styles.popupTextoSair}>Apagar</Text>
                 </Pressable>
               </View>

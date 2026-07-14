@@ -207,7 +207,7 @@ export default function DetalhesAlunoOrientador() {
           onPress={() =>
             router.replace({
               pathname:
-                "/orientador/estagios/alunosEstagio/alunosEstagio" as any,
+                "orientador/estagios/alunosEstagio/alunoEstagio" as any,
               params: {
                 edicaoId: String(edicaoId || ""),
               },
@@ -385,7 +385,7 @@ export default function DetalhesAlunoOrientador() {
                 onPress={() =>
                   router.push({
                     pathname:
-                      "/orientador/presencas/presencasAluno/presencasAluno" as any,
+                      "/orientador/estagios/presencas/presencasAluno" as any,
                     params: {
                       inscricaoId: String(inscricaoId || ""),
                       alunoId,
@@ -409,7 +409,7 @@ export default function DetalhesAlunoOrientador() {
                 onPress={() =>
                   router.push({
                     pathname:
-                      "/orientador/avaliacoes/avaliacaoAluno/avaliacaoAluno" as any,
+                      "/orientador/estagios/avaliacoes/avaliacaoAluno" as any,
                     params: {
                       inscricaoId: String(inscricaoId || ""),
                       alunoId,
@@ -433,7 +433,7 @@ export default function DetalhesAlunoOrientador() {
                 onPress={() =>
                   router.push({
                     pathname:
-                      "/orientador/agenda/criarReuniao/criarReuniao" as any,
+                      "/orientador/estagios/agenda/criarReuniao" as any,
                     params: {
                       inscricaoId: String(inscricaoId || ""),
                       alunoId,
@@ -457,7 +457,7 @@ export default function DetalhesAlunoOrientador() {
                 onPress={() =>
                   router.push({
                     pathname:
-                      "/orientador/comentarios/comentariosAluno/comentariosAluno" as any,
+                      "/orientador/estagios/comentariosSemanais/comentariosSemanais" as any,
                     params: {
                       inscricaoId: String(inscricaoId || ""),
                       alunoId,
@@ -485,7 +485,7 @@ export default function DetalhesAlunoOrientador() {
                 onPress={() =>
                   router.push({
                     pathname:
-                      "/orientador/relatorios/relatorioAluno/relatorioAluno" as any,
+                      "/orientador/estagios/relatorios/relatorios" as any,
                     params: {
                       inscricaoId: String(inscricaoId || ""),
                       alunoId,

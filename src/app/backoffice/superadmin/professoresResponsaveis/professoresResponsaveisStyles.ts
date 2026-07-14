@@ -523,19 +523,27 @@ const local = StyleSheet.create({
   },
 
   colProfessor: {
-    flex: 1.8,
+    flex: 1.6,
   },
 
   colNumero: {
-    flex: 0.8,
+    flex: 0.65,
   },
 
   colEnsinos: {
-    flex: 0.8,
+    flex: 0.7,
+  },
+
+  colEstado: {
+    flex: 0.7,
+  },
+
+  colData: {
+    flex: 0.85,
   },
 
   colAcoes: {
-    flex: 1,
+    flex: 1.1,
   },
 
   acoes: {
@@ -695,6 +703,80 @@ textoBotaoCriar: {
   popupTextoSair: {
     ...backofficeStyles.popupTextoPerigo,
   },
+
+  estadoBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#e0f9dcff",
+    color: "#4bcf37ff",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    overflow: "hidden",
+    fontSize: 13,
+    fontWeight: "900",
+    fontFamily: "serif",
+    textAlign: "center",
+  },
+
+  estadoBadgeInativo: {
+    backgroundColor: "#F8C8C8",
+    color: "#B42318",
+  },
+
+infoExtraLinha: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  paddingHorizontal: 14,
+  paddingVertical: 12,
+  marginBottom: 10,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+},
+
+infoExtraLabel: {
+  fontSize: 14,
+  fontWeight: "900",
+  color: "#667085",
+  fontFamily: "serif",
+},
+
+infoExtraValor: {
+  fontSize: 14,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+pickerBox: {
+  marginBottom: 14,
+},
+
+modalSearchContainer: {
+  width: "100%",
+  height: 48,
+  backgroundColor: "#F2F4F7",
+  borderRadius: 10,
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 12,
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+  marginBottom: 10,
+},
+
+modalSearchInput: {
+  flex: 1,
+  height: 48,
+  fontSize: 15,
+  fontWeight: "700",
+  color: "#160909",
+  fontFamily: "serif",
+  marginLeft: 8,
+},
 });
 
 const styles = {

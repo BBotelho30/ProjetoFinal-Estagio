@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./servicosStyles";
 
 type Instituicao = {
@@ -32,11 +33,14 @@ type Servico = {
 
 export default function Servicos() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
 
-  const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<number | null>(null);
+  const [instituicaoSelecionada, setInstituicaoSelecionada] = useState<
+    number | null
+  >(null);
   const [nomeServico, setNomeServico] = useState("");
   const [modalVisivel, setModalVisivel] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -46,15 +50,21 @@ export default function Servicos() {
   const [aCriar, setACriar] = useState(false);
 
   const [pesquisa, setPesquisa] = useState("");
-  const [filtroAtivo, setFiltroAtivo] = useState<"ativos" | "inativos" | "todos">("ativos");
+  const [filtroAtivo, setFiltroAtivo] = useState<
+    "ativos" | "inativos" | "todos"
+  >("ativos");
   const [showFiltroAtivo, setShowFiltroAtivo] = useState(false);
 
-  const [servicoSelecionado, setServicoSelecionado] = useState<Servico | null>(null);
+  const [servicoSelecionado, setServicoSelecionado] = useState<Servico | null>(
+    null,
+  );
 
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupTipo, setPopupTipo] = useState< "normal" | "sair" | "apagar" | "inativar" | "ativar" >("normal");
+  const [popupTipo, setPopupTipo] = useState<
+    "normal" | "sair" | "apagar" | "inativar" | "ativar"
+  >("normal");
 
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(15);
@@ -67,7 +77,7 @@ export default function Servicos() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "apagar" | "inativar" | "ativar" = "normal"
+    tipo: "normal" | "sair" | "apagar" | "inativar" | "ativar" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -137,6 +147,41 @@ export default function Servicos() {
       return;
     }
 
+    const nomesServicos = obterNomesServicosDoInput();
+
+    if (nomesServicos.length === 0) {
+      abrirPopup("Erro", "Escreve pelo menos um serviço.");
+      return;
+    }
+
+    const repetidosNoInput = nomesRepetidosNoInput();
+
+    if (repetidosNoInput.length > 0) {
+      abrirPopup(
+        "Serviço repetido",
+        `Escreveste o mesmo serviço mais do que uma vez: ${[
+          ...new Set(repetidosNoInput),
+        ].join(", ")}.`,
+      );
+      return;
+    }
+
+    const existentesNaBD = await servicosJaExistentesNaInstituicaoBD();
+
+    if (existentesNaBD === null) {
+      return;
+    }
+
+    if (existentesNaBD.length > 0) {
+      abrirPopup(
+        "Serviço já existente",
+        `Este serviço já existe nesta instituição: ${[
+          ...new Set(existentesNaBD),
+        ].join(", ")}.`,
+      );
+      return;
+    }
+
     setACriar(true);
 
     let error: any = null;
@@ -145,18 +190,13 @@ export default function Servicos() {
       const res = await supabase
         .from("servicos")
         .update({
-          nome: nomeServico.trim(),
+          nome: nomesServicos[0],
           instituicao_id: instituicaoSelecionada,
         })
         .eq("id", editingId);
 
       error = res.error;
     } else {
-      const nomesServicos = nomeServico
-        .split(/\n|,|;/)
-        .map((nome) => nome.trim())
-        .filter((nome) => nome.length > 0);
-
       const servicosParaInserir = nomesServicos.map((nome) => ({
         nome,
         instituicao_id: instituicaoSelecionada,
@@ -181,7 +221,7 @@ export default function Servicos() {
       "Sucesso",
       editingId
         ? "Serviço atualizado com sucesso."
-        : "Serviço(s) criado(s) com sucesso."
+        : "Serviço(s) criado(s) com sucesso.",
     );
 
     carregarDados();
@@ -194,13 +234,13 @@ export default function Servicos() {
       abrirPopup(
         "Ativar serviço",
         `Tens a certeza que queres ativar ${servico.nome}?`,
-        "ativar"
+        "ativar",
       );
     } else {
       abrirPopup(
         "Inativar serviço",
         `Tens a certeza que queres colocar ${servico.nome} como inativo?`,
-        "inativar"
+        "inativar",
       );
     }
   }
@@ -227,7 +267,7 @@ export default function Servicos() {
       "Sucesso",
       novoAtivo
         ? "Serviço ativado com sucesso."
-        : "Serviço colocado como inativo."
+        : "Serviço colocado como inativo.",
     );
 
     setServicoSelecionado(null);
@@ -240,7 +280,7 @@ export default function Servicos() {
     abrirPopup(
       "Apagar serviço",
       `Tens a certeza que queres apagar ${servico.nome}? Esta ação não pode ser desfeita.`,
-      "apagar"
+      "apagar",
     );
   }
 
@@ -256,7 +296,10 @@ export default function Servicos() {
 
     if (error) {
       console.log("ERRO AO APAGAR SERVIÇO:", error);
-      abrirPopup("Erro", "Não foi possível apagar o serviço.");
+      abrirPopup(
+        "Erro",
+        "Não foi possível apagar o serviço, pois ja existem registos associados a ele.",
+      );
       return;
     }
 
@@ -284,17 +327,17 @@ export default function Servicos() {
         filtroAtivo === "todos"
           ? true
           : filtroAtivo === "ativos"
-          ? servico.ativo !== false
-          : servico.ativo === false;
+            ? servico.ativo !== false
+            : servico.ativo === false;
 
       return correspondePesquisa && correspondeEstado;
     });
   }, [servicos, pesquisa, filtroAtivo]);
 
   const totalPaginas = Math.max(
-  1,
-  Math.ceil(servicosFiltrados.length / itensPorPagina)
-);
+    1,
+    Math.ceil(servicosFiltrados.length / itensPorPagina),
+  );
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const fim = inicio + itensPorPagina;
@@ -317,6 +360,82 @@ export default function Servicos() {
     if (paginaAtual < totalPaginas) {
       setPaginaAtual(paginaAtual + 1);
     }
+  }
+
+  function normalizarNomeServico(nome: string) {
+    return nome
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+  }
+
+  function escreverNomeServico(texto: string) {
+    const textoFormatado = texto
+      .replace(/[,;؛]+/g, "\n")
+      .replace(/\n\s+/g, "\n");
+
+    setNomeServico(textoFormatado);
+  }
+
+  function obterNomesServicosDoInput() {
+    return nomeServico
+      .replace(/[,;؛]+/g, "\n")
+      .split("\n")
+      .map((nome) => nome.trim())
+      .filter((nome) => nome.length > 0);
+  }
+
+  function nomesRepetidosNoInput() {
+    const nomes = obterNomesServicosDoInput();
+    const vistos = new Set<string>();
+    const repetidos: string[] = [];
+
+    nomes.forEach((nome) => {
+      const normalizado = normalizarNomeServico(nome);
+
+      if (vistos.has(normalizado)) {
+        repetidos.push(nome);
+      } else {
+        vistos.add(normalizado);
+      }
+    });
+
+    return repetidos;
+  }
+
+  async function servicosJaExistentesNaInstituicaoBD() {
+    if (!instituicaoSelecionada) return [];
+
+    const nomesDoInput = obterNomesServicosDoInput();
+
+    const { data, error } = await supabase
+      .from("servicos")
+      .select("id, nome, instituicao_id")
+      .eq("instituicao_id", instituicaoSelecionada);
+
+    if (error) {
+      console.log("ERRO AO VERIFICAR SERVIÇOS EXISTENTES:", error);
+      abrirPopup("Erro", "Não foi possível verificar se o serviço já existe.");
+      return null;
+    }
+
+    const servicosDaInstituicao = ((data as any) || []) as Servico[];
+
+    return nomesDoInput.filter((nomeInput) => {
+      const nomeNormalizado = normalizarNomeServico(nomeInput);
+
+      return servicosDaInstituicao.some((servico) => {
+        const mesmoNome =
+          normalizarNomeServico(servico.nome) === nomeNormalizado;
+
+        const naoEOMesmoServicoEmEdicao =
+          !editingId || servico.id !== editingId;
+
+        return mesmoNome && naoEOMesmoServicoEmEdicao;
+      });
+    });
   }
 
   return (
@@ -366,17 +485,33 @@ export default function Servicos() {
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/aprovarConta/aprovarConta" as any)
+              router.push(
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
+              )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Aprovar Contas</Text>}
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {sidebarAberta && (
+                <Text style={styles.menuText}>Aprovar Contas</Text>
+              )}
+              <ContasPendentesBadge count={contasPendentes} />
+            </View>
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/utilizadores/utilizadores" as any)
+              router.push(
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
+              )
             }
           >
             <Ionicons name="people-outline" size={23} color="#FFFFFF" />
@@ -386,7 +521,9 @@ export default function Servicos() {
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/instituicoes/instituicoes" as any)
+              router.push(
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
+              )
             }
           >
             <Ionicons name="business-outline" size={23} color="#FFFFFF" />
@@ -411,29 +548,35 @@ export default function Servicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
             <Ionicons name="school-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Ensinos Clínicos</Text>}
-          </Pressable>
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() =>
-              router.push("/backoffice/superadmin/editarEstagio/editarEstagio" as any)
-            }
-          >
-            <Ionicons name="calendar-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Edições de Estágio</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Ensinos Clínicos</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
+              )
+            }
+          >
+            <Ionicons name="calendar-outline" size={23} color="#FFFFFF" />
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Edições de Estágio</Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            style={styles.menuItem}
+            onPress={() =>
+              router.push(
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -446,7 +589,9 @@ export default function Servicos() {
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/criar_equipas/equipasEstagio" as any)
+              router.push(
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
+              )
             }
           >
             <Ionicons name="people-circle-outline" size={23} color="#FFFFFF" />
@@ -457,12 +602,14 @@ export default function Servicos() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
             <Ionicons name="git-branch-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Distribuir Alunos</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Distribuir Alunos</Text>
+            )}
           </Pressable>
         </ScrollView>
 
@@ -483,7 +630,7 @@ export default function Servicos() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -493,7 +640,10 @@ export default function Servicos() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -544,11 +694,15 @@ export default function Servicos() {
                 {filtroAtivo === "ativos"
                   ? "Ativos"
                   : filtroAtivo === "inativos"
-                  ? "Inativos"
-                  : "Todos"}
+                    ? "Inativos"
+                    : "Todos"}
               </Text>
               <Ionicons
-                name={showFiltroAtivo ? "chevron-up-outline" : "chevron-down-outline"}
+                name={
+                  showFiltroAtivo
+                    ? "chevron-up-outline"
+                    : "chevron-down-outline"
+                }
                 size={18}
                 color="#160909"
               />
@@ -593,178 +747,186 @@ export default function Servicos() {
           </View>
         </View>
 
-       {loading ? (
-  <ActivityIndicator
-    size="large"
-    color="#FDB515"
-    style={{ marginTop: 40 }}
-  />
-) : servicosFiltrados.length === 0 ? (
-  <View style={styles.vazioContainer}>
-    <Ionicons name="medkit-outline" size={52} color="#FDB515" />
-    <Text style={styles.textoVazio}>
-      Não existem serviços para mostrar.
-    </Text>
-  </View>
-) : (
-  <>
-    <View style={styles.tabelaCard}>
-      <View style={styles.tabelaHeader}>
-        <Text style={[styles.th, styles.colNome]}>Serviço</Text>
-        <Text style={[styles.th, styles.colInstituicao]}>Instituição</Text>
-        <Text style={[styles.th, styles.colEstado]}>Estado</Text>
-        <Text style={[styles.th, styles.colAcoes]}>Ações</Text>
-      </View>
-
-      {servicosPaginados.map((servico) => (
-        <View key={servico.id} style={styles.tabelaLinha}>
-          <Text style={[styles.tdNome, styles.colNome]}>
-            {servico.nome}
-          </Text>
-
-          <Text style={[styles.td, styles.colInstituicao]}>
-            {servico.instituicoes?.nome || "Sem instituição"}
-          </Text>
-
-          <View style={styles.colEstado}>
-            <Text
-              style={[
-                styles.estadoBadge,
-                servico.ativo === false && styles.estadoBadgeInativo,
-              ]}
-            >
-              {servico.ativo === false ? "Inativo" : "Ativo"}
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#FDB515"
+            style={{ marginTop: 40 }}
+          />
+        ) : servicosFiltrados.length === 0 ? (
+          <View style={styles.vazioContainer}>
+            <Ionicons name="medkit-outline" size={52} color="#FDB515" />
+            <Text style={styles.textoVazio}>
+              Não existem serviços para mostrar.
             </Text>
           </View>
+        ) : (
+          <>
+            <View style={styles.tabelaCard}>
+              <View style={styles.tabelaHeader}>
+                <Text style={[styles.th, styles.colNome]}>Serviço</Text>
+                <Text style={[styles.th, styles.colInstituicao]}>
+                  Instituição
+                </Text>
+                <Text style={[styles.th, styles.colEstado]}>Estado</Text>
+                <Text style={[styles.th, styles.colAcoes]}>Ações</Text>
+              </View>
 
-          <View style={[styles.acoes, styles.colAcoes]}>
-            <Pressable
-              style={styles.acaoBotao}
-              onPress={() => abrirModalEditar(servico)}
-            >
-              <Ionicons name="pencil-outline" size={19} color="#160909" />
-            </Pressable>
+              {servicosPaginados.map((servico) => (
+                <View key={servico.id} style={styles.tabelaLinha}>
+                  <Text style={[styles.tdNome, styles.colNome]}>
+                    {servico.nome}
+                  </Text>
 
-            <Pressable
-              style={styles.acaoBotao}
-              onPress={() => pedirAlterarAtivo(servico)}
-            >
-              <Ionicons
-                name={
-                  servico.ativo === false
-                    ? "refresh-outline"
-                    : "ban-outline"
-                }
-                size={19}
-                color="#160909"
-              />
-            </Pressable>
+                  <Text style={[styles.td, styles.colInstituicao]}>
+                    {servico.instituicoes?.nome || "Sem instituição"}
+                  </Text>
 
-            <Pressable
-              style={styles.acaoBotaoPerigo}
-              onPress={() => pedirApagar(servico)}
-            >
-              <Ionicons name="trash-outline" size={19} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        </View>
-      ))}
-    </View>
+                  <View style={styles.colEstado}>
+                    <Text
+                      style={[
+                        styles.estadoBadge,
+                        servico.ativo === false && styles.estadoBadgeInativo,
+                      ]}
+                    >
+                      {servico.ativo === false ? "Inativo" : "Ativo"}
+                    </Text>
+                  </View>
 
-    <View style={styles.paginacaoCard}>
-      <View style={styles.paginacaoInfo}>
-        <Text style={styles.paginacaoTexto}>
-          A mostrar {servicosFiltrados.length === 0 ? 0 : inicio + 1}-
-          {Math.min(fim, servicosFiltrados.length)} de{" "}
-          {servicosFiltrados.length}
-        </Text>
+                  <View style={[styles.acoes, styles.colAcoes]}>
+                    <Pressable
+                      style={styles.acaoBotao}
+                      onPress={() => abrirModalEditar(servico)}
+                    >
+                      <Ionicons
+                        name="pencil-outline"
+                        size={19}
+                        color="#160909"
+                      />
+                    </Pressable>
 
-        <View style={styles.porPaginaContainer}>
-          <Text style={styles.porPaginaLabel}>Por página:</Text>
+                    <Pressable
+                      style={styles.acaoBotao}
+                      onPress={() => pedirAlterarAtivo(servico)}
+                    >
+                      <Ionicons
+                        name={
+                          servico.ativo === false
+                            ? "refresh-outline"
+                            : "ban-outline"
+                        }
+                        size={19}
+                        color="#160909"
+                      />
+                    </Pressable>
 
-          <Pressable
-            style={styles.porPaginaBotao}
-            onPress={() => setShowPorPagina(!showPorPagina)}
-          >
-            <Text style={styles.porPaginaTexto}>{itensPorPagina}</Text>
-            <Ionicons
-              name={
-                showPorPagina
-                  ? "chevron-up-outline"
-                  : "chevron-down-outline"
-              }
-              size={16}
-              color="#160909"
-            />
-          </Pressable>
-
-          {showPorPagina && (
-            <View style={styles.porPaginaDropdown}>
-              <Pressable
-                style={styles.porPaginaOpcao}
-                onPress={() => mudarItensPorPagina(10)}
-              >
-                <Text style={styles.porPaginaOpcaoTexto}>10</Text>
-              </Pressable>
-
-              <Pressable
-                style={styles.porPaginaOpcao}
-                onPress={() => mudarItensPorPagina(15)}
-              >
-                <Text style={styles.porPaginaOpcaoTexto}>15</Text>
-              </Pressable>
-
-              <Pressable
-                style={styles.porPaginaOpcao}
-                onPress={() => mudarItensPorPagina(20)}
-              >
-                <Text style={styles.porPaginaOpcaoTexto}>20</Text>
-              </Pressable>
+                    <Pressable
+                      style={styles.acaoBotaoPerigo}
+                      onPress={() => pedirApagar(servico)}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={19}
+                        color="#FFFFFF"
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
             </View>
-          )}
-        </View>
-      </View>
 
-      <View style={styles.paginacaoBotoes}>
-        <Pressable
-          style={[
-            styles.paginaBotao,
-            paginaAtual === 1 && styles.paginaBotaoDisabled,
-          ]}
-          onPress={irPaginaAnterior}
-          disabled={paginaAtual === 1}
-        >
-          <Ionicons
-            name="chevron-back-outline"
-            size={20}
-            color="#160909"
-          />
-        </Pressable>
+            <View style={styles.paginacaoCard}>
+              <View style={styles.paginacaoInfo}>
+                <Text style={styles.paginacaoTexto}>
+                  A mostrar {servicosFiltrados.length === 0 ? 0 : inicio + 1}-
+                  {Math.min(fim, servicosFiltrados.length)} de{" "}
+                  {servicosFiltrados.length}
+                </Text>
 
-        <Text style={styles.paginaAtualTexto}>
-          Página {paginaAtual} de {totalPaginas}
-        </Text>
+                <View style={styles.porPaginaContainer}>
+                  <Text style={styles.porPaginaLabel}>Por página:</Text>
 
-        <Pressable
-          style={[
-            styles.paginaBotao,
-            paginaAtual === totalPaginas && styles.paginaBotaoDisabled,
-          ]}
-          onPress={irPaginaSeguinte}
-          disabled={paginaAtual === totalPaginas}
-        >
-          <Ionicons
-            name="chevron-forward-outline"
-            size={20}
-            color="#160909"
-          />
-        </Pressable>
-      </View>
-    </View>
-  </>
-)}
+                  <Pressable
+                    style={styles.porPaginaBotao}
+                    onPress={() => setShowPorPagina(!showPorPagina)}
+                  >
+                    <Text style={styles.porPaginaTexto}>{itensPorPagina}</Text>
+                    <Ionicons
+                      name={
+                        showPorPagina
+                          ? "chevron-up-outline"
+                          : "chevron-down-outline"
+                      }
+                      size={16}
+                      color="#160909"
+                    />
+                  </Pressable>
 
-        
+                  {showPorPagina && (
+                    <View style={styles.porPaginaDropdown}>
+                      <Pressable
+                        style={styles.porPaginaOpcao}
+                        onPress={() => mudarItensPorPagina(10)}
+                      >
+                        <Text style={styles.porPaginaOpcaoTexto}>10</Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={styles.porPaginaOpcao}
+                        onPress={() => mudarItensPorPagina(15)}
+                      >
+                        <Text style={styles.porPaginaOpcaoTexto}>15</Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={styles.porPaginaOpcao}
+                        onPress={() => mudarItensPorPagina(20)}
+                      >
+                        <Text style={styles.porPaginaOpcaoTexto}>20</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.paginacaoBotoes}>
+                <Pressable
+                  style={[
+                    styles.paginaBotao,
+                    paginaAtual === 1 && styles.paginaBotaoDisabled,
+                  ]}
+                  onPress={irPaginaAnterior}
+                  disabled={paginaAtual === 1}
+                >
+                  <Ionicons
+                    name="chevron-back-outline"
+                    size={20}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                <Text style={styles.paginaAtualTexto}>
+                  Página {paginaAtual} de {totalPaginas}
+                </Text>
+
+                <Pressable
+                  style={[
+                    styles.paginaBotao,
+                    paginaAtual === totalPaginas && styles.paginaBotaoDisabled,
+                  ]}
+                  onPress={irPaginaSeguinte}
+                  disabled={paginaAtual === totalPaginas}
+                >
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color="#160909"
+                  />
+                </Pressable>
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       <Modal
@@ -787,11 +949,14 @@ export default function Servicos() {
             >
               <Text style={styles.selectToggleText}>
                 {instituicaoSelecionada
-                  ? instituicoes.find((i) => i.id === instituicaoSelecionada)?.nome
+                  ? instituicoes.find((i) => i.id === instituicaoSelecionada)
+                      ?.nome
                   : "Selecionar instituição..."}
               </Text>
               <Ionicons
-                name={dropdownOpen ? "chevron-up-outline" : "chevron-down-outline"}
+                name={
+                  dropdownOpen ? "chevron-up-outline" : "chevron-down-outline"
+                }
                 size={22}
                 color="#160909"
               />
@@ -842,19 +1007,24 @@ export default function Servicos() {
                 !editingId && styles.modalInputMultiline,
               ]}
               value={nomeServico}
-              onChangeText={setNomeServico}
+              onChangeText={escreverNomeServico}
               multiline={!editingId}
               textAlignVertical={!editingId ? "top" : "center"}
+              blurOnSubmit={false}
             />
 
             {!editingId && (
               <Text style={styles.ajudaTexto}>
-                Podes escrever vários serviços, um por linha, separados por vírgula ou ponto e vírgula.
+                Podes escrever vários serviços, um por linha, separados por
+                vírgula ou ponto e vírgula.
               </Text>
             )}
 
             <View style={styles.popupBotoesLinha}>
-              <Pressable style={styles.popupBotaoCancelar} onPress={fecharModal}>
+              <Pressable
+                style={styles.popupBotaoCancelar}
+                onPress={fecharModal}
+              >
                 <Text style={styles.popupTextoCancelar}>Cancelar</Text>
               </Pressable>
 
@@ -864,13 +1034,14 @@ export default function Servicos() {
                 disabled={aCriar}
               >
                 <Text style={styles.popupTextoConfirmar}>
+                  {" "}
                   {aCriar
                     ? editingId
                       ? "A gravar..."
                       : "A criar..."
                     : editingId
-                    ? "Guardar"
-                    : "Criar"}
+                      ? "Guardar"
+                      : "Criar"}
                 </Text>
               </Pressable>
             </View>
@@ -898,7 +1069,10 @@ export default function Servicos() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>
@@ -911,7 +1085,10 @@ export default function Servicos() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={confirmarApagar}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={confirmarApagar}
+                >
                   <Text style={styles.popupTextoSair}>Apagar</Text>
                 </Pressable>
               </View>

@@ -457,7 +457,7 @@ const local = StyleSheet.create({
   estadoTexto: {
     fontSize: 15,
     fontWeight: "900",
-    color: "#B77900",
+    color: "#4bcf37ff",
     fontFamily: "serif",
   },
 

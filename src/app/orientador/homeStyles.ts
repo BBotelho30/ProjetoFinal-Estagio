@@ -309,6 +309,81 @@ const local = StyleSheet.create({
     marginTop: 4,
     lineHeight: 19,
   },
+
+popupOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.45)",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 22,
+},
+
+popupContainer: {
+  width: "100%",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 22,
+},
+
+popupTitle: {
+  fontSize: 22,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  marginBottom: 8,
+},
+
+popupMessage: {
+  fontSize: 15,
+  fontWeight: "700",
+  color: "#777",
+  fontFamily: "serif",
+  lineHeight: 21,
+},
+
+popupOkButton: {
+  height: 48,
+  backgroundColor: "#FDB515",
+  borderRadius: 10,
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 18,
+},
+
+popupOkText: {
+  fontSize: 16,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+avisoPerfil: {
+  backgroundColor: "#FFF3C4",
+  borderRadius: 16,
+  padding: 16,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 12,
+  marginBottom: 22,
+  borderWidth: 1,
+  borderColor: "#FDB515",
+},
+
+avisoTitulo: {
+  fontSize: 18,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+avisoTexto: {
+  fontSize: 14,
+  fontWeight: "700",
+  color: "#777",
+  fontFamily: "serif",
+  marginTop: 3,
+  lineHeight: 19,
+},
 });
 
 const styles = {

@@ -17,8 +17,11 @@ import styles from "./relatoriosFinaisStyles";
 
 type Estagio = {
   id: number;
+  aluno_id: string;
+  edicao_estagio_id: number;
   estado_estagio: string | null;
   edicoes_estagio?: {
+    id: number;
     data_inicio: string | null;
     data_fim: string | null;
     ensinos_clinicos?: {
@@ -27,39 +30,83 @@ type Estagio = {
       ano_curricular: number;
       semestre: number;
     };
-    instituicoes?: { nome: string };
-    servicos?: { nome: string };
+    instituicoes?: {
+      nome: string;
+    };
+    servicos?: {
+      nome: string;
+    };
   };
 };
 
 type Relatorio = {
   id: number;
+  inscricao_id: number;
   ficheiro_url: string | null;
-  nome_ficheiro: string | null;
   observacoes: string | null;
   estado: string | null;
+  validado_por: string | null;
+  data_validacao: string | null;
   criado_em: string | null;
 };
 
+type DocumentoEscolhido = {
+  name: string;
+  uri: string;
+  mimeType?: string;
+};
+
 export default function RelatorioFinal() {
-  const { inscricaoId } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+
+  const inscricaoId = params.inscricaoId ? String(params.inscricaoId) : "";
+  const edicaoId = params.edicaoId ? String(params.edicaoId) : "";
+  const origem = params.origem ? String(params.origem) : "home";
 
   const [estagio, setEstagio] = useState<Estagio | null>(null);
   const [relatorio, setRelatorio] = useState<Relatorio | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [documento, setDocumento] = useState<any>(null);
-  const [observacoes, setObservacoes] = useState("");
+  const [documento, setDocumento] = useState<DocumentoEscolhido | null>(null);
   const [aGuardar, setAGuardar] = useState(false);
 
   const [popupVisivel, setPopupVisivel] = useState(false);
   const [popupTitulo, setPopupTitulo] = useState("");
   const [popupMensagem, setPopupMensagem] = useState("");
 
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
   function mostrarPopup(titulo: string, mensagem: string) {
     setPopupTitulo(titulo);
     setPopupMensagem(mensagem);
     setPopupVisivel(true);
+  }
+
+  function voltarPaginaAnterior() {
+    const temDadosDoEstagio =
+      Boolean(estagio?.id || inscricaoId) &&
+      Boolean(estagio?.edicao_estagio_id || edicaoId);
+
+    if (
+      origem === "detalhesEstagio" ||
+      origem === "detalheEstagio" ||
+      origem === "detalhe" ||
+      temDadosDoEstagio
+    ) {
+      router.replace({
+        pathname: "/aluno/estagios/detalheEstagio/detalheEstagio" as any,
+        params: {
+          inscricaoId: String(estagio?.id || inscricaoId || ""),
+          edicaoId: String(estagio?.edicao_estagio_id || edicaoId || ""),
+        },
+      });
+
+      return;
+    }
+
+    router.replace("/aluno/home" as any);
   }
 
   async function carregarDados() {
@@ -72,25 +119,30 @@ export default function RelatorioFinal() {
       return;
     }
 
+    const alunoId = authData.user.id;
+
     let query = supabase
       .from("inscricoes_estagio")
       .select(`
         id,
+        aluno_id,
+        edicao_estagio_id,
         estado_estagio,
         edicoes_estagio(
+          id,
           data_inicio,
           data_fim,
           ensinos_clinicos(id, nome, ano_curricular, semestre),
           instituicoes(nome),
           servicos(nome)
         )
-      `);
+      `)
+      .eq("aluno_id", alunoId);
 
     if (inscricaoId) {
       query = query.eq("id", Number(inscricaoId));
     } else {
       query = query
-        .eq("aluno_id", authData.user.id)
         .neq("estado_estagio", "concluido")
         .order("id", { ascending: false })
         .limit(1);
@@ -105,13 +157,26 @@ export default function RelatorioFinal() {
       return;
     }
 
-    setEstagio((estagioData as any) || null);
+    const estagioAtual = (estagioData as any) || null;
 
-    if (estagioData) {
+    setEstagio(estagioAtual);
+
+    if (estagioAtual) {
       const { data: relatorioData, error: relatorioError } = await supabase
         .from("relatorios_finais")
-        .select("id, ficheiro_url, nome_ficheiro, observacoes, estado, criado_em")
-        .eq("inscricao_id", (estagioData as any).id)
+        .select(`
+          id,
+          inscricao_id,
+          ficheiro_url,
+          observacoes,
+          estado,
+          validado_por,
+          data_validacao,
+          criado_em
+        `)
+        .eq("inscricao_id", estagioAtual.id)
+        .order("criado_em", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (relatorioError) {
@@ -119,20 +184,16 @@ export default function RelatorioFinal() {
       }
 
       setRelatorio((relatorioData as any) || null);
-      setObservacoes((relatorioData as any)?.observacoes || "");
     }
 
     setLoading(false);
   }
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
-
   function podeSubmeter() {
     if (!estagio) return false;
     if (estagio.estado_estagio === "concluido") return false;
     if (relatorio?.estado === "validado") return false;
+
     return true;
   }
 
@@ -140,6 +201,7 @@ export default function RelatorioFinal() {
     if (estado === "validado") return "Validado";
     if (estado === "rejeitado") return "Rejeitado";
     if (estado === "submetido") return "Submetido";
+
     return "Não submetido";
   }
 
@@ -147,23 +209,73 @@ export default function RelatorioFinal() {
     if (estado === "validado") return "#CDEFD6";
     if (estado === "rejeitado") return "#F8C8C8";
     if (estado === "submetido") return "#FDE8B4";
+
     return "#E9E9E9";
   }
 
   function formatarData(data?: string | null) {
     if (!data) return "Sem data";
-    return new Date(data).toLocaleDateString("pt-PT");
+
+    const date = new Date(data);
+
+    if (Number.isNaN(date.getTime())) return "Sem data";
+
+    return date.toLocaleDateString("pt-PT");
   }
 
   async function escolherDocumento() {
     const result = await DocumentPicker.getDocumentAsync({
       type: "application/pdf",
       copyToCacheDirectory: true,
+      multiple: false,
     });
 
     if (result.canceled) return;
 
-    setDocumento(result.assets[0]);
+    const asset = result.assets?.[0];
+
+    if (!asset) return;
+
+    setDocumento({
+      name: asset.name,
+      uri: asset.uri,
+      mimeType: asset.mimeType || "application/pdf",
+    });
+  }
+
+  async function uploadDocumento() {
+    if (!documento || !estagio) return null;
+
+    const ext = documento.name?.split(".").pop() || "pdf";
+
+    const path = `${estagio.aluno_id}/${estagio.id}/${Date.now()}.${ext}`;
+
+    const response = await fetch(documento.uri);
+    const blob = await response.blob();
+
+    const { error: uploadError } = await supabase.storage
+      .from("relatorios-finais")
+      .upload(path, blob, {
+        upsert: true,
+        contentType: documento.mimeType || "application/pdf",
+      });
+
+    if (uploadError) {
+      console.log("ERRO STORAGE RELATÓRIO:", uploadError);
+      return {
+        url: null,
+        erro: uploadError.message,
+      };
+    }
+
+    const { data } = supabase.storage
+      .from("relatorios-finais")
+      .getPublicUrl(path);
+
+    return {
+      url: data.publicUrl,
+      erro: null,
+    };
   }
 
   async function submeterRelatorio() {
@@ -182,61 +294,49 @@ export default function RelatorioFinal() {
     setAGuardar(true);
 
     let ficheiroUrl = relatorio?.ficheiro_url || null;
-    let nomeFicheiro = relatorio?.nome_ficheiro || null;
 
     if (documento) {
-      const ext = documento.name?.split(".").pop() || "pdf";
-      const path = `${estagio.id}/${Date.now()}.${ext}`;
+      const resultadoUpload = await uploadDocumento();
 
-      const response = await fetch(documento.uri);
-      const blob = await response.blob();
-
-      const { error: uploadError } = await supabase.storage
-        .from("relatorios-finais")
-        .upload(path, blob, {
-          upsert: true,
-          contentType: documento.mimeType || "application/pdf",
-        });
-
-      if (uploadError) {
+      if (!resultadoUpload?.url) {
         setAGuardar(false);
-        mostrarPopup("Erro", uploadError.message);
+        mostrarPopup(
+          "Erro",
+          resultadoUpload?.erro ||
+            "Não foi possível enviar o ficheiro. Verifica as permissões do Storage."
+        );
         return;
       }
 
-      const { data } = supabase.storage
-        .from("relatorios-finais")
-        .getPublicUrl(path);
-
-      ficheiroUrl = data.publicUrl;
-      nomeFicheiro = documento.name || "relatorio_final.pdf";
+      ficheiroUrl = resultadoUpload.url;
     }
 
-    const payload = {
-      inscricao_id: estagio.id,
-      ficheiro_url: ficheiroUrl,
-      nome_ficheiro: nomeFicheiro,
-      observacoes: observacoes.trim() || null,
-      estado: "submetido",
-    };
+  const payload = {
+    inscricao_id: estagio.id,
+    ficheiro_url: ficheiroUrl,
+    estado: "submetido",
+  };
 
     const { error } = relatorio
       ? await supabase
           .from("relatorios_finais")
           .update(payload)
           .eq("id", relatorio.id)
-      : await supabase.from("relatorios_finais").insert([payload]);
+      : await supabase.from("relatorios_finais").insert(payload);
 
     setAGuardar(false);
 
     if (error) {
+      console.log("ERRO GUARDAR RELATÓRIO FINAL:", error);
       mostrarPopup("Erro", error.message);
       return;
     }
 
     setDocumento(null);
+
     mostrarPopup("Sucesso", "Relatório final submetido com sucesso.");
-    carregarDados();
+
+    await carregarDados();
   }
 
   if (loading) {
@@ -250,8 +350,9 @@ export default function RelatorioFinal() {
   return (
     <View style={styles.page}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Pressable style={styles.voltar} onPress={() =>inscricaoId ? router.push( `/aluno/estagios/detalheEstagio/detalheEstagio?id=${inscricaoId}` as any) : router.push("/aluno/home" as any)}>
+        <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
           <Ionicons name="arrow-back-outline" size={24} color="#160909" />
+
           <Text style={styles.voltarTexto}>Voltar</Text>
         </Pressable>
 
@@ -283,10 +384,13 @@ export default function RelatorioFinal() {
             <View
               style={[
                 styles.estadoCard,
-                { backgroundColor: corEstado(relatorio?.estado) },
+                {
+                  backgroundColor: corEstado(relatorio?.estado),
+                },
               ]}
             >
               <Text style={styles.estadoTitulo}>Estado</Text>
+
               <Text style={styles.estadoTexto}>
                 {textoEstado(relatorio?.estado)}
               </Text>
@@ -299,39 +403,57 @@ export default function RelatorioFinal() {
                 style={styles.documentoCard}
                 onPress={() => Linking.openURL(relatorio.ficheiro_url!)}
               >
-                <Ionicons name="document-text-outline" size={28} color="#160909" />
+                <Ionicons
+                  name="document-text-outline"
+                  size={28}
+                  color="#160909"
+                />
+
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.documentoTitulo}>
-                    {relatorio.nome_ficheiro || "Relatório final"}
-                  </Text>
+                  <Text style={styles.documentoTitulo}>Relatório final</Text>
+
                   <Text style={styles.documentoTexto}>Abrir documento</Text>
                 </View>
               </Pressable>
             ) : null}
 
             {podeSubmeter() ? (
-              <Pressable style={styles.botaoDocumento} onPress={escolherDocumento}>
-                <Ionicons name="document-attach-outline" size={24} color="#160909" />
+              <Pressable
+                style={styles.botaoDocumento}
+                onPress={escolherDocumento}
+              >
+                <Ionicons
+                  name="document-attach-outline"
+                  size={24}
+                  color="#160909"
+                />
+
                 <Text style={styles.textoDocumento}>
                   {documento ? documento.name : "Anexar PDF"}
                 </Text>
               </Pressable>
             ) : null}
 
-            <Text style={styles.label}>Observações</Text>
+          <Text style={styles.label}>Observações do professor</Text>
 
-            <TextInput
-              placeholder="Escreve observações, se necessário..."
-              placeholderTextColor="#8c8787"
-              style={styles.inputObservacoes}
-              value={observacoes}
-              onChangeText={setObservacoes}
-              multiline
-              editable={podeSubmeter()}
-            />
+          <View style={styles.observacoesCard}>
+            <Text style={styles.observacoesTexto}>
+              {relatorio?.observacoes ||
+                "Ainda não existem observações registadas pelo professor."}
+            </Text>
+          </View>
 
             {podeSubmeter() ? (
-              <Pressable style={styles.botaoSubmeter} onPress={submeterRelatorio}>
+              <Pressable
+                style={[
+                  styles.botaoSubmeter,
+                  aGuardar && {
+                    opacity: 0.55,
+                  },
+                ]}
+                onPress={submeterRelatorio}
+                disabled={aGuardar}
+              >
                 <Text style={styles.textoBotaoSubmeter}>
                   {aGuardar ? "A submeter..." : "Submeter Relatório"}
                 </Text>
@@ -349,6 +471,7 @@ export default function RelatorioFinal() {
         <View style={styles.popupOverlay}>
           <View style={styles.popupContainer}>
             <Text style={styles.popupTitle}>{popupTitulo}</Text>
+
             <Text style={styles.popupMessage}>{popupMensagem}</Text>
 
             <Pressable

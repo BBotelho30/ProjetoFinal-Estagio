@@ -34,19 +34,37 @@ const COR_REUNIAO = "#8ED6FF";
 export default function AgendaAluno() {
   const hoje = new Date();
 
+  const params = useLocalSearchParams();
+
+  const from = params.from ? String(params.from) : "";
+  const origem = params.origem ? String(params.origem) : "";
+
+  const mostrarBottomBar = from === "bottom";
+
   const [loading, setLoading] = useState(true);
   const [mesAtual, setMesAtual] = useState(hoje.getMonth());
   const [anoAtual, setAnoAtual] = useState(hoje.getFullYear());
   const [diaSelecionado, setDiaSelecionado] = useState(hoje.getDate());
   const [eventos, setEventos] = useState<EventoAgenda[]>([]);
 
-  const params = useLocalSearchParams();
-  const from = params.from ? String(params.from) : "";
-  const mostrarBottomBar = from === "bottom";
-
   useEffect(() => {
     carregarEventos();
   }, []);
+
+  function voltarPagina() {
+    const veioDeDetalhes =
+      from === "detalhes" ||
+      origem === "detalhes" ||
+      origem === "detalhesAluno" ||
+      origem === "detalhesEstagio";
+
+    if (veioDeDetalhes) {
+      router.back();
+      return;
+    }
+
+    router.replace("/aluno/home" as any);
+  }
 
   async function carregarEventos() {
     setLoading(true);
@@ -102,13 +120,9 @@ export default function AgendaAluno() {
 
         if (!edicao) return;
 
-        const nomeEstagio =
-          edicao.ensinos_clinicos?.nome || "Ensino Clínico";
+        const nomeEstagio = edicao.ensinos_clinicos?.nome || "Ensino Clínico";
 
-        const localEstagio = [
-          edicao.instituicoes?.nome,
-          edicao.servicos?.nome,
-        ]
+        const localEstagio = [edicao.instituicoes?.nome, edicao.servicos?.nome]
           .filter(Boolean)
           .join(" · ");
 
@@ -295,10 +309,7 @@ export default function AgendaAluno() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          style={styles.voltar}
-          onPress={() => router.replace("/aluno/home" as any)}
-        >
+        <Pressable style={styles.voltar} onPress={voltarPagina}>
           <Ionicons name="arrow-back-outline" size={24} color="#160909" />
           <Text style={styles.voltarTexto}>Voltar</Text>
         </Pressable>
@@ -436,11 +447,7 @@ export default function AgendaAluno() {
                 {evento.tipo === "reuniao" ? (
                   <>
                     <View style={styles.infoLinha}>
-                      <Ionicons
-                        name="time-outline"
-                        size={18}
-                        color="#777"
-                      />
+                      <Ionicons name="time-outline" size={18} color="#777" />
                       <Text style={styles.eventoTexto}>
                         Hora: {evento.hora || "Sem hora"}
                       </Text>
@@ -469,33 +476,21 @@ export default function AgendaAluno() {
                     </View>
 
                     <View style={styles.infoLinha}>
-                      <Ionicons
-                        name="school-outline"
-                        size={18}
-                        color="#777"
-                      />
+                      <Ionicons name="school-outline" size={18} color="#777" />
                       <Text style={styles.eventoTexto}>
                         Estágio: {evento.descricao}
                       </Text>
                     </View>
 
                     <View style={styles.infoLinha}>
-                      <Ionicons
-                        name="person-outline"
-                        size={18}
-                        color="#777"
-                      />
+                      <Ionicons name="person-outline" size={18} color="#777" />
                       <Text style={styles.eventoTexto}>
                         Professor: {evento.professor || "Não indicado"}
                       </Text>
                     </View>
 
                     <View style={styles.infoLinha}>
-                      <Ionicons
-                        name="people-outline"
-                        size={18}
-                        color="#777"
-                      />
+                      <Ionicons name="people-outline" size={18} color="#777" />
                       <Text style={styles.eventoTexto}>
                         Orientador: {evento.orientador || "Não indicado"}
                       </Text>
@@ -504,11 +499,7 @@ export default function AgendaAluno() {
                 ) : (
                   <>
                     <View style={styles.infoLinha}>
-                      <Ionicons
-                        name="school-outline"
-                        size={18}
-                        color="#777"
-                      />
+                      <Ionicons name="school-outline" size={18} color="#777" />
                       <Text style={styles.eventoTexto}>{evento.titulo}</Text>
                     </View>
 
@@ -518,9 +509,7 @@ export default function AgendaAluno() {
                         size={18}
                         color="#777"
                       />
-                      <Text style={styles.eventoTexto}>
-                        {evento.descricao}
-                      </Text>
+                      <Text style={styles.eventoTexto}>{evento.descricao}</Text>
                     </View>
                   </>
                 )}

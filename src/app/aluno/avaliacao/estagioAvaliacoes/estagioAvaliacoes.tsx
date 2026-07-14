@@ -17,47 +17,38 @@ type Estagio = {
   estado_estagio: string | null;
   estado: string | null;
   distribuido_por: string | null;
-  professor_id: string | null;
-  orientador_id: string | null;
   edicoes_estagio?: {
     id: number;
-    ano_letivo: string;
+    ano_letivo: string | null;
     data_inicio: string | null;
     data_fim: string | null;
     ensinos_clinicos?: {
       nome: string;
-      ano_curricular: number;
+      ano_curricular: number | null;
+      semestre: number | null;
       horas_estimadas: number | null;
-    };
+    } | null;
     instituicoes?: {
       nome: string;
-    };
+    } | null;
     servicos?: {
       nome: string;
-    };
-  };
-  professor?: {
-    nome: string;
-  } | null;
-  orientador?: {
-    nome: string;
+    } | null;
   } | null;
   avaliacao?: {
     id: number;
-    nota_professor: number | null;
-    nota_orientador: number | null;
     nota_final: number | null;
-    estado: string | null;
+    criado_em: string | null;
   } | null;
 };
 
 const CORES_ESTAGIOS = [
   "#2F80ED",
-  "#A7F3D0",
+  "#8EC5FC",
   "#9B51E0",
-  "#F8BBD0",
+  "#B8E0D2",
+  "#FF6B9A",
   "#C9A27E",
-  "#800020",
   "#FDB515",
   "#8ED6FF",
   "#EB5757",
@@ -80,7 +71,7 @@ export default function EstagioAvaliacoesAluno() {
 
       if (anoA !== anoB) return anoA - anoB;
 
-      return b.id - a.id;
+      return a.id - b.id;
     });
   }, [estagios]);
 
@@ -104,22 +95,18 @@ export default function EstagioAvaliacoesAluno() {
         estado_estagio,
         estado,
         distribuido_por,
-        professor_id,
-        orientador_id,
         edicoes_estagio(
           id,
           ano_letivo,
           data_inicio,
           data_fim,
-          ensinos_clinicos(nome, ano_curricular, horas_estimadas),
+          ensinos_clinicos(nome, ano_curricular, semestre, horas_estimadas),
           instituicoes(nome),
           servicos(nome)
-        ),
-        professor:utilizadores!inscricoes_estagio_professor_id_fkey(nome),
-        orientador:utilizadores!inscricoes_estagio_orientador_id_fkey(nome)
+        )
       `)
       .eq("aluno_id", userId)
-      .order("id", { ascending: false });
+      .order("id", { ascending: true });
 
     if (error) {
       console.log("ERRO ESTÁGIOS AVALIAÇÕES:", error);
@@ -128,21 +115,20 @@ export default function EstagioAvaliacoesAluno() {
       return;
     }
 
-    const listaValida = ((data as any) || []).filter((item: Estagio) => {
-      return (
-        item.estado !== "rejeitado" &&
-        item.estado_estagio !== "inativo" &&
-        item.estado_estagio !== "por_distribuir" &&
-        (item.estado === "aprovado" ||
-          item.estado_estagio === "em_curso" ||
-          item.estado_estagio === "aguarda_relatorio" ||
-          item.estado_estagio === "aguarda_avaliacao" ||
-          item.estado_estagio === "concluido" ||
-          Boolean(item.distribuido_por))
-      );
-    });
+    // Filtrar os estágios válidos (não rejeitados, não inativos e não por distribuir)
+    const listaValida = (((data as any) || []) as Estagio[]).filter(
+      (item: Estagio) => {
+        return (
+          item.estado !== "rejeitado" &&
+          item.estado_estagio !== "inativo" &&
+          item.estado_estagio !== "por_distribuir"
+        );
+      }
+    );
 
-    const edicoesIds = listaValida.map((item: Estagio) => item.edicao_estagio_id);
+    const edicoesIds = listaValida.map(
+      (item: Estagio) => item.edicao_estagio_id
+    );
 
     let avaliacoes: any[] = [];
 
@@ -153,10 +139,8 @@ export default function EstagioAvaliacoesAluno() {
           id,
           aluno_id,
           edicao_estagio_id,
-          nota_professor,
-          nota_orientador,
           nota_final,
-          estado
+          criado_em
         `)
         .eq("aluno_id", userId)
         .in("edicao_estagio_id", edicoesIds);
@@ -180,7 +164,7 @@ export default function EstagioAvaliacoesAluno() {
       };
     });
 
-    setEstagios(listaComAvaliacao as any);
+    setEstagios(listaComAvaliacao);
     setLoading(false);
   }
 
@@ -188,20 +172,16 @@ export default function EstagioAvaliacoesAluno() {
     if (!data) return "Sem data";
 
     const date = new Date(data);
-
-    if (Number.isNaN(date.getTime())) return data;
+    if (Number.isNaN(date.getTime())) return "Sem data";
 
     return date.toLocaleDateString("pt-PT");
   }
 
   function numeroDoEstagio(estagio: Estagio) {
-    const nome = estagio.edicoes_estagio?.ensinos_clinicos?.nome || "";
+  const nome = estagio.edicoes_estagio?.ensinos_clinicos?.nome || "";
+  const match = nome.match(/Ensino Clínico\s*(\d+)/i);
 
-    const match = nome.match(/Ensino Clínico\s*(\d+)/i);
-
-    if (match?.[1]) {
-      return Number(match[1]);
-    }
+    if (match?.[1]) return Number(match[1]);
 
     return null;
   }
@@ -214,32 +194,25 @@ export default function EstagioAvaliacoesAluno() {
     return CORES_ESTAGIOS[numero - 1] || "#FDB515";
   }
 
-  function textoEstadoAvaliacao(estagio: Estagio) {
-    if (estagio.avaliacao?.nota_final !== null && estagio.avaliacao?.nota_final !== undefined) {
-      return "Avaliada";
-    }
-
-    if (estagio.estado_estagio === "aguarda_avaliacao") {
-      return "A aguardar avaliação";
-    }
-
-    if (estagio.estado_estagio === "concluido") {
-      return "Concluído";
-    }
-
-    return "Sem nota";
+  function notaTexto(nota: number | null | undefined) {
+    if (nota === null || nota === undefined) return "--";
+    return Number(nota).toFixed(1);
   }
 
-  function corEstadoAvaliacao(estagio: Estagio) {
-    if (estagio.avaliacao?.nota_final !== null && estagio.avaliacao?.nota_final !== undefined) {
-      return "#CDEFD6";
-    }
+  function semestreTexto(estagio: Estagio) {
+    const semestre = estagio.edicoes_estagio?.ensinos_clinicos?.semestre;
 
-    if (estagio.estado_estagio === "aguarda_avaliacao") {
-      return "#DDEBFF";
-    }
+    if (!semestre) return "N/A";
 
-    return "#FDE8B4";
+    return `S${semestre}`;
+  }
+
+  function anoTexto(estagio: Estagio) {
+    const ano = estagio.edicoes_estagio?.ensinos_clinicos?.ano_curricular;
+
+    if (!ano) return "N/A";
+
+    return `${ano}.º ano`;
   }
 
   return (
@@ -253,14 +226,14 @@ export default function EstagioAvaliacoesAluno() {
           style={styles.voltar}
           onPress={() => router.replace("/aluno/home" as any)}
         >
-          <Ionicons name="arrow-back-outline" size={24} color="#160909" />
+          <Ionicons name="arrow-back-outline" size={22} color="#160909" />
           <Text style={styles.voltarTexto}>Voltar</Text>
         </Pressable>
 
         <Text style={styles.titulo}>Avaliações</Text>
 
         <Text style={styles.subtitulo}>
-          Escolhe o ensino clínico onde queres consultar a avaliação.
+          Consulta as tuas avaliações por ensino clínico.
         </Text>
 
         {loading ? (
@@ -273,87 +246,24 @@ export default function EstagioAvaliacoesAluno() {
           <View style={styles.vazioCard}>
             <Ionicons
               name="information-circle-outline"
-              size={34}
+              size={30}
               color="#FDB515"
             />
-
-            <Text style={styles.vazioTitulo}>Sem estágios</Text>
-
+            <Text style={styles.vazioTitulo}>Sem avaliações</Text>
             <Text style={styles.vazioTexto}>
-              Ainda não tens ensinos clínicos associados.
+              Ainda não existem estágios disponíveis para mostrar.
             </Text>
           </View>
         ) : (
           <View style={styles.lista}>
-            {estagiosOrdenados.map((estagio) => (
-              <View
-                key={estagio.id}
-                style={[
-                  styles.card,
-                  {
-                    borderLeftColor: corDoEstagio(estagio),
-                  },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitulo}>
-                      {estagio.edicoes_estagio?.ensinos_clinicos?.nome ||
-                        "Ensino Clínico"}
-                    </Text>
+            {estagiosOrdenados.map((estagio) => {
+              const cor = corDoEstagio(estagio);
+              const ensino = estagio.edicoes_estagio?.ensinos_clinicos;
 
-                    <Text style={styles.cardSubtitulo}>
-                      {estagio.edicoes_estagio?.instituicoes?.nome ||
-                        "Instituição"}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.badgeEstado,
-                      {
-                        backgroundColor: corEstadoAvaliacao(estagio),
-                      },
-                    ]}
-                  >
-                    <Text style={styles.badgeTexto}>
-                      {textoEstadoAvaliacao(estagio)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.linhaInfo}>
-                  <Ionicons name="calendar-outline" size={18} color="#777" />
-
-                  <Text style={styles.infoTexto}>
-                    {formatarData(estagio.edicoes_estagio?.data_inicio)} -{" "}
-                    {formatarData(estagio.edicoes_estagio?.data_fim)}
-                  </Text>
-                </View>
-
-                <Text style={styles.infoTexto}>
-                  Serviço:{" "}
-                  {estagio.edicoes_estagio?.servicos?.nome || "Não indicado"}
-                </Text>
-
-                <Text style={styles.infoTexto}>
-                  Docente: {estagio.professor?.nome || "Não indicado"}
-                </Text>
-
-                <Text style={styles.infoTexto}>
-                  Orientador: {estagio.orientador?.nome || "Não indicado"}
-                </Text>
-
-                <Text style={styles.infoTexto}>
-                  Nota final:{" "}
-                  {estagio.avaliacao?.nota_final !== null &&
-                  estagio.avaliacao?.nota_final !== undefined
-                    ? `${estagio.avaliacao.nota_final} valores`
-                    : "Ainda não lançada"}
-                </Text>
-
+              return (
                 <Pressable
-                  style={styles.botaoDetalhes}
+                  key={estagio.id}
+                  style={styles.cardNota}
                   onPress={() =>
                     router.push({
                       pathname: "/aluno/avaliacao/avaliacao" as any,
@@ -365,16 +275,52 @@ export default function EstagioAvaliacoesAluno() {
                     })
                   }
                 >
-                  <Text style={styles.textoDetalhes}>Ver avaliação</Text>
-
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={18}
-                    color="#160909"
+                  <View
+                    style={[
+                      styles.barraCor,
+                      { backgroundColor: cor },
+                    ]}
                   />
+
+                  <View style={styles.cardNotaConteudo}>
+                    <View style={styles.infoArea}>
+                      <Text style={styles.cardNotaTitulo}>
+                        {ensino?.nome || "Ensino Clínico"}
+                      </Text>
+
+                      <Text style={styles.cardNotaTexto}>
+                        Semestre: {semestreTexto(estagio)}
+                      </Text>
+
+                      <Text style={styles.cardNotaTexto}>
+                        Ano: {anoTexto(estagio)}
+                      </Text>
+
+                      <Text style={styles.cardNotaTexto}>
+                        Data de Avaliação:{" "}
+                        {formatarData(estagio.avaliacao?.criado_em)}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.notaCirculo,
+                        { borderColor: cor },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.notaCirculoTexto,
+                          { color: cor },
+                        ]}
+                      >
+                        {notaTexto(estagio.avaliacao?.nota_final)}
+                      </Text>
+                    </View>
+                  </View>
                 </Pressable>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>

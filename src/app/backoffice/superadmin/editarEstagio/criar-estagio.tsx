@@ -2,16 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./criar-estagioStyles";
 
 type EnsinoClinico = {
@@ -37,6 +38,7 @@ type Servico = {
 
 export default function CriarEstagio() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [loading, setLoading] = useState(true);
   const [aGuardar, setAGuardar] = useState(false);
@@ -46,7 +48,7 @@ export default function CriarEstagio() {
   const [servicos, setServicos] = useState<Servico[]>([]);
 
   const [ensinoSelecionado, setEnsinoSelecionado] = useState<number | null>(
-    null
+    null,
   );
 
   const [instituicoesSelecionadas, setInstituicoesSelecionadas] = useState<
@@ -54,7 +56,7 @@ export default function CriarEstagio() {
   >([]);
 
   const [servicosSelecionados, setServicosSelecionados] = useState<number[]>(
-    []
+    [],
   );
 
   const [servicosAbertos, setServicosAbertos] = useState<
@@ -78,7 +80,7 @@ export default function CriarEstagio() {
 
   const [calendarioAberto, setCalendarioAberto] = useState(false);
   const [campoDataAtivo, setCampoDataAtivo] = useState<"inicio" | "fim" | null>(
-    null
+    null,
   );
   const [mesCalendario, setMesCalendario] = useState(new Date());
 
@@ -94,7 +96,7 @@ export default function CriarEstagio() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" = "normal"
+    tipo: "normal" | "sair" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -128,8 +130,9 @@ export default function CriarEstagio() {
     if (ensinosError || instituicoesError || servicosError) {
       console.log(
         "ERRO AO CARREGAR DADOS:",
-        ensinosError || instituicoesError || servicosError
+        ensinosError || instituicoesError || servicosError,
       );
+
       abrirPopup("Erro", "Não foi possível carregar os dados.");
     } else {
       setEnsinos((ensinosData as any) || []);
@@ -152,7 +155,7 @@ export default function CriarEstagio() {
 
     if (instituicoesSelecionadas.length === 1) {
       const instituicao = instituicoes.find(
-        (i) => i.id === instituicoesSelecionadas[0]
+        (i) => i.id === instituicoesSelecionadas[0],
       );
 
       return instituicao ? instituicao.nome : "1 instituição selecionada";
@@ -161,27 +164,24 @@ export default function CriarEstagio() {
     return `${instituicoesSelecionadas.length} instituições selecionadas`;
   }
 
-  function textoServicosSelecionadosPorInstituicao(instituicaoId: number) {
-    const servicosDaInstituicao = servicos
-      .filter((servico) => servico.instituicao_id === instituicaoId)
-      .filter((servico) => servicosSelecionados.includes(servico.id));
-
-    if (servicosDaInstituicao.length === 0) {
-      return "Selecionar serviços deste hospital...";
-    }
-
-    if (servicosDaInstituicao.length === 1) {
-      return servicosDaInstituicao[0].nome;
-    }
-
-    return `${servicosDaInstituicao.length} serviços selecionados`;
-  }
-
   function servicosPorInstituicao(instituicaoId: number) {
     return servicos.filter(
       (servico) =>
-        servico.instituicao_id === instituicaoId && servico.ativo !== false
+        servico.instituicao_id === instituicaoId && servico.ativo !== false,
     );
+  }
+
+  function nomeInstituicao(instituicaoId: number) {
+    return (
+      instituicoes.find((instituicao) => instituicao.id === instituicaoId)
+        ?.nome || "Instituição"
+    );
+  }
+
+  function totalServicosSelecionadosPorInstituicao(instituicaoId: number) {
+    return servicos
+      .filter((servico) => servico.instituicao_id === instituicaoId)
+      .filter((servico) => servicosSelecionados.includes(servico.id)).length;
   }
 
   function selecionarEnsino(id: number) {
@@ -192,7 +192,7 @@ export default function CriarEstagio() {
   function toggleInstituicao(id: number) {
     if (instituicoesSelecionadas.includes(id)) {
       setInstituicoesSelecionadas(
-        instituicoesSelecionadas.filter((i) => i !== id)
+        instituicoesSelecionadas.filter((i) => i !== id),
       );
 
       const servicosDaInstituicao = servicos
@@ -200,7 +200,7 @@ export default function CriarEstagio() {
         .map((s) => s.id);
 
       setServicosSelecionados(
-        servicosSelecionados.filter((s) => !servicosDaInstituicao.includes(s))
+        servicosSelecionados.filter((s) => !servicosDaInstituicao.includes(s)),
       );
 
       const novasVagas = { ...vagasPorServico };
@@ -216,6 +216,10 @@ export default function CriarEstagio() {
       setServicosAbertos(novosAbertos);
     } else {
       setInstituicoesSelecionadas([...instituicoesSelecionadas, id]);
+      setServicosAbertos({
+        ...servicosAbertos,
+        [id]: true,
+      });
     }
   }
 
@@ -235,6 +239,7 @@ export default function CriarEstagio() {
       setVagasPorServico(novasVagas);
     } else {
       setServicosSelecionados([...servicosSelecionados, id]);
+
       setVagasPorServico({
         ...vagasPorServico,
         [id]: vagasPorServico[id] || "",
@@ -300,7 +305,7 @@ export default function CriarEstagio() {
     const mes = mesCalendario.getMonth() + 1;
 
     const dataISO = `${ano}-${String(mes).padStart(2, "0")}-${String(
-      dia
+      dia,
     ).padStart(2, "0")}`;
 
     if (campoDataAtivo === "inicio") {
@@ -315,7 +320,11 @@ export default function CriarEstagio() {
 
   function mudarMes(valor: number) {
     setMesCalendario(
-      new Date(mesCalendario.getFullYear(), mesCalendario.getMonth() + valor, 1)
+      new Date(
+        mesCalendario.getFullYear(),
+        mesCalendario.getMonth() + valor,
+        1,
+      ),
     );
   }
 
@@ -373,13 +382,14 @@ export default function CriarEstagio() {
 
     const servicosSemVagas = servicosSelecionados.filter((servicoId) => {
       const valor = vagasPorServico[servicoId];
+
       return !valor || Number.isNaN(Number(valor)) || Number(valor) <= 0;
     });
 
     if (servicosSemVagas.length > 0) {
       abrirPopup(
         "Erro",
-        "Preenche corretamente as vagas de todos os serviços selecionados."
+        "Preenche corretamente as vagas de todos os serviços selecionados.",
       );
       return;
     }
@@ -395,7 +405,7 @@ export default function CriarEstagio() {
     }
 
     const servicosValidos = servicos.filter((servico) =>
-      servicosSelecionados.includes(servico.id)
+      servicosSelecionados.includes(servico.id),
     );
 
     if (servicosValidos.length === 0) {
@@ -437,7 +447,7 @@ export default function CriarEstagio() {
       "Sucesso",
       dadosParaInserir.length === 1
         ? "Edição de estágio criada com sucesso."
-        : `${dadosParaInserir.length} edições de estágio criadas com sucesso.`
+        : `${dadosParaInserir.length} edições de estágio criadas com sucesso.`,
     );
   }
 
@@ -495,21 +505,31 @@ export default function CriarEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && (
-              <Text style={styles.menuText}>Aprovar Contas</Text>
-            )}
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {sidebarAberta && (
+                <Text style={styles.menuText}>Aprovar Contas</Text>
+              )}
+              <ContasPendentesBadge count={contasPendentes} />
+            </View>
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -521,7 +541,7 @@ export default function CriarEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -543,7 +563,7 @@ export default function CriarEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -557,7 +577,7 @@ export default function CriarEstagio() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -573,7 +593,7 @@ export default function CriarEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -587,7 +607,7 @@ export default function CriarEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -599,7 +619,7 @@ export default function CriarEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -627,7 +647,7 @@ export default function CriarEstagio() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -637,14 +657,17 @@ export default function CriarEstagio() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
               style={styles.botaoVoltarHome}
               onPress={() =>
                 router.push(
-                  "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                  "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
                 )
               }
             >
@@ -668,64 +691,212 @@ export default function CriarEstagio() {
             style={{ marginTop: 40 }}
           />
         ) : (
-          <View style={styles.filtrosCard}>
+          <View style={styles.formCard}>
             <Text style={styles.modalTitulo}>Dados da Edição</Text>
 
-            <Text style={styles.label}>Ensino Clínico</Text>
+            <View style={styles.formGrid}>
+              <View style={styles.formCampoGrande}>
+                <Text style={styles.label}>Ensino Clínico</Text>
 
-            <Pressable
-              style={styles.selectToggle}
-              onPress={() => {
-                setEnsinoOpen(!ensinoOpen);
-                setInstituicaoOpen(false);
-                setReposicaoOpen(false);
-              }}
-            >
-              <Text style={styles.selectToggleText}>
-                {nomeEnsinoSelecionado()}
-              </Text>
-
-              <Ionicons
-                name={ensinoOpen ? "chevron-up-outline" : "chevron-down-outline"}
-                size={22}
-                color="#160909"
-              />
-            </Pressable>
-
-            {ensinoOpen && (
-              <ScrollView style={styles.instituicoesBox} nestedScrollEnabled>
-                {ensinos.length === 0 ? (
-                  <Text style={styles.textoVazio}>
-                    Não existem ensinos clínicos ativos.
+                <Pressable
+                  style={styles.selectToggle}
+                  onPress={() => {
+                    setEnsinoOpen(!ensinoOpen);
+                    setInstituicaoOpen(false);
+                    setReposicaoOpen(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>
+                    {nomeEnsinoSelecionado()}
                   </Text>
-                ) : (
-                  ensinos.map((ensino) => (
+
+                  <Ionicons
+                    name={
+                      ensinoOpen ? "chevron-up-outline" : "chevron-down-outline"
+                    }
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                {ensinoOpen && (
+                  <ScrollView style={styles.dropdownBox} nestedScrollEnabled>
+                    {ensinos.length === 0 ? (
+                      <Text style={styles.textoVazio}>
+                        Não existem ensinos clínicos ativos.
+                      </Text>
+                    ) : (
+                      ensinos.map((ensino) => (
+                        <Pressable
+                          key={ensino.id}
+                          style={[
+                            styles.opcao,
+                            ensinoSelecionado === ensino.id &&
+                              styles.opcaoSelecionada,
+                          ]}
+                          onPress={() => selecionarEnsino(ensino.id)}
+                        >
+                          <Text style={styles.opcaoTexto}>{ensino.nome}</Text>
+
+                          <Text style={styles.opcaoSubtexto}>
+                            {ensino.ano_curricular
+                              ? `${ensino.ano_curricular}.º ano`
+                              : "Ano não definido"}
+                            {ensino.semestre
+                              ? ` · ${ensino.semestre}.º semestre`
+                              : ""}
+                          </Text>
+                        </Pressable>
+                      ))
+                    )}
+                  </ScrollView>
+                )}
+              </View>
+
+              <View style={styles.formCampoPequeno}>
+                <Text style={styles.label}>Ano Letivo</Text>
+
+                <TextInput
+                  placeholder="2025/2026"
+                  placeholderTextColor="#8c8787"
+                  style={styles.modalInput}
+                  value={anoLetivo}
+                  onChangeText={setAnoLetivo}
+                />
+              </View>
+            </View>
+
+            <View style={styles.formGrid}>
+              <View style={styles.formCampoPequeno}>
+                <Text style={styles.label}>Data Início</Text>
+
+                <Pressable
+                  style={styles.dateInput}
+                  onPress={() => abrirCalendario("inicio")}
+                >
+                  <Text
+                    style={[
+                      styles.dateInputText,
+                      !dataInicio && styles.dateInputPlaceholder,
+                    ]}
+                  >
+                    {dataInicio ? formatarDataPT(dataInicio) : "Selecionar"}
+                  </Text>
+
+                  <Ionicons name="calendar-outline" size={22} color="#160909" />
+                </Pressable>
+              </View>
+
+              <View style={styles.formCampoPequeno}>
+                <Text style={styles.label}>Data Fim</Text>
+
+                <Pressable
+                  style={styles.dateInput}
+                  onPress={() => abrirCalendario("fim")}
+                >
+                  <Text
+                    style={[
+                      styles.dateInputText,
+                      !dataFim && styles.dateInputPlaceholder,
+                    ]}
+                  >
+                    {dataFim ? formatarDataPT(dataFim) : "Selecionar"}
+                  </Text>
+
+                  <Ionicons name="calendar-outline" size={22} color="#160909" />
+                </Pressable>
+              </View>
+
+              <View style={styles.formCampoPequeno}>
+                <Text style={styles.label}>Reposição</Text>
+
+                <Pressable
+                  style={styles.selectToggle}
+                  onPress={() => {
+                    setReposicaoOpen(!reposicaoOpen);
+                    setEnsinoOpen(false);
+                    setInstituicaoOpen(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>
+                    {permiteReposicao ? "Sim" : "Não"}
+                  </Text>
+
+                  <Ionicons
+                    name={
+                      reposicaoOpen
+                        ? "chevron-up-outline"
+                        : "chevron-down-outline"
+                    }
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                {reposicaoOpen && (
+                  <View style={styles.dropdownModal}>
                     <Pressable
-                      key={ensino.id}
                       style={[
                         styles.opcao,
-                        ensinoSelecionado === ensino.id &&
-                          styles.opcaoSelecionada,
+                        permiteReposicao === true && styles.opcaoSelecionada,
                       ]}
-                      onPress={() => selecionarEnsino(ensino.id)}
+                      onPress={() => {
+                        setPermiteReposicao(true);
+                        setReposicaoOpen(false);
+                      }}
                     >
-                      <Text style={styles.opcaoTexto}>{ensino.nome}</Text>
-
-                      <Text style={styles.opcaoSubtexto}>
-                        {ensino.ano_curricular
-                          ? `${ensino.ano_curricular}.º ano`
-                          : "Ano não definido"}
-                        {ensino.semestre
-                          ? ` · ${ensino.semestre}.º semestre`
-                          : ""}
-                      </Text>
+                      <Text style={styles.opcaoTexto}>Sim</Text>
                     </Pressable>
-                  ))
-                )}
-              </ScrollView>
-            )}
 
-            <Text style={styles.label}>Hospitais / Instituições</Text>
+                    <Pressable
+                      style={[
+                        styles.opcao,
+                        permiteReposicao === false && styles.opcaoSelecionada,
+                      ]}
+                      onPress={() => {
+                        setPermiteReposicao(false);
+                        setMaxHorasDia("7");
+                        setReposicaoOpen(false);
+                      }}
+                    >
+                      <Text style={styles.opcaoTexto}>Não</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.formGrid}>
+              <View style={styles.formCampoPequeno}>
+                <Text style={styles.label}>Limite de Faltas (%)</Text>
+
+                <TextInput
+                  placeholder="15"
+                  placeholderTextColor="#8c8787"
+                  style={styles.modalInput}
+                  value={limiteFaltas}
+                  onChangeText={setLimiteFaltas}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.formCampoPequeno}>
+                <Text style={styles.label}>Máximo Horas/Dia</Text>
+
+                <TextInput
+                  placeholder="7"
+                  placeholderTextColor="#8c8787"
+                  style={styles.modalInput}
+                  value={maxHorasDia}
+                  onChangeText={setMaxHorasDia}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            <View style={styles.separadorFormulario} />
+
+            <Text style={styles.secaoTitulo}>Hospitais / Instituições</Text>
 
             <Pressable
               style={styles.selectToggle}
@@ -751,7 +922,7 @@ export default function CriarEstagio() {
             </Pressable>
 
             {instituicaoOpen && (
-              <ScrollView style={styles.instituicoesBox} nestedScrollEnabled>
+              <ScrollView style={styles.dropdownBox} nestedScrollEnabled>
                 {instituicoes.length === 0 ? (
                   <Text style={styles.textoVazio}>
                     Não existem instituições ativas.
@@ -759,35 +930,29 @@ export default function CriarEstagio() {
                 ) : (
                   instituicoes.map((instituicao) => {
                     const selecionada = instituicoesSelecionadas.includes(
-                      instituicao.id
+                      instituicao.id,
                     );
 
                     return (
                       <Pressable
                         key={instituicao.id}
                         style={[
-                          styles.opcao,
+                          styles.opcaoCompacta,
                           selecionada && styles.opcaoSelecionada,
                         ]}
                         onPress={() => toggleInstituicao(instituicao.id)}
                       >
-                        <View style={styles.opcaoLinha}>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.opcaoTexto}>
-                              {instituicao.nome}
-                            </Text>
-                          </View>
+                        <Text style={styles.opcaoTexto}>
+                          {instituicao.nome}
+                        </Text>
 
-                          <Ionicons
-                            name={
-                              selecionada
-                                ? "checkbox-outline"
-                                : "square-outline"
-                            }
-                            size={24}
-                            color="#160909"
-                          />
-                        </View>
+                        <Ionicons
+                          name={
+                            selecionada ? "checkbox-outline" : "square-outline"
+                          }
+                          size={24}
+                          color="#160909"
+                        />
                       </Pressable>
                     );
                   })
@@ -795,7 +960,7 @@ export default function CriarEstagio() {
               </ScrollView>
             )}
 
-            <Text style={styles.label}>Serviços e vagas</Text>
+            <Text style={styles.secaoTitulo}>Serviços e vagas</Text>
 
             {instituicoesSelecionadas.length === 0 ? (
               <View style={styles.avisoLocalBox}>
@@ -811,30 +976,33 @@ export default function CriarEstagio() {
                 </Text>
               </View>
             ) : (
-              <View style={styles.servicosHospitaisContainer}>
+              <View style={styles.servicosCompactContainer}>
                 {instituicoesSelecionadas.map((instituicaoId) => {
-                  const instituicao = instituicoes.find(
-                    (i) => i.id === instituicaoId
-                  );
-
                   const aberto = servicosAbertos[instituicaoId] === true;
                   const listaServicos = servicosPorInstituicao(instituicaoId);
+                  const totalSelecionados =
+                    totalServicosSelecionadosPorInstituicao(instituicaoId);
 
                   return (
-                    <View key={instituicaoId} style={styles.hospitalServicoCard}>
-                      <Text style={styles.grupoServicoTitulo}>
-                        {instituicao?.nome || "Instituição"}
-                      </Text>
-
+                    <View
+                      key={instituicaoId}
+                      style={styles.hospitalCompactCard}
+                    >
                       <Pressable
-                        style={styles.selectToggle}
+                        style={styles.hospitalCompactHeader}
                         onPress={() => toggleServicosHospital(instituicaoId)}
                       >
-                        <Text style={styles.selectToggleText}>
-                          {textoServicosSelecionadosPorInstituicao(
-                            instituicaoId
-                          )}
-                        </Text>
+                        <View>
+                          <Text style={styles.hospitalCompactTitulo}>
+                            {nomeInstituicao(instituicaoId)}
+                          </Text>
+
+                          <Text style={styles.hospitalCompactSubtitulo}>
+                            {totalSelecionados === 0
+                              ? "Nenhum serviço selecionado"
+                              : `${totalSelecionados} serviço(s) selecionado(s)`}
+                          </Text>
+                        </View>
 
                         <Ionicons
                           name={
@@ -842,75 +1010,66 @@ export default function CriarEstagio() {
                               ? "chevron-up-outline"
                               : "chevron-down-outline"
                           }
-                          size={22}
+                          size={23}
                           color="#160909"
                         />
                       </Pressable>
 
                       {aberto && (
-                        <View style={styles.servicosListaHospital}>
+                        <View style={styles.servicosCompactLista}>
                           {listaServicos.length === 0 ? (
                             <Text style={styles.textoVazio}>
                               Não existem serviços ativos nesta instituição.
                             </Text>
                           ) : (
                             listaServicos.map((servico) => {
-                              const selecionado =
-                                servicosSelecionados.includes(servico.id);
+                              const selecionado = servicosSelecionados.includes(
+                                servico.id,
+                              );
 
                               return (
                                 <View
                                   key={servico.id}
-                                  style={styles.servicoComVagasBox}
+                                  style={[
+                                    styles.servicoCompactLinha,
+                                    selecionado &&
+                                      styles.servicoCompactLinhaSelecionada,
+                                  ]}
                                 >
                                   <Pressable
-                                    style={[
-                                      styles.opcao,
-                                      selecionado &&
-                                        styles.opcaoSelecionada,
-                                    ]}
+                                    style={styles.servicoCompactCheckArea}
                                     onPress={() => toggleServico(servico.id)}
                                   >
-                                    <View style={styles.opcaoLinha}>
-                                      <View style={{ flex: 1 }}>
-                                        <Text style={styles.opcaoTexto}>
-                                          {servico.nome}
-                                        </Text>
-                                      </View>
+                                    <Ionicons
+                                      name={
+                                        selecionado
+                                          ? "checkbox-outline"
+                                          : "square-outline"
+                                      }
+                                      size={23}
+                                      color="#160909"
+                                    />
 
-                                      <Ionicons
-                                        name={
-                                          selecionado
-                                            ? "checkbox-outline"
-                                            : "square-outline"
-                                        }
-                                        size={24}
-                                        color="#160909"
-                                      />
-                                    </View>
+                                    <Text style={styles.servicoCompactNome}>
+                                      {servico.nome}
+                                    </Text>
                                   </Pressable>
 
-                                  {selecionado && (
-                                    <View style={styles.vagasServicoLinha}>
-                                      <Text style={styles.vagasServicoLabel}>
-                                        Vagas para este serviço
-                                      </Text>
-
-                                      <TextInput
-                                        placeholder="ex: 10"
-                                        placeholderTextColor="#8c8787"
-                                        style={styles.vagasServicoInput}
-                                        value={vagasPorServico[servico.id] || ""}
-                                        onChangeText={(valor) =>
-                                          atualizarVagasServico(
-                                            servico.id,
-                                            valor
-                                          )
-                                        }
-                                        keyboardType="numeric"
-                                      />
-                                    </View>
-                                  )}
+                                  <TextInput
+                                    placeholder="Vagas"
+                                    placeholderTextColor="#8c8787"
+                                    style={[
+                                      styles.vagasCompactInput,
+                                      !selecionado &&
+                                        styles.vagasCompactInputDisabled,
+                                    ]}
+                                    value={vagasPorServico[servico.id] || ""}
+                                    onChangeText={(valor) =>
+                                      atualizarVagasServico(servico.id, valor)
+                                    }
+                                    editable={selecionado}
+                                    keyboardType="numeric"
+                                  />
                                 </View>
                               );
                             })
@@ -923,133 +1082,12 @@ export default function CriarEstagio() {
               </View>
             )}
 
-            <Text style={styles.label}>Ano Letivo</Text>
-            <TextInput
-              placeholder="ex: 2025/2026"
-              placeholderTextColor="#8c8787"
-              style={styles.modalInput}
-              value={anoLetivo}
-              onChangeText={setAnoLetivo}
-            />
-
-            <Text style={styles.label}>Data Início</Text>
-
-            <Pressable
-              style={styles.dateInput}
-              onPress={() => abrirCalendario("inicio")}
-            >
-              <Text
-                style={[
-                  styles.dateInputText,
-                  !dataInicio && styles.dateInputPlaceholder,
-                ]}
-              >
-                {dataInicio
-                  ? formatarDataPT(dataInicio)
-                  : "Selecionar data de início"}
-              </Text>
-
-              <Ionicons name="calendar-outline" size={22} color="#160909" />
-            </Pressable>
-
-            <Text style={styles.label}>Data Fim</Text>
-
-            <Pressable
-              style={styles.dateInput}
-              onPress={() => abrirCalendario("fim")}
-            >
-              <Text
-                style={[
-                  styles.dateInputText,
-                  !dataFim && styles.dateInputPlaceholder,
-                ]}
-              >
-                {dataFim ? formatarDataPT(dataFim) : "Selecionar data de fim"}
-              </Text>
-
-              <Ionicons name="calendar-outline" size={22} color="#160909" />
-            </Pressable>
-
-            <Text style={styles.label}>Permite Reposição de Horas?</Text>
-
-            <Pressable
-              style={styles.selectToggle}
-              onPress={() => {
-                setReposicaoOpen(!reposicaoOpen);
-                setEnsinoOpen(false);
-                setInstituicaoOpen(false);
-              }}
-            >
-              <Text style={styles.selectToggleText}>
-                {permiteReposicao ? "Sim" : "Não"}
-              </Text>
-
-              <Ionicons
-                name={
-                  reposicaoOpen ? "chevron-up-outline" : "chevron-down-outline"
-                }
-                size={22}
-                color="#160909"
-              />
-            </Pressable>
-
-            {reposicaoOpen && (
-              <View style={styles.dropdownModal}>
-                <Pressable
-                  style={[
-                    styles.opcao,
-                    permiteReposicao === true && styles.opcaoSelecionada,
-                  ]}
-                  onPress={() => {
-                    setPermiteReposicao(true);
-                    setReposicaoOpen(false);
-                  }}
-                >
-                  <Text style={styles.opcaoTexto}>Sim</Text>
-                </Pressable>
-
-                <Pressable
-                  style={[
-                    styles.opcao,
-                    permiteReposicao === false && styles.opcaoSelecionada,
-                  ]}
-                  onPress={() => {
-                    setPermiteReposicao(false);
-                    setMaxHorasDia("7");
-                    setReposicaoOpen(false);
-                  }}
-                >
-                  <Text style={styles.opcaoTexto}>Não</Text>
-                </Pressable>
-              </View>
-            )}
-
-            <Text style={styles.label}>Limite de Faltas (%)</Text>
-            <TextInput
-              placeholder="15"
-              placeholderTextColor="#8c8787"
-              style={styles.modalInput}
-              value={limiteFaltas}
-              onChangeText={setLimiteFaltas}
-              keyboardType="numeric"
-            />
-
-            <Text style={styles.label}>Máximo de Horas por Dia</Text>
-            <TextInput
-              placeholder="7"
-              placeholderTextColor="#8c8787"
-              style={styles.modalInput}
-              value={maxHorasDia}
-              onChangeText={setMaxHorasDia}
-              keyboardType="numeric"
-            />
-
             <View style={styles.popupBotoesLinha}>
               <Pressable
                 style={styles.popupBotaoCancelar}
                 onPress={() =>
                   router.push(
-                    "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                    "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
                   )
                 }
               >
@@ -1127,7 +1165,7 @@ export default function CriarEstagio() {
                   >
                     <Text style={styles.calendarioDiaTexto}>{dia}</Text>
                   </Pressable>
-                )
+                ),
               )}
             </View>
 
@@ -1161,7 +1199,10 @@ export default function CriarEstagio() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>

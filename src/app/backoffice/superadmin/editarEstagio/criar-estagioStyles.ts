@@ -585,6 +585,183 @@ avisoLocalTexto: {
   fontFamily: "serif",
   lineHeight: 22,
 },
+
+formCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 22,
+  marginBottom: 20,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.04,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
+
+formGrid: {
+  flexDirection: "row",
+  gap: 14,
+  alignItems: "flex-start",
+  marginBottom: 6,
+},
+
+formCampoGrande: {
+  flex: 2,
+  position: "relative",
+},
+
+formCampoPequeno: {
+  flex: 1,
+  position: "relative",
+},
+
+dropdownBox: {
+  width: "100%",
+  maxHeight: 230,
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  padding: 8,
+  marginBottom: 14,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.05,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 3,
+},
+
+opcaoCompacta: {
+  minHeight: 44,
+  backgroundColor: "#F2F4F7",
+  borderRadius: 10,
+  paddingVertical: 10,
+  paddingHorizontal: 14,
+  marginBottom: 8,
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 10,
+},
+
+secaoTitulo: {
+  fontSize: 20,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  marginTop: 14,
+  marginBottom: 10,
+},
+
+separadorFormulario: {
+  height: 1,
+  backgroundColor: "#E4E7EC",
+  marginVertical: 16,
+},
+
+servicosCompactContainer: {
+  gap: 10,
+  marginBottom: 18,
+},
+
+hospitalCompactCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 14,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  overflow: "hidden",
+},
+
+hospitalCompactHeader: {
+  minHeight: 58,
+  backgroundColor: "#F7F8FA",
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  borderBottomWidth: 1,
+  borderBottomColor: "#E4E7EC",
+},
+
+hospitalCompactTitulo: {
+  fontSize: 18,
+  fontWeight: "900",
+  color: "#225943",
+  fontFamily: "serif",
+},
+
+hospitalCompactSubtitulo: {
+  fontSize: 13,
+  fontWeight: "800",
+  color: "#667085",
+  fontFamily: "serif",
+  marginTop: 2,
+},
+
+servicosCompactLista: {
+  padding: 10,
+  gap: 8,
+},
+
+servicoCompactLinha: {
+  minHeight: 48,
+  backgroundColor: "#F2F4F7",
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+  paddingHorizontal: 12,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+},
+
+servicoCompactLinhaSelecionada: {
+  backgroundColor: "#FFF7E0",
+  borderColor: "#FDB515",
+},
+
+servicoCompactCheckArea: {
+  flex: 1,
+  minHeight: 46,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 10,
+},
+
+servicoCompactNome: {
+  flex: 1,
+  fontSize: 15,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+},
+
+vagasCompactInput: {
+  width: 96,
+  height: 38,
+  backgroundColor: "#FFFFFF",
+  borderRadius: 9,
+  paddingHorizontal: 10,
+  fontSize: 14,
+  fontWeight: "900",
+  color: "#160909",
+  fontFamily: "serif",
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+  textAlign: "center",
+},
+
+vagasCompactInputDisabled: {
+  opacity: 0.45,
+},
 });
 
 const styles = {

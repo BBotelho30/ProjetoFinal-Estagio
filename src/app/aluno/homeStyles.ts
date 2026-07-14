@@ -54,15 +54,17 @@ const local = StyleSheet.create({
     borderColor: "#FDB515",
   },
 
-  avisoPerfil: {
-    backgroundColor: "#FDB515",
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 26,
-  },
+avisoPerfil: {
+  backgroundColor: "#FFF3C4",
+  borderRadius: 16,
+  padding: 16,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 12,
+  marginBottom: 22,
+  borderWidth: 1,
+  borderColor: "#FDB515",
+},
 
   avisoTitulo: {
     fontSize: 18,
@@ -103,7 +105,7 @@ const local = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    marginBottom: 28,
+    marginBottom: 5,
     borderLeftWidth: 7,
   },
 

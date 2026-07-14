@@ -187,6 +187,22 @@ const local = StyleSheet.create({
     fontFamily: "serif",
     textAlign: "center",
   },
+  observacoesCard: {
+  backgroundColor: "#E9E9E9",
+  borderRadius: 14,
+  paddingHorizontal: 14,
+  paddingVertical: 16,
+  marginBottom: 22,
+  minHeight: 90,
+},
+
+observacoesTexto: {
+  fontSize: 15,
+  fontWeight: "700",
+  color: "#777",
+  fontFamily: "serif",
+  lineHeight: 22,
+},
 });
 
 const styles = {

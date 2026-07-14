@@ -90,7 +90,7 @@ export default function AvaliacoesProfessor() {
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
   const [popupTipo, setPopupTipo] = useState<"normal" | "confirmarGuardar">(
-    "normal",
+    "normal"
   );
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function AvaliacoesProfessor() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "confirmarGuardar" = "normal",
+    tipo: "normal" | "confirmarGuardar" = "normal"
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -138,7 +138,7 @@ export default function AvaliacoesProfessor() {
 
     if (notaOrientador !== null && notaOrientador !== undefined) {
       return Number(
-        ((notaProfessorNumero + Number(notaOrientador)) / 2).toFixed(2),
+        ((notaProfessorNumero + Number(notaOrientador)) / 2).toFixed(2)
       );
     }
 
@@ -178,7 +178,7 @@ export default function AvaliacoesProfessor() {
     if (!inscricaoIdFinal) {
       abrirPopup(
         "Erro",
-        "Não foi possível identificar a inscrição deste aluno.",
+        "Não foi possível identificar a inscrição deste aluno."
       );
       setLoading(false);
       return;
@@ -224,7 +224,7 @@ export default function AvaliacoesProfessor() {
         ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
         instituicoes(nome),
         servicos(nome)
-      `,
+      `
       )
       .eq("id", inscricaoAtual.edicao_estagio_id)
       .maybeSingle();
@@ -253,7 +253,7 @@ export default function AvaliacoesProfessor() {
         observacao_final,
         estado,
         criado_em
-      `,
+      `
       )
       .eq("aluno_id", inscricaoAtual.aluno_id)
       .eq("edicao_estagio_id", inscricaoAtual.edicao_estagio_id)
@@ -290,7 +290,7 @@ export default function AvaliacoesProfessor() {
     abrirPopup(
       "Guardar avaliação",
       "Tens a certeza que queres guardar a nota e a observação deste aluno?",
-      "confirmarGuardar",
+      "confirmarGuardar"
     );
   }
 
@@ -379,7 +379,7 @@ export default function AvaliacoesProfessor() {
                 inscricaoId: String(inscricao?.id || inscricaoIdParam || ""),
                 alunoId: String(inscricao?.aluno_id || alunoIdParam || ""),
                 edicaoId: String(
-                  inscricao?.edicao_estagio_id || edicaoIdParam || "",
+                  inscricao?.edicao_estagio_id || edicaoIdParam || ""
                 ),
               },
             })
@@ -459,17 +459,18 @@ export default function AvaliacoesProfessor() {
               </View>
             </View>
 
-            {avaliacao?.observacao_orientador ? (
-              <View style={styles.observacaoOrientadorBox}>
+            <View style={styles.observacaoOrientadorBox}>
+              <View style={styles.observacaoHeader}>
                 <Text style={styles.observacaoTitulo}>
                   Observação do orientador
                 </Text>
-
-                <Text style={styles.observacaoTexto}>
-                  {avaliacao.observacao_orientador}
-                </Text>
               </View>
-            ) : null}
+
+              <Text style={styles.observacaoTexto}>
+                {avaliacao?.observacao_orientador ||
+                  "Ainda não existe observação registada pelo orientador."}
+              </Text>
+            </View>
 
             <Text style={styles.secaoTitulo}>Dar nota</Text>
 

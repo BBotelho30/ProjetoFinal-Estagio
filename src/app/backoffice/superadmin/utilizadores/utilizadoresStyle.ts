@@ -212,13 +212,14 @@ const local = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "#E4E7EC",
-    zIndex: 20,
+    zIndex: 1000,
+    overflow: "visible",
 
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
+    elevation: 20,
   },
 
   searchRow: {
@@ -251,12 +252,14 @@ const local = StyleSheet.create({
     flexDirection: "row",
     gap: 14,
     alignItems: "flex-start",
-    zIndex: 20,
+    zIndex: 1000,
+    overflow: "visible",
   },
 
   filtroBox: {
     flex: 1,
     position: "relative",
+    zIndex: 1000,
   },
 
   filtroLabel: {
@@ -287,22 +290,24 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-  dropdown: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    padding: 6,
-    marginTop: 8,
-    zIndex: 50,
+    dropdown: {
+      position: "absolute",
+      top: 76,
+      left: 0,
+      right: 0,
+      backgroundColor: "#FFFFFF",
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: "#E4E7EC",
+      padding: 6,
+      zIndex: 2000,
 
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 30,
+    },
 
   dropdownOption: {
     minHeight: 40,
@@ -396,8 +401,8 @@ const local = StyleSheet.create({
 
   estadoBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFF7E0",
-    color: "#B77900",
+    backgroundColor: "#e0f9dcff",
+    color: "#4bcf37ff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,

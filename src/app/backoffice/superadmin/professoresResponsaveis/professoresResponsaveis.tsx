@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./professoresResponsaveisStyles";
 
 type Professor = {
@@ -33,6 +34,8 @@ type Associacao = {
   id: number;
   professor_id: string;
   ensino_clinico_id: number;
+  ativo: boolean | null;
+  criado_em: string | null;
   utilizadores?: {
     nome: string;
     email: string;
@@ -50,17 +53,22 @@ type ProfessorAgrupado = {
   nome: string;
   email: string;
   numero_identificacao: string | null;
+  ativo: boolean | null;
+  criado_em: string | null;
   ensinos: {
     associacao_id: number;
     ensino_id: number;
     nome: string;
     ano_curricular: number;
     semestre: number | null;
+    ativo: boolean | null;
+    criado_em: string | null;
   }[];
 };
 
 export default function ProfessoresResponsaveis() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [ensinos, setEnsinos] = useState<EnsinoClinico[]>([]);
@@ -74,13 +82,20 @@ export default function ProfessoresResponsaveis() {
   const [mostrarProfessores, setMostrarProfessores] = useState(false);
   const [mostrarEnsinos, setMostrarEnsinos] = useState(false);
 
+  const [pesquisaProfessorModal, setPesquisaProfessorModal] = useState("");
+
   const [professorEditarId, setProfessorEditarId] = useState<string | null>(
-    null
+    null,
   );
 
   const [pesquisa, setPesquisa] = useState("");
   const [filtroAno, setFiltroAno] = useState("todos");
   const [showFiltroAno, setShowFiltroAno] = useState(false);
+
+  const [filtroEstado, setFiltroEstado] = useState<
+    "todos" | "ativos" | "inativos"
+  >("ativos");
+  const [showFiltroEstado, setShowFiltroEstado] = useState(false);
 
   const [professorAberto, setProfessorAberto] = useState<string | null>(null);
 
@@ -90,12 +105,15 @@ export default function ProfessoresResponsaveis() {
   const [professorParaApagar, setProfessorParaApagar] =
     useState<ProfessorAgrupado | null>(null);
 
+  const [professorParaAlterarEstado, setProfessorParaAlterarEstado] =
+    useState<ProfessorAgrupado | null>(null);
+
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupTipo, setPopupTipo] = useState<"normal" | "sair" | "apagar">(
-    "normal"
-  );
+  const [popupTipo, setPopupTipo] = useState<
+    "normal" | "sair" | "apagar" | "ativar" | "inativar"
+  >("normal");
 
   useEffect(() => {
     carregarDados();
@@ -104,12 +122,22 @@ export default function ProfessoresResponsaveis() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "apagar" = "normal"
+    tipo: "normal" | "sair" | "apagar" | "ativar" | "inativar" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
     setPopupTipo(tipo);
     setPopupVisible(true);
+  }
+
+  function formatarData(data: string | null | undefined) {
+    if (!data) return "Sem data";
+
+    const date = new Date(data);
+
+    if (Number.isNaN(date.getTime())) return "Sem data";
+
+    return date.toLocaleDateString("pt-PT");
   }
 
   async function carregarDados() {
@@ -138,16 +166,18 @@ export default function ProfessoresResponsaveis() {
         id,
         professor_id,
         ensino_clinico_id,
+        ativo,
+        criado_em,
         utilizadores(nome, email, numero_identificacao),
         ensinos_clinicos(nome, ano_curricular, semestre)
-      `
+      `,
       )
       .order("id", { ascending: false });
 
     if (professoresError || ensinosError || associacoesError) {
       console.log(
         "ERRO:",
-        professoresError || ensinosError || associacoesError
+        professoresError || ensinosError || associacoesError,
       );
       abrirPopup("Erro", "Não foi possível carregar os dados.");
     } else {
@@ -165,6 +195,7 @@ export default function ProfessoresResponsaveis() {
     setEnsinosSelecionados([]);
     setMostrarProfessores(false);
     setMostrarEnsinos(false);
+    setPesquisaProfessorModal("");
     setModalVisivel(true);
   }
 
@@ -175,6 +206,7 @@ export default function ProfessoresResponsaveis() {
     setEnsinosSelecionados([]);
     setMostrarProfessores(false);
     setMostrarEnsinos(false);
+    setPesquisaProfessorModal("");
   }
 
   function nomeProfessorSelecionado() {
@@ -235,6 +267,7 @@ export default function ProfessoresResponsaveis() {
     const novasAssociacoes = ensinosSelecionados.map((ensinoId) => ({
       professor_id: professorSelecionado,
       ensino_clinico_id: ensinoId,
+      ativo: true,
     }));
 
     const { error } = await supabase
@@ -249,7 +282,7 @@ export default function ProfessoresResponsaveis() {
       if (error.code === "23505") {
         abrirPopup(
           "Erro",
-          "Um destes ensinos clínicos já está associado a este professor."
+          "Um destes ensinos clínicos já está associado a este professor.",
         );
       } else {
         abrirPopup("Erro", error.message);
@@ -264,7 +297,7 @@ export default function ProfessoresResponsaveis() {
       "Sucesso",
       professorEditarId
         ? "Associações atualizadas com sucesso."
-        : "Professor responsável nomeado com sucesso."
+        : "Professor responsável nomeado com sucesso.",
     );
 
     carregarDados();
@@ -276,6 +309,7 @@ export default function ProfessoresResponsaveis() {
     setEnsinosSelecionados(professor.ensinos.map((e) => e.ensino_id));
     setMostrarProfessores(false);
     setMostrarEnsinos(false);
+    setPesquisaProfessorModal("");
     setModalVisivel(true);
   }
 
@@ -285,7 +319,7 @@ export default function ProfessoresResponsaveis() {
     abrirPopup(
       "Remover professor responsável",
       `Tens a certeza que queres remover todas as associações de ${professor.nome}?`,
-      "apagar"
+      "apagar",
     );
   }
 
@@ -310,10 +344,59 @@ export default function ProfessoresResponsaveis() {
     carregarDados();
   }
 
+  function pedirAlterarEstadoProfessor(professor: ProfessorAgrupado) {
+    setProfessorParaAlterarEstado(professor);
+
+    if (professor.ativo === false) {
+      abrirPopup(
+        "Ativar nomeação",
+        `Tens a certeza que queres ativar a nomeação de ${professor.nome}?`,
+        "ativar",
+      );
+    } else {
+      abrirPopup(
+        "Inativar nomeação",
+        `Tens a certeza que queres colocar a nomeação de ${professor.nome} como inativa?`,
+        "inativar",
+      );
+    }
+  }
+
+  async function confirmarAlterarEstadoProfessor() {
+    if (!professorParaAlterarEstado) return;
+
+    const novoEstado = professorParaAlterarEstado.ativo === false;
+
+    setPopupVisible(false);
+
+    const { error } = await supabase
+      .from("responsaveis_ensinos_clinicos")
+      .update({
+        ativo: novoEstado,
+      })
+      .eq("professor_id", professorParaAlterarEstado.professor_id);
+
+    if (error) {
+      console.log("ERRO AO ALTERAR ESTADO:", error);
+      abrirPopup("Erro", "Não foi possível alterar o estado da nomeação.");
+      return;
+    }
+
+    abrirPopup(
+      "Sucesso",
+      novoEstado
+        ? "Nomeação ativada com sucesso."
+        : "Nomeação colocada como inativa.",
+    );
+
+    setProfessorParaAlterarEstado(null);
+    carregarDados();
+  }
+
   async function terminarSessao() {
     setPopupVisible(false);
     await supabase.auth.signOut();
-    router.replace("/backoffice/superamdmin/login/login" as any);
+    router.replace("/backoffice/login" as any);
   }
 
   const professoresAgrupados = useMemo(() => {
@@ -327,6 +410,8 @@ export default function ProfessoresResponsaveis() {
           email: assoc.utilizadores?.email || "",
           numero_identificacao:
             assoc.utilizadores?.numero_identificacao || null,
+          ativo: assoc.ativo,
+          criado_em: assoc.criado_em,
           ensinos: [],
         };
       }
@@ -337,6 +422,8 @@ export default function ProfessoresResponsaveis() {
         nome: assoc.ensinos_clinicos?.nome || "Ensino clínico",
         ano_curricular: assoc.ensinos_clinicos?.ano_curricular || 0,
         semestre: assoc.ensinos_clinicos?.semestre || null,
+        ativo: assoc.ativo,
+        criado_em: assoc.criado_em,
       });
     });
 
@@ -353,32 +440,68 @@ export default function ProfessoresResponsaveis() {
         professor.email.toLowerCase().includes(textoPesquisa) ||
         professor.numero_identificacao?.toLowerCase().includes(textoPesquisa) ||
         professor.ensinos.some((e) =>
-          e.nome.toLowerCase().includes(textoPesquisa)
+          e.nome.toLowerCase().includes(textoPesquisa),
         );
 
       const correspondeAno =
         filtroAno === "todos"
           ? true
           : professor.ensinos.some(
-              (e) => e.ano_curricular === Number(filtroAno)
+              (e) => e.ano_curricular === Number(filtroAno),
             );
 
-      return correspondePesquisa && correspondeAno;
+      const correspondeEstado =
+        filtroEstado === "todos"
+          ? true
+          : filtroEstado === "ativos"
+            ? professor.ativo !== false
+            : professor.ativo === false;
+
+      return correspondePesquisa && correspondeAno && correspondeEstado;
     });
-  }, [professoresAgrupados, pesquisa, filtroAno]);
+  }, [professoresAgrupados, pesquisa, filtroAno, filtroEstado]);
+
+  const professoresModalFiltrados = useMemo(() => {
+    const texto = pesquisaProfessorModal.toLowerCase().trim();
+
+    if (texto === "") {
+      return professores;
+    }
+
+    return professores.filter((professor) => {
+      const nome = professor.nome?.toLowerCase() || "";
+      const email = professor.email?.toLowerCase() || "";
+      const numero = professor.numero_identificacao?.toLowerCase() || "";
+
+      return (
+        nome.includes(texto) || email.includes(texto) || numero.includes(texto)
+      );
+    });
+  }, [professores, pesquisaProfessorModal]);
 
   return (
     <View style={styles.page}>
       <View style={[styles.sidebar, !sidebarAberta && styles.sidebarFechada]}>
         <View style={styles.sidebarTop}>
-          <Pressable style={styles.menuButton} onPress={() => setSidebarAberta(!sidebarAberta)}>
-            <Ionicons name={sidebarAberta ? "chevron-back-outline" : "menu-outline"} size={26} color="#FDB515"/>
+          <Pressable
+            style={styles.menuButton}
+            onPress={() => setSidebarAberta(!sidebarAberta)}
+          >
+            <Ionicons
+              name={sidebarAberta ? "chevron-back-outline" : "menu-outline"}
+              size={26}
+              color="#FDB515"
+            />
           </Pressable>
 
           {sidebarAberta && (
             <View style={styles.sidebarHeader}>
               <View style={styles.logoCircle}>
-                <Image source={require("../../../../../assets/images/enf.jpg")} style={styles.logoSidebar} resizeMode="cover"/>
+                <Image
+                  source={require("../../../../../assets/images/enf.jpg")}
+                  style={styles.logoSidebar}
+                  resizeMode="cover"
+                />
               </View>
 
               <Text style={styles.sidebarTitle}>Passaporte</Text>
@@ -404,7 +527,7 @@ export default function ProfessoresResponsaveis() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
@@ -412,13 +535,14 @@ export default function ProfessoresResponsaveis() {
             {sidebarAberta && (
               <Text style={styles.menuText}>Aprovar Contas</Text>
             )}
+            <ContasPendentesBadge count={contasPendentes} />
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -430,7 +554,7 @@ export default function ProfessoresResponsaveis() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -452,7 +576,7 @@ export default function ProfessoresResponsaveis() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -466,7 +590,7 @@ export default function ProfessoresResponsaveis() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -480,7 +604,7 @@ export default function ProfessoresResponsaveis() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -496,7 +620,7 @@ export default function ProfessoresResponsaveis() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -508,7 +632,7 @@ export default function ProfessoresResponsaveis() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -536,7 +660,7 @@ export default function ProfessoresResponsaveis() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -546,7 +670,10 @@ export default function ProfessoresResponsaveis() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -597,7 +724,10 @@ export default function ProfessoresResponsaveis() {
 
                 <Pressable
                   style={styles.selectFiltro}
-                  onPress={() => setShowFiltroAno(!showFiltroAno)}
+                  onPress={() => {
+                    setShowFiltroAno(!showFiltroAno);
+                    setShowFiltroEstado(false);
+                  }}
                 >
                   <Text style={styles.selectToggleText}>
                     {filtroAno === "todos" ? "Todos" : `${filtroAno}.º ano`}
@@ -616,54 +746,83 @@ export default function ProfessoresResponsaveis() {
 
                 {showFiltroAno && (
                   <View style={styles.dropdown}>
+                    {["todos", "1", "2", "3", "4"].map((ano) => (
+                      <Pressable
+                        key={ano}
+                        style={styles.dropdownOption}
+                        onPress={() => {
+                          setFiltroAno(ano);
+                          setShowFiltroAno(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownOptionText}>
+                          {ano === "todos" ? "Todos" : `${ano}.º ano`}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.filtroBox}>
+                <Text style={styles.filtroLabel}>Estado</Text>
+
+                <Pressable
+                  style={styles.selectFiltro}
+                  onPress={() => {
+                    setShowFiltroEstado(!showFiltroEstado);
+                    setShowFiltroAno(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>
+                    {filtroEstado === "ativos"
+                      ? "Ativos"
+                      : filtroEstado === "inativos"
+                        ? "Inativos"
+                        : "Todos"}
+                  </Text>
+
+                  <Ionicons
+                    name={
+                      showFiltroEstado
+                        ? "chevron-up-outline"
+                        : "chevron-down-outline"
+                    }
+                    size={18}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                {showFiltroEstado && (
+                  <View style={styles.dropdown}>
                     <Pressable
                       style={styles.dropdownOption}
                       onPress={() => {
-                        setFiltroAno("todos");
-                        setShowFiltroAno(false);
+                        setFiltroEstado("ativos");
+                        setShowFiltroEstado(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownOptionText}>Ativos</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.dropdownOption}
+                      onPress={() => {
+                        setFiltroEstado("inativos");
+                        setShowFiltroEstado(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownOptionText}>Inativos</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.dropdownOption}
+                      onPress={() => {
+                        setFiltroEstado("todos");
+                        setShowFiltroEstado(false);
                       }}
                     >
                       <Text style={styles.dropdownOptionText}>Todos</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={styles.dropdownOption}
-                      onPress={() => {
-                        setFiltroAno("1");
-                        setShowFiltroAno(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownOptionText}>1.º ano</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={styles.dropdownOption}
-                      onPress={() => {
-                        setFiltroAno("2");
-                        setShowFiltroAno(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownOptionText}>2.º ano</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={styles.dropdownOption}
-                      onPress={() => {
-                        setFiltroAno("3");
-                        setShowFiltroAno(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownOptionText}>3.º ano</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={styles.dropdownOption}
-                      onPress={() => {
-                        setFiltroAno("4");
-                        setShowFiltroAno(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownOptionText}>4.º ano</Text>
                     </Pressable>
                   </View>
                 )}
@@ -685,6 +844,8 @@ export default function ProfessoresResponsaveis() {
                   </Text>
                   <Text style={[styles.th, styles.colNumero]}>Número</Text>
                   <Text style={[styles.th, styles.colEnsinos]}>Ensinos</Text>
+                  <Text style={[styles.th, styles.colEstado]}>Estado</Text>
+                  <Text style={[styles.th, styles.colData]}>Criado em</Text>
                   <Text style={[styles.th, styles.colAcoes]}>Ações</Text>
                 </View>
 
@@ -710,12 +871,28 @@ export default function ProfessoresResponsaveis() {
                           {professor.ensinos.length} ensino(s)
                         </Text>
 
+                        <View style={styles.colEstado}>
+                          <Text
+                            style={[
+                              styles.estadoBadge,
+                              professor.ativo === false &&
+                                styles.estadoBadgeInativo,
+                            ]}
+                          >
+                            {professor.ativo === false ? "Inativo" : "Ativo"}
+                          </Text>
+                        </View>
+
+                        <Text style={[styles.td, styles.colData]}>
+                          {formatarData(professor.criado_em)}
+                        </Text>
+
                         <View style={[styles.acoes, styles.colAcoes]}>
                           <Pressable
                             style={styles.acaoBotao}
                             onPress={() =>
                               setProfessorAberto(
-                                aberto ? null : professor.professor_id
+                                aberto ? null : professor.professor_id,
                               )
                             }
                           >
@@ -738,6 +915,23 @@ export default function ProfessoresResponsaveis() {
                           >
                             <Ionicons
                               name="pencil-outline"
+                              size={19}
+                              color="#160909"
+                            />
+                          </Pressable>
+
+                          <Pressable
+                            style={styles.acaoBotao}
+                            onPress={() =>
+                              pedirAlterarEstadoProfessor(professor)
+                            }
+                          >
+                            <Ionicons
+                              name={
+                                professor.ativo === false
+                                  ? "refresh-outline"
+                                  : "ban-outline"
+                              }
                               size={19}
                               color="#160909"
                             />
@@ -828,39 +1022,65 @@ export default function ProfessoresResponsaveis() {
               </Pressable>
 
               {mostrarProfessores && (
-                <ScrollView style={styles.pickerLista} nestedScrollEnabled>
-                  {professores.length === 0 ? (
-                    <Text style={styles.textoVazioModal}>
-                      Não existem professores aprovados.
-                    </Text>
-                  ) : (
-                    professores.map((professor) => (
-                      <Pressable
-                        key={professor.id}
-                        style={[
-                          styles.opcaoInstituicao,
-                          professorSelecionado === professor.id &&
-                            styles.opcaoInstituicaoSelecionada,
-                        ]}
-                        onPress={() => {
-                          setProfessorSelecionado(professor.id);
-                          setMostrarProfessores(false);
-                        }}
-                      >
-                        <Text style={styles.opcaoInstituicaoTexto}>
-                          {professor.nome}
-                        </Text>
+                <View style={styles.pickerBox}>
+                  <View style={styles.modalSearchContainer}>
+                    <Ionicons name="search-outline" size={20} color="#777" />
 
-                        <Text style={styles.opcaoSubtexto}>
-                          {professor.email}
-                          {professor.numero_identificacao
-                            ? ` · Nº ${professor.numero_identificacao}`
-                            : ""}
-                        </Text>
+                    <TextInput
+                      placeholder="Pesquisar professor..."
+                      placeholderTextColor="#8c8787"
+                      style={styles.modalSearchInput}
+                      value={pesquisaProfessorModal}
+                      onChangeText={setPesquisaProfessorModal}
+                      autoCapitalize="none"
+                    />
+
+                    {pesquisaProfessorModal.length > 0 && (
+                      <Pressable onPress={() => setPesquisaProfessorModal("")}>
+                        <Ionicons
+                          name="close-circle-outline"
+                          size={20}
+                          color="#777"
+                        />
                       </Pressable>
-                    ))
-                  )}
-                </ScrollView>
+                    )}
+                  </View>
+
+                  <ScrollView style={styles.pickerLista} nestedScrollEnabled>
+                    {professoresModalFiltrados.length === 0 ? (
+                      <Text style={styles.textoVazioModal}>
+                        Nenhum professor encontrado.
+                      </Text>
+                    ) : (
+                      professoresModalFiltrados.map((professor) => (
+                        <Pressable
+                          key={professor.id}
+                          style={[
+                            styles.opcaoInstituicao,
+                            professorSelecionado === professor.id &&
+                              styles.opcaoInstituicaoSelecionada,
+                          ]}
+                          onPress={() => {
+                            setProfessorSelecionado(professor.id);
+                            setMostrarProfessores(false);
+                            setPesquisaProfessorModal("");
+                          }}
+                        >
+                          <Text style={styles.opcaoInstituicaoTexto}>
+                            {professor.nome}
+                          </Text>
+
+                          <Text style={styles.opcaoSubtexto}>
+                            {professor.email}
+                            {professor.numero_identificacao
+                              ? ` · Nº ${professor.numero_identificacao}`
+                              : ""}
+                          </Text>
+                        </Pressable>
+                      ))
+                    )}
+                  </ScrollView>
+                </View>
               )}
 
               <Text style={styles.label}>Ensinos Clínicos</Text>
@@ -896,7 +1116,7 @@ export default function ProfessoresResponsaveis() {
                   ) : (
                     ensinos.map((ensino) => {
                       const selecionado = ensinosSelecionados.includes(
-                        ensino.id
+                        ensino.id,
                       );
 
                       return (
@@ -956,8 +1176,8 @@ export default function ProfessoresResponsaveis() {
                     {aGuardar
                       ? "A guardar..."
                       : professorEditarId
-                      ? "Guardar"
-                      : "Criar"}
+                        ? "Guardar"
+                        : "Criar"}
                   </Text>
                 </Pressable>
               </View>
@@ -986,7 +1206,10 @@ export default function ProfessoresResponsaveis() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>
@@ -1004,6 +1227,24 @@ export default function ProfessoresResponsaveis() {
                   onPress={confirmarApagarProfessor}
                 >
                   <Text style={styles.popupTextoSair}>Apagar</Text>
+                </Pressable>
+              </View>
+            ) : popupTipo === "inativar" || popupTipo === "ativar" ? (
+              <View style={styles.popupBotoesLinha}>
+                <Pressable
+                  style={styles.popupBotaoCancelar}
+                  onPress={() => setPopupVisible(false)}
+                >
+                  <Text style={styles.popupTextoCancelar}>Cancelar</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.popupBotaoConfirmar}
+                  onPress={confirmarAlterarEstadoProfessor}
+                >
+                  <Text style={styles.popupTextoConfirmar}>
+                    {popupTipo === "ativar" ? "Ativar" : "Inativar"}
+                  </Text>
                 </Pressable>
               </View>
             ) : (

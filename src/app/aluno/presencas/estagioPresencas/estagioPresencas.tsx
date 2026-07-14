@@ -11,6 +11,10 @@ import {
 import { supabase } from "../../../../lib/supabase";
 import styles from "./estagioPresencasS";
 
+type PessoaResumo = {
+  nome: string;
+} | null;
+
 type Estagio = {
   id: number;
   edicao_estagio_id: number;
@@ -36,26 +40,22 @@ type Estagio = {
       nome: string;
     };
   };
-  professor?: {
-    nome: string;
-  } | null;
-  orientador?: {
-    nome: string;
-  } | null;
+  professor?: PessoaResumo;
+  orientador?: PessoaResumo;
 };
 
 const CORES_ESTAGIOS = [
-  "#2F80ED", // Ensino Clínico 1
-  "#A7F3D0", // Ensino Clínico 2
-  "#9B51E0", // Ensino Clínico 3
-  "#F8BBD0", // Ensino Clínico 4
-  "#C9A27E", // Ensino Clínico 5
-  "#800020", // Ensino Clínico 6
-  "#FDB515", // Ensino Clínico 7
-  "#8ED6FF", // Ensino Clínico 8
-  "#EB5757", // Ensino Clínico 9
-  "#BDBDBD", // Ensino Clínico 10
-  "#F2994A", // Ensino Clínico 11
+  "#2F80ED",
+  "#A7F3D0",
+  "#9B51E0",
+  "#F8BBD0",
+  "#C9A27E",
+  "#800020",
+  "#FDB515",
+  "#8ED6FF",
+  "#EB5757",
+  "#BDBDBD",
+  "#F2994A",
 ];
 
 export default function EstagioPresencasAluno() {
@@ -77,6 +77,42 @@ export default function EstagioPresencasAluno() {
     });
   }, [estagios]);
 
+  async function buscarProfessorDaEdicao(edicaoId: number) {
+    const { data, error } = await supabase
+      .from("professores_estagio")
+      .select(`
+        professor:utilizadores!professores_estagio_professor_id_fkey(nome)
+      `)
+      .eq("edicao_estagio_id", edicaoId)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.log("ERRO PROFESSOR DA EDIÇÃO PRESENÇAS:", error);
+      return null;
+    }
+
+    return (data as any)?.professor || null;
+  }
+
+  async function buscarOrientadorDaEdicao(edicaoId: number) {
+    const { data, error } = await supabase
+      .from("orientadores_estagio")
+      .select(`
+        orientador:utilizadores!orientadores_estagio_orientador_id_fkey(nome)
+      `)
+      .eq("edicao_estagio_id", edicaoId)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.log("ERRO ORIENTADOR DA EDIÇÃO PRESENÇAS:", error);
+      return null;
+    }
+
+    return (data as any)?.orientador || null;
+  }
+
   async function carregarEstagios() {
     setLoading(true);
 
@@ -86,6 +122,8 @@ export default function EstagioPresencasAluno() {
       router.replace("/login/login" as any);
       return;
     }
+
+    const alunoId = authData.user.id;
 
     const { data, error } = await supabase
       .from("inscricoes_estagio")
@@ -105,9 +143,11 @@ export default function EstagioPresencasAluno() {
           ensinos_clinicos(nome, ano_curricular, horas_estimadas),
           instituicoes(nome),
           servicos(nome)
-        )
+        ),
+        professor:utilizadores!inscricoes_estagio_professor_id_fkey(nome),
+        orientador:utilizadores!inscricoes_estagio_orientador_id_fkey(nome)
       `)
-      .eq("aluno_id", authData.user.id)
+      .eq("aluno_id", alunoId)
       .order("id", { ascending: false });
 
     if (error) {
@@ -117,52 +157,67 @@ export default function EstagioPresencasAluno() {
       return;
     }
 
+    console.log("TODOS ESTÁGIOS PRESENÇAS:", data);
+
     const listaValida = ((data as any) || []).filter((item: Estagio) => {
-      return (
-        item.estado !== "rejeitado" &&
-        item.estado_estagio !== "inativo" &&
-        item.estado_estagio !== "por_distribuir" &&
-        (item.estado === "aprovado" ||
-          item.estado_estagio === "em_curso" ||
-          item.estado_estagio === "aguarda_relatorio" ||
-          item.estado_estagio === "aguarda_avaliacao" ||
-          item.estado_estagio === "concluido" ||
-          Boolean(item.distribuido_por))
-      );
-    });
+      return item.estado_estagio !== "concluido";
+    }) as Estagio[];
+
+    console.log("ESTÁGIOS FILTRADOS PRESENÇAS:", listaValida);
 
     const listaComNomes = await Promise.all(
       listaValida.map(async (estagio: Estagio) => {
-        let professor = null;
-        let orientador = null;
+        const edicaoId = estagio.edicoes_estagio?.id;
 
-        if (estagio.professor_id) {
-          const { data: professorData } = await supabase
+        let professorFinal = estagio.professor || null;
+        let orientadorFinal = estagio.orientador || null;
+
+        if (estagio.professor_id && !professorFinal) {
+          const { data: professorData, error: professorError } = await supabase
             .from("utilizadores")
             .select("nome")
             .eq("id", estagio.professor_id)
             .maybeSingle();
 
-          professor = professorData;
+          if (professorError) {
+            console.log("ERRO PROFESSOR DIRETO:", professorError);
+          }
+
+          professorFinal = (professorData as any) || null;
         }
 
-        if (estagio.orientador_id) {
-          const { data: orientadorData } = await supabase
-            .from("utilizadores")
-            .select("nome")
-            .eq("id", estagio.orientador_id)
-            .maybeSingle();
+        if (estagio.orientador_id && !orientadorFinal) {
+          const { data: orientadorData, error: orientadorError } =
+            await supabase
+              .from("utilizadores")
+              .select("nome")
+              .eq("id", estagio.orientador_id)
+              .maybeSingle();
 
-          orientador = orientadorData;
+          if (orientadorError) {
+            console.log("ERRO ORIENTADOR DIRETO:", orientadorError);
+          }
+
+          orientadorFinal = (orientadorData as any) || null;
+        }
+
+        if (edicaoId && !professorFinal) {
+          professorFinal = await buscarProfessorDaEdicao(edicaoId);
+        }
+
+        if (edicaoId && !orientadorFinal) {
+          orientadorFinal = await buscarOrientadorDaEdicao(edicaoId);
         }
 
         return {
           ...estagio,
-          professor,
-          orientador,
+          professor: professorFinal,
+          orientador: orientadorFinal,
         };
       })
     );
+
+    console.log("ESTÁGIOS COM NOMES PRESENÇAS:", listaComNomes);
 
     setEstagios(listaComNomes as any);
     setLoading(false);
@@ -187,6 +242,12 @@ export default function EstagioPresencasAluno() {
       return Number(match[1]);
     }
 
+    const ensinoClinicoId = estagio.edicoes_estagio?.id;
+
+    if (ensinoClinicoId) {
+      return Number(ensinoClinicoId);
+    }
+
     return null;
   }
 
@@ -202,6 +263,8 @@ export default function EstagioPresencasAluno() {
     if (estado === "aguarda_relatorio") return "A aguardar relatório";
     if (estado === "aguarda_avaliacao") return "A aguardar avaliação";
     if (estado === "concluido") return "Concluído";
+    if (estado === "por_distribuir") return "Por distribuir";
+    if (estado === "inativo") return "Inativo";
     return "Em curso";
   }
 
@@ -209,6 +272,8 @@ export default function EstagioPresencasAluno() {
     if (estado === "concluido") return "#CDEFD6";
     if (estado === "aguarda_relatorio") return "#FDE8B4";
     if (estado === "aguarda_avaliacao") return "#DDEBFF";
+    if (estado === "por_distribuir") return "#E9E9E9";
+    if (estado === "inativo") return "#E9E9E9";
     return "#CDEFD6";
   }
 

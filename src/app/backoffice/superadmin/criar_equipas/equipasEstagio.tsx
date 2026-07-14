@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./equipasEstagioStyles";
 
 type Edicao = {
@@ -66,6 +67,7 @@ type Inscricao = {
 
 export default function EquipasEstagio() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [edicoes, setEdicoes] = useState<Edicao[]>([]);
   const [professores, setProfessores] = useState<ProfessorEstagio[]>([]);
@@ -100,7 +102,12 @@ export default function EquipasEstagio() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "apagar" | "inativarTudo" | "apagarTudo" = "normal"
+    tipo:
+      | "normal"
+      | "sair"
+      | "apagar"
+      | "inativarTudo"
+      | "apagarTudo" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -122,7 +129,7 @@ export default function EquipasEstagio() {
         ensinos_clinicos(nome, ano_curricular),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .order("id", { ascending: false });
 
@@ -135,7 +142,7 @@ export default function EquipasEstagio() {
         professor_id,
         max_alunos,
         utilizadores(nome, email, numero_identificacao)
-      `
+      `,
       );
 
     const { data: orientadoresData, error: orientadoresError } = await supabase
@@ -147,7 +154,7 @@ export default function EquipasEstagio() {
         orientador_id,
         max_alunos,
         utilizadores(nome, email, numero_identificacao)
-      `
+      `,
       );
 
     const { data: inscricoesData, error: inscricoesError } = await supabase
@@ -160,13 +167,21 @@ export default function EquipasEstagio() {
         estado_estagio,
         distribuido_por,
         data_distribuicao
-      `
+      `,
       );
 
-    if (edicoesError || professoresError || orientadoresError || inscricoesError) {
+    if (
+      edicoesError ||
+      professoresError ||
+      orientadoresError ||
+      inscricoesError
+    ) {
       console.log(
         "ERRO:",
-        edicoesError || professoresError || orientadoresError || inscricoesError
+        edicoesError ||
+          professoresError ||
+          orientadoresError ||
+          inscricoesError,
       );
 
       abrirPopup("Erro", "Não foi possível carregar os dados.");
@@ -185,11 +200,15 @@ export default function EquipasEstagio() {
   }
 
   function orientadoresDaEdicao(edicaoId: number) {
-    return orientadores.filter((orient) => orient.edicao_estagio_id === edicaoId);
+    return orientadores.filter(
+      (orient) => orient.edicao_estagio_id === edicaoId,
+    );
   }
 
   function inscricoesDaEdicao(edicaoId: number) {
-    return inscricoes.filter((inscricao) => inscricao.edicao_estagio_id === edicaoId);
+    return inscricoes.filter(
+      (inscricao) => inscricao.edicao_estagio_id === edicaoId,
+    );
   }
 
   function inscricaoEstaDistribuida(inscricao: Inscricao) {
@@ -206,11 +225,11 @@ export default function EquipasEstagio() {
       (inscricao) =>
         inscricao.estado !== "rejeitado" &&
         inscricao.estado_estagio !== "por_distribuir" &&
-        inscricaoEstaDistribuida(inscricao)
+        inscricaoEstaDistribuida(inscricao),
     );
   }
 
-    function contarAtribuidos(edicaoId: number) {
+  function contarAtribuidos(edicaoId: number) {
     return inscricoesDistribuidasDaEdicao(edicaoId).length;
   }
 
@@ -249,15 +268,15 @@ export default function EquipasEstagio() {
     }
 
     const porAdmin = lista.filter(
-      (inscricao) => inscricao.distribuido_por === "admin"
+      (inscricao) => inscricao.distribuido_por === "admin",
     ).length;
 
     const porResponsavel = lista.filter(
-      (inscricao) => inscricao.distribuido_por === "professor_responsavel"
+      (inscricao) => inscricao.distribuido_por === "professor_responsavel",
     ).length;
 
     const semOrigem = lista.filter(
-      (inscricao) => !inscricao.distribuido_por
+      (inscricao) => !inscricao.distribuido_por,
     ).length;
 
     const partes: string[] = [];
@@ -276,6 +295,7 @@ export default function EquipasEstagio() {
 
     return partes.join(" · ");
   }
+
   function origemDistribuicaoDetalhe(edicaoId: number) {
     const lista = inscricoesDistribuidasDaEdicao(edicaoId);
 
@@ -284,15 +304,15 @@ export default function EquipasEstagio() {
     }
 
     const porAdmin = lista.filter(
-      (inscricao) => inscricao.distribuido_por === "admin"
+      (inscricao) => inscricao.distribuido_por === "admin",
     ).length;
 
     const porResponsavel = lista.filter(
-      (inscricao) => inscricao.distribuido_por === "professor_responsavel"
+      (inscricao) => inscricao.distribuido_por === "professor_responsavel",
     ).length;
 
     const semOrigem = lista.filter(
-      (inscricao) => !inscricao.distribuido_por
+      (inscricao) => !inscricao.distribuido_por,
     ).length;
 
     const partes: string[] = [];
@@ -303,7 +323,7 @@ export default function EquipasEstagio() {
 
     if (porResponsavel > 0) {
       partes.push(
-        `${porResponsavel} aluno(s) distribuído(s) pelo Professor Responsável`
+        `${porResponsavel} aluno(s) distribuído(s) pelo Professor Responsável`,
       );
     }
 
@@ -320,7 +340,7 @@ export default function EquipasEstagio() {
     abrirPopup(
       "Apagar equipa",
       "Tens a certeza que queres apagar os professores e orientadores associados a esta edição?",
-      "apagar"
+      "apagar",
     );
   }
 
@@ -355,7 +375,7 @@ export default function EquipasEstagio() {
     abrirPopup(
       "Colocar tudo inativo",
       "Tens a certeza que queres colocar todas as edições com equipa como inativas?",
-      "inativarTudo"
+      "inativarTudo",
     );
   }
 
@@ -382,7 +402,7 @@ export default function EquipasEstagio() {
 
     abrirPopup(
       "Sucesso",
-      "Todas as edições com equipa foram colocadas como inativas."
+      "Todas as edições com equipa foram colocadas como inativas.",
     );
 
     carregarDados();
@@ -392,7 +412,7 @@ export default function EquipasEstagio() {
     abrirPopup(
       "Apagar tudo",
       "Tens a certeza que queres apagar todas as equipas? Isto remove todos os professores e orientadores associados às edições.",
-      "apagarTudo"
+      "apagarTudo",
     );
   }
 
@@ -435,11 +455,11 @@ export default function EquipasEstagio() {
   const edicoesComEquipa = useMemo(() => {
     return edicoes.filter((edicao) => {
       const profs = professores.filter(
-        (prof) => prof.edicao_estagio_id === edicao.id
+        (prof) => prof.edicao_estagio_id === edicao.id,
       );
 
       const orients = orientadores.filter(
-        (orient) => orient.edicao_estagio_id === edicao.id
+        (orient) => orient.edicao_estagio_id === edicao.id,
       );
 
       return profs.length > 0 || orients.length > 0;
@@ -451,11 +471,11 @@ export default function EquipasEstagio() {
       const texto = pesquisa.toLowerCase().trim();
 
       const profs = professores.filter(
-        (prof) => prof.edicao_estagio_id === edicao.id
+        (prof) => prof.edicao_estagio_id === edicao.id,
       );
 
       const orients = orientadores.filter(
-        (orient) => orient.edicao_estagio_id === edicao.id
+        (orient) => orient.edicao_estagio_id === edicao.id,
       );
 
       const correspondePesquisa =
@@ -465,8 +485,12 @@ export default function EquipasEstagio() {
         edicao.servicos?.nome?.toLowerCase().includes(texto) ||
         edicao.ano_letivo?.toLowerCase().includes(texto) ||
         origemDistribuicaoResumo(edicao.id).toLowerCase().includes(texto) ||
-        profs.some((p) => p.utilizadores?.nome?.toLowerCase().includes(texto)) ||
-        orients.some((o) => o.utilizadores?.nome?.toLowerCase().includes(texto));
+        profs.some((p) =>
+          p.utilizadores?.nome?.toLowerCase().includes(texto),
+        ) ||
+        orients.some((o) =>
+          o.utilizadores?.nome?.toLowerCase().includes(texto),
+        );
 
       const correspondeAno =
         filtroAno === "todos"
@@ -475,11 +499,18 @@ export default function EquipasEstagio() {
 
       return correspondePesquisa && correspondeAno;
     });
-  }, [edicoesComEquipa, pesquisa, filtroAno, professores, orientadores, inscricoes]);
+  }, [
+    edicoesComEquipa,
+    pesquisa,
+    filtroAno,
+    professores,
+    orientadores,
+    inscricoes,
+  ]);
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(edicoesFiltradas.length / itensPorPagina)
+    Math.ceil(edicoesFiltradas.length / itensPorPagina),
   );
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -552,19 +583,22 @@ export default function EquipasEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Aprovar Contas</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Aprovar Contas</Text>
+            )}
+            <ContasPendentesBadge count={contasPendentes} />
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -576,7 +610,7 @@ export default function EquipasEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -598,31 +632,35 @@ export default function EquipasEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
             <Ionicons name="school-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Ensinos Clínicos</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Ensinos Clínicos</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
             <Ionicons name="calendar-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Edições de Estágio</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Edições de Estágio</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -636,7 +674,7 @@ export default function EquipasEstagio() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -652,12 +690,14 @@ export default function EquipasEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
             <Ionicons name="git-branch-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Distribuir Alunos</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Distribuir Alunos</Text>
+            )}
           </Pressable>
         </ScrollView>
 
@@ -678,7 +718,7 @@ export default function EquipasEstagio() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -688,7 +728,10 @@ export default function EquipasEstagio() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -710,7 +753,7 @@ export default function EquipasEstagio() {
             style={styles.botaoCriarHeader}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/criarEquipaEstagio" as any
+                "/backoffice/superadmin/criar_equipas/criarEquipaEstagio" as any,
               )
             }
           >
@@ -750,7 +793,9 @@ export default function EquipasEstagio() {
 
                 <Ionicons
                   name={
-                    showFiltroAno ? "chevron-up-outline" : "chevron-down-outline"
+                    showFiltroAno
+                      ? "chevron-up-outline"
+                      : "chevron-down-outline"
                   }
                   size={18}
                   color="#160909"
@@ -797,7 +842,9 @@ export default function EquipasEstagio() {
           <>
             <View style={styles.tabelaCard}>
               <View style={styles.tabelaHeader}>
-                <Text style={[styles.th, styles.colEnsino]}>Ensino Clínico</Text>
+                <Text style={[styles.th, styles.colEnsino]}>
+                  Ensino Clínico
+                </Text>
                 <Text style={[styles.th, styles.colLocal]}>Local</Text>
                 <Text style={[styles.th, styles.colAno]}>Ano</Text>
                 <Text style={[styles.th, styles.colVagas]}>Vagas</Text>
@@ -823,15 +870,18 @@ export default function EquipasEstagio() {
                 return (
                   <View key={edicao.id} style={styles.linhaContainer}>
                     <View style={styles.tabelaLinha}>
-                      <Text style={[styles.tdNome, styles.colEnsino]}>
+                      <Text
+                        style={[styles.tdNome, styles.colEnsino]}
+                        numberOfLines={1}
+                      >
                         {edicao.ensinos_clinicos?.nome || "Ensino Clínico"}
                       </Text>
 
                       <View style={styles.colLocal}>
-                        <Text style={styles.td}>
+                        <Text style={styles.td} numberOfLines={1}>
                           {edicao.instituicoes?.nome || "Instituição"}
                         </Text>
-                        <Text style={styles.tdSub}>
+                        <Text style={styles.tdSub} numberOfLines={1}>
                           {edicao.servicos?.nome || "Serviço"}
                         </Text>
                       </View>
@@ -856,109 +906,133 @@ export default function EquipasEstagio() {
                             styles.origemBadge,
                             semDistribuicao && styles.origemBadgePendente,
                           ]}
+                          numberOfLines={1}
                         >
                           {resumoOrigem}
                         </Text>
                       </View>
 
-                     <View style={[styles.acoes, styles.colAcoes]}>
-                      <Pressable
-                        style={styles.acaoBotao}
-                        onPress={() => setEquipaAberta(aberto ? null : edicao.id)}
-                      >
-                        <Ionicons
-                          name={aberto ? "chevron-up-outline" : "chevron-down-outline"}
-                          size={21}
-                          color="#160909"
-                        />
-                      </Pressable>
+                      <View style={[styles.acoes, styles.colAcoes]}>
+                        <Pressable
+                          style={styles.acaoBotao}
+                          onPress={() =>
+                            setEquipaAberta(aberto ? null : edicao.id)
+                          }
+                        >
+                          <Ionicons
+                            name={
+                              aberto
+                                ? "chevron-up-outline"
+                                : "chevron-down-outline"
+                            }
+                            size={21}
+                            color="#160909"
+                          />
+                        </Pressable>
 
-                      <Pressable
-                        style={styles.acaoBotao}
-                        onPress={() =>
-                          router.push(
-                            `/backoffice/superadmin/criar_equipas/criarEquipaEstagio?edicaoId=${edicao.id}` as any
-                          )
-                        }
-                      >
-                        <Ionicons name="pencil-outline" size={19} color="#160909" />
-                      </Pressable>
+                        <Pressable
+                          style={styles.acaoBotao}
+                          onPress={() =>
+                            router.push(
+                              `/backoffice/superadmin/criar_equipas/criarEquipaEstagio?edicaoId=${edicao.id}` as any,
+                            )
+                          }
+                        >
+                          <Ionicons
+                            name="pencil-outline"
+                            size={19}
+                            color="#160909"
+                          />
+                        </Pressable>
 
-                      <Pressable
-                        style={styles.acaoBotaoPerigo}
-                        onPress={() => pedirApagarEquipa(edicao.id)}
-                      >
-                        <Ionicons name="trash-outline" size={19} color="#FFFFFF" />
-                      </Pressable>
-                    </View>
+                        <Pressable
+                          style={styles.acaoBotaoPerigo}
+                          onPress={() => pedirApagarEquipa(edicao.id)}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={19}
+                            color="#FFFFFF"
+                          />
+                        </Pressable>
+                      </View>
                     </View>
 
                     {aberto && (
                       <View style={styles.detalhesLinha}>
-                        <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>Ano letivo</Text>
-                          <Text style={styles.detalheValor}>
-                            {edicao.ano_letivo}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>Alunos</Text>
-                          <Text style={styles.detalheValor}>
-                            {atribuidosTexto(atribuidos, disponiveis)}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>
-                            Última distribuição
-                          </Text>
-                          <Text style={styles.detalheValor}>
-                            {dataUltimaDistribuicao(edicao.id)}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detalheItemFull}>
-                          <Text style={styles.detalheLabel}>
-                            Origem da distribuição
-                          </Text>
-                          <Text style={styles.detalheValor}>
-                            {origemDistribuicaoDetalhe(edicao.id)}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detalheItemFull}>
-                          <Text style={styles.detalheLabel}>Professores</Text>
-
-                          {profs.length === 0 ? (
+                        <View style={styles.detalhesLinhaSuperior}>
+                          <View style={styles.detalheItem}>
+                            <Text style={styles.detalheLabel}>Ano letivo</Text>
                             <Text style={styles.detalheValor}>
-                              Ainda não existem professores associados.
+                              {edicao.ano_letivo}
                             </Text>
-                          ) : (
-                            profs.map((prof) => (
-                              <Text key={prof.id} style={styles.detalheValor}>
-                                • {prof.utilizadores?.nome || "Professor"} — limite{" "}
-                                {prof.max_alunos}
-                              </Text>
-                            ))
-                          )}
+                          </View>
+
+                          <View style={styles.detalheItem}>
+                            <Text style={styles.detalheLabel}>Alunos</Text>
+                            <Text style={styles.detalheValor}>
+                              {atribuidosTexto(atribuidos, disponiveis)}
+                            </Text>
+                          </View>
+
+                          <View style={styles.detalheItem}>
+                            <Text style={styles.detalheLabel}>
+                              Última distribuição
+                            </Text>
+                            <Text style={styles.detalheValor}>
+                              {dataUltimaDistribuicao(edicao.id)}
+                            </Text>
+                          </View>
+
+                          <View style={styles.detalheItem}>
+                            <Text style={styles.detalheLabel}>
+                              Origem da distribuição
+                            </Text>
+                            <Text style={styles.detalheValor}>
+                              {origemDistribuicaoDetalhe(edicao.id)}
+                            </Text>
+                          </View>
                         </View>
 
-                        <View style={styles.detalheItemFull}>
-                          <Text style={styles.detalheLabel}>Orientadores</Text>
+                        <View style={styles.detalhesLinhaInferior}>
+                          <View style={styles.detalheItemGrande}>
+                            <Text style={styles.detalheLabel}>Professores</Text>
 
-                          {orients.length === 0 ? (
-                            <Text style={styles.detalheValor}>
-                              Ainda não existem orientadores associados.
-                            </Text>
-                          ) : (
-                            orients.map((orient) => (
-                              <Text key={orient.id} style={styles.detalheValor}>
-                                • {orient.utilizadores?.nome || "Orientador"} — limite{" "}
-                                {orient.max_alunos}
+                            {profs.length === 0 ? (
+                              <Text style={styles.detalheValor}>
+                                Ainda não existem professores associados.
                               </Text>
-                            ))
-                          )}
+                            ) : (
+                              profs.map((prof) => (
+                                <Text key={prof.id} style={styles.detalheValor}>
+                                  • {prof.utilizadores?.nome || "Professor"} —
+                                  limite {prof.max_alunos}
+                                </Text>
+                              ))
+                            )}
+                          </View>
+
+                          <View style={styles.detalheItemGrande}>
+                            <Text style={styles.detalheLabel}>
+                              Orientadores
+                            </Text>
+
+                            {orients.length === 0 ? (
+                              <Text style={styles.detalheValor}>
+                                Ainda não existem orientadores associados.
+                              </Text>
+                            ) : (
+                              orients.map((orient) => (
+                                <Text
+                                  key={orient.id}
+                                  style={styles.detalheValor}
+                                >
+                                  • {orient.utilizadores?.nome || "Orientador"}{" "}
+                                  — limite {orient.max_alunos}
+                                </Text>
+                              ))
+                            )}
+                          </View>
                         </View>
                       </View>
                     )}
@@ -1021,7 +1095,11 @@ export default function EquipasEstagio() {
                   onPress={irPaginaAnterior}
                   disabled={paginaAtual === 1}
                 >
-                  <Ionicons name="chevron-back-outline" size={20} color="#160909" />
+                  <Ionicons
+                    name="chevron-back-outline"
+                    size={20}
+                    color="#160909"
+                  />
                 </Pressable>
 
                 <Text style={styles.paginaAtualTexto}>
@@ -1054,7 +1132,10 @@ export default function EquipasEstagio() {
                 <Text style={styles.textoBotaoFinal}>Colocar tudo inativo</Text>
               </Pressable>
 
-              <Pressable style={styles.botaoApagarTudo} onPress={pedirApagarTudo}>
+              <Pressable
+                style={styles.botaoApagarTudo}
+                onPress={pedirApagarTudo}
+              >
                 <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
                 <Text style={styles.textoBotaoFinal}>Apagar tudo</Text>
               </Pressable>
@@ -1083,7 +1164,10 @@ export default function EquipasEstagio() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>

@@ -8,9 +8,11 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { useContasPendentes } from "../contasPendentes";
 import styles from "./criarDistribuicaoStyles";
 
 type Edicao = {
@@ -90,6 +92,7 @@ export default function CriarDistribuicao() {
   const inscricaoId = params.inscricaoId ? Number(params.inscricaoId) : null;
 
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [edicoes, setEdicoes] = useState<Edicao[]>([]);
   const [alunos, setAlunos] = useState<Utilizador[]>([]);
@@ -108,11 +111,15 @@ export default function CriarDistribuicao() {
   >([]);
 
   const [edicaoSelecionada, setEdicaoSelecionada] = useState<number | null>(
-    null
+    null,
   );
   const [alunosSelecionados, setAlunosSelecionados] = useState<string[]>([]);
 
   const [mostrarEdicoes, setMostrarEdicoes] = useState(false);
+
+  const [pesquisaAluno, setPesquisaAluno] = useState("");
+  const [filtroAnoAluno, setFiltroAnoAluno] = useState("estagio");
+  const [filtroAnoAberto, setFiltroAnoAberto] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [aGuardar, setAGuardar] = useState(false);
@@ -129,7 +136,7 @@ export default function CriarDistribuicao() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" = "normal"
+    tipo: "normal" | "sair" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -152,7 +159,7 @@ export default function CriarDistribuicao() {
         ensinos_clinicos(nome, ano_curricular),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .neq("estado", "inativo")
       .order("id", { ascending: false });
@@ -179,7 +186,7 @@ export default function CriarDistribuicao() {
         data_distribuicao,
         estado,
         estado_estagio
-      `
+      `,
       );
 
     if (edicoesError || alunosError || inscricoesError) {
@@ -190,7 +197,8 @@ export default function CriarDistribuicao() {
     }
 
     const listaAlunos = ((alunosData as any) || []) as Utilizador[];
-    const listaInscricoes = ((inscricoesData as any) || []) as InscricaoExistente[];
+    const listaInscricoes = ((inscricoesData as any) ||
+      []) as InscricaoExistente[];
 
     setEdicoes((edicoesData as any) || []);
     setAlunos(listaAlunos);
@@ -213,7 +221,7 @@ export default function CriarDistribuicao() {
               id,
               ensinos_clinicos(nome, ano_curricular)
             )
-          `
+          `,
           )
           .in("aluno_id", alunosIds)
           .eq("estado", "aprovado")
@@ -248,7 +256,7 @@ export default function CriarDistribuicao() {
         professor_id,
         edicao_estagio_id,
         utilizadores(nome)
-      `
+      `,
       )
       .eq("edicao_estagio_id", edicaoId);
 
@@ -260,7 +268,7 @@ export default function CriarDistribuicao() {
         orientador_id,
         edicao_estagio_id,
         utilizadores(nome)
-      `
+      `,
       )
       .eq("edicao_estagio_id", edicaoId);
 
@@ -278,6 +286,8 @@ export default function CriarDistribuicao() {
     setEdicaoSelecionada(id);
     setAlunosSelecionados([]);
     setMostrarEdicoes(false);
+    setFiltroAnoAluno("estagio");
+    setPesquisaAluno("");
 
     await carregarEquipa(id);
   }
@@ -296,23 +306,38 @@ export default function CriarDistribuicao() {
     }`;
   }
 
-  const alunosDoAno = useMemo(() => {
+  const anosAlunosDisponiveis = useMemo(() => {
+    const anos = alunos
+      .map((aluno) => aluno.ano_curricular)
+      .filter((ano): ano is number => Boolean(ano));
+
+    return Array.from(new Set(anos)).sort((a, b) => a - b);
+  }, [alunos]);
+
+  function textoFiltroAnoAluno() {
     const e = edicaoAtual();
 
-    if (!e) return [];
+    if (filtroAnoAluno === "estagio") {
+      if (e?.ensinos_clinicos?.ano_curricular) {
+        return `${e.ensinos_clinicos.ano_curricular}.º ano`;
+      }
 
-    return alunos.filter(
-      (aluno) => aluno.ano_curricular === e.ensinos_clinicos?.ano_curricular
-    );
-  }, [alunos, edicaoSelecionada, edicoes]);
+      return "Ano curricular";
+    }
+
+    if (filtroAnoAluno === "todos") {
+      return "Todos";
+    }
+
+    return `${filtroAnoAluno}.º ano`;
+  }
 
   function inscricaoDoAluno(alunoId: string) {
     if (!edicaoSelecionada) return null;
 
     return (
-      inscricoesExistentes.find(
-        (inscricao) =>
-          inscriçãoValidaParaMesmoAluno(inscricao, alunoId, edicaoSelecionada)
+      inscricoesExistentes.find((inscricao) =>
+        inscriçãoValidaParaMesmoAluno(inscricao, alunoId, edicaoSelecionada),
       ) || null
     );
   }
@@ -320,9 +345,11 @@ export default function CriarDistribuicao() {
   function inscriçãoValidaParaMesmoAluno(
     inscricao: InscricaoExistente,
     alunoId: string,
-    edicaoId: number
+    edicaoId: number,
   ) {
-    return inscricao.aluno_id === alunoId && inscricao.edicao_estagio_id === edicaoId;
+    return (
+      inscricao.aluno_id === alunoId && inscricao.edicao_estagio_id === edicaoId
+    );
   }
 
   function alunoJaDistribuido(alunoId: string) {
@@ -333,8 +360,7 @@ export default function CriarDistribuicao() {
     if (inscricaoId && inscricao.id === inscricaoId) return false;
 
     return (
-      inscricao.estado === "aprovado" ||
-      inscricao.estado_estagio === "em_curso"
+      inscricao.estado === "aprovado" || inscricao.estado_estagio === "em_curso"
     );
   }
 
@@ -366,7 +392,7 @@ export default function CriarDistribuicao() {
       (inscricao) =>
         inscricao.aluno_id === alunoId &&
         inscricao.estado === "aprovado" &&
-        inscricao.estado_estagio !== "inativo"
+        inscricao.estado_estagio !== "inativo",
     );
 
     if (lista.length === 0) {
@@ -391,7 +417,7 @@ export default function CriarDistribuicao() {
     if (alunoJaDistribuido(id)) {
       abrirPopup(
         "Aluno já distribuído",
-        "Este aluno já está associado a este estágio."
+        "Este aluno já está associado a este estágio.",
       );
       return;
     }
@@ -407,6 +433,45 @@ export default function CriarDistribuicao() {
       setAlunosSelecionados([...alunosSelecionados, id]);
     }
   }
+
+  const alunosFiltrados = useMemo(() => {
+    const termo = pesquisaAluno.toLowerCase().trim();
+    const e = edicaoAtual();
+
+    return alunos.filter((aluno) => {
+      const texto = `
+        ${aluno.nome || ""}
+        ${aluno.email || ""}
+        ${aluno.numero_identificacao || ""}
+        ${aluno.ano_curricular || ""}
+        ${textoDistribuicaoAluno(aluno.id)}
+        ${textoEstagiosAluno(aluno.id)}
+      `.toLowerCase();
+
+      const passaPesquisa = !termo || texto.includes(termo);
+
+      let passaAno = true;
+
+      if (filtroAnoAluno === "estagio") {
+        passaAno =
+          Boolean(e) &&
+          Number(aluno.ano_curricular) ===
+            Number(e?.ensinos_clinicos?.ano_curricular);
+      } else if (filtroAnoAluno !== "todos") {
+        passaAno = Number(aluno.ano_curricular) === Number(filtroAnoAluno);
+      }
+
+      return passaPesquisa && passaAno;
+    });
+  }, [
+    alunos,
+    pesquisaAluno,
+    filtroAnoAluno,
+    edicaoSelecionada,
+    edicoes,
+    inscricoesExistentes,
+    inscricoesAlunosTodas,
+  ]);
 
   async function contarAlunosNoEstagio() {
     if (!edicaoSelecionada) return 0;
@@ -425,7 +490,7 @@ export default function CriarDistribuicao() {
       (i: any) =>
         i.estado !== "rejeitado" &&
         i.estado_estagio !== "inativo" &&
-        (i.estado === "aprovado" || i.estado_estagio === "em_curso")
+        (i.estado === "aprovado" || i.estado_estagio === "em_curso"),
     ).length;
   }
 
@@ -452,7 +517,7 @@ export default function CriarDistribuicao() {
     if (professoresEstagio.length === 0 || orientadoresEstagio.length === 0) {
       abrirPopup(
         "Equipa em falta",
-        "Este estágio ainda não tem professor e orientador associados. Cria primeiro a equipa do estágio."
+        "Este estágio ainda não tem professor e orientador associados. Cria primeiro a equipa do estágio.",
       );
       return;
     }
@@ -475,7 +540,7 @@ export default function CriarDistribuicao() {
       setAGuardar(false);
       abrirPopup(
         "Erro",
-        `Só existem ${vagasDisponiveis} vaga(s) disponíveis neste estágio.`
+        `Só existem ${vagasDisponiveis} vaga(s) disponíveis neste estágio.`,
       );
       return;
     }
@@ -492,7 +557,7 @@ export default function CriarDistribuicao() {
         setAGuardar(false);
         abrirPopup(
           "Aluno já distribuído",
-          "Um dos alunos selecionados já está associado a este estágio."
+          "Um dos alunos selecionados já está associado a este estágio.",
         );
         return;
       }
@@ -543,7 +608,7 @@ export default function CriarDistribuicao() {
           if (error.code === "23505") {
             abrirPopup(
               "Erro",
-              "Um destes alunos já está associado a este estágio."
+              "Um destes alunos já está associado a este estágio.",
             );
           } else {
             abrirPopup("Erro", error.message);
@@ -560,12 +625,12 @@ export default function CriarDistribuicao() {
       "Sucesso",
       inscricaoId
         ? "Distribuição editada com sucesso."
-        : "Alunos distribuídos com sucesso."
+        : "Alunos distribuídos com sucesso.",
     );
 
     setTimeout(() => {
       router.push(
-        "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+        "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
       );
     }, 900);
   }
@@ -624,19 +689,21 @@ export default function CriarDistribuicao() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Aprovar Contas</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Aprovar Contas</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -648,7 +715,7 @@ export default function CriarDistribuicao() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -670,7 +737,7 @@ export default function CriarDistribuicao() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -684,7 +751,7 @@ export default function CriarDistribuicao() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -698,7 +765,7 @@ export default function CriarDistribuicao() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -712,7 +779,7 @@ export default function CriarDistribuicao() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -724,7 +791,7 @@ export default function CriarDistribuicao() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -754,7 +821,7 @@ export default function CriarDistribuicao() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -764,14 +831,17 @@ export default function CriarDistribuicao() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
               style={styles.botaoVoltarHome}
               onPress={() =>
                 router.push(
-                  "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                  "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
                 )
               }
             >
@@ -889,72 +959,149 @@ export default function CriarDistribuicao() {
 
             <Text style={styles.label}>Alunos</Text>
 
-            <ScrollView style={styles.pickerListaGrande} nestedScrollEnabled>
-              {!edicaoSelecionada ? (
-                <Text style={styles.textoVazioModal}>
-                  Seleciona primeiro um estágio.
-                </Text>
-              ) : alunosDoAno.length === 0 ? (
-                <Text style={styles.textoVazioModal}>
-                  Não existem alunos aprovados para este ano curricular.
-                </Text>
-              ) : (
-                alunosDoAno.map((aluno) => {
-                  const selecionado = alunosSelecionados.includes(aluno.id);
-                  const jaDistribuido = alunoJaDistribuido(aluno.id);
+            <View style={styles.alunosBox}>
+              <View style={styles.searchFiltroLinha}>
+                <View style={styles.searchContainerComFiltro}>
+                  <Ionicons name="search-outline" size={21} color="#667085" />
 
-                  return (
-                    <Pressable
-                      key={aluno.id}
-                      style={[
-                        styles.opcao,
-                        selecionado && styles.opcaoSelecionada,
-                        jaDistribuido && styles.opcaoOrientadorCombina,
-                      ]}
-                      onPress={() => toggleAluno(aluno.id)}
-                    >
-                      <View style={styles.opcaoLinha}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.opcaoTitulo}>{aluno.nome}</Text>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Pesquisar aluno por nome, email, número ou estágio..."
+                    placeholderTextColor="#8c8787"
+                    value={pesquisaAluno}
+                    onChangeText={setPesquisaAluno}
+                    autoCapitalize="none"
+                  />
 
-                          <Text style={styles.opcaoTexto}>
-                            {aluno.email}
-                            {aluno.numero_identificacao
-                              ? ` · Nº ${aluno.numero_identificacao}`
-                              : ""}
-                          </Text>
-
-                          <Text style={styles.localOrientadorTexto}>
-                            {textoDistribuicaoAluno(aluno.id)}
-                          </Text>
-
-                          <Text style={styles.estagiosAlunoTexto}>
-                            {textoEstagiosAluno(aluno.id)}
-                          </Text>
-                        </View>
-
-                        <Ionicons
-                          name={
-                            selecionado
-                              ? "checkbox-outline"
-                              : "square-outline"
-                          }
-                          size={24}
-                          color="#160909"
-                        />
-                      </View>
+                  {pesquisaAluno.length > 0 && (
+                    <Pressable onPress={() => setPesquisaAluno("")}>
+                      <Ionicons
+                        name="close-circle-outline"
+                        size={20}
+                        color="#667085"
+                      />
                     </Pressable>
-                  );
-                })
-              )}
-            </ScrollView>
+                  )}
+                </View>
+
+                <View style={styles.filtroAnoBox}>
+                  <Pressable
+                    style={styles.filtroAnoToggle}
+                    onPress={() => setFiltroAnoAberto(!filtroAnoAberto)}
+                  >
+                    <Text style={styles.filtroAnoTexto}>
+                      {textoFiltroAnoAluno()}
+                    </Text>
+
+                    <Ionicons
+                      name={
+                        filtroAnoAberto
+                          ? "chevron-up-outline"
+                          : "chevron-down-outline"
+                      }
+                      size={18}
+                      color="#160909"
+                    />
+                  </Pressable>
+
+                  {filtroAnoAberto && (
+                    <View style={styles.filtroAnoDropdown}>
+                      <Pressable
+                        style={styles.filtroAnoOpcao}
+                        onPress={() => {
+                          setFiltroAnoAluno("todos");
+                          setFiltroAnoAberto(false);
+                        }}
+                      >
+                        <Text style={styles.filtroAnoOpcaoTexto}>Todos</Text>
+                      </Pressable>
+
+                      {anosAlunosDisponiveis.map((ano) => (
+                        <Pressable
+                          key={ano}
+                          style={styles.filtroAnoOpcao}
+                          onPress={() => {
+                            setFiltroAnoAluno(String(ano));
+                            setFiltroAnoAberto(false);
+                          }}
+                        >
+                          <Text style={styles.filtroAnoOpcaoTexto}>
+                            {ano}.º ano
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <ScrollView style={styles.pickerListaAlunos} nestedScrollEnabled>
+                {!edicaoSelecionada ? (
+                  <Text style={styles.textoVazioModal}>
+                    Seleciona primeiro um estágio.
+                  </Text>
+                ) : alunosFiltrados.length === 0 ? (
+                  <Text style={styles.textoVazioModal}>
+                    Não existem alunos para os filtros selecionados.
+                  </Text>
+                ) : (
+                  alunosFiltrados.map((aluno) => {
+                    const selecionado = alunosSelecionados.includes(aluno.id);
+                    const jaDistribuido = alunoJaDistribuido(aluno.id);
+
+                    return (
+                      <Pressable
+                        key={aluno.id}
+                        style={[
+                          styles.opcao,
+                          selecionado && styles.opcaoSelecionada,
+                          jaDistribuido && styles.opcaoOrientadorCombina,
+                        ]}
+                        onPress={() => toggleAluno(aluno.id)}
+                      >
+                        <View style={styles.opcaoLinha}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.opcaoTitulo}>{aluno.nome}</Text>
+
+                            <Text style={styles.opcaoTexto}>
+                              {aluno.email}
+                              {aluno.numero_identificacao
+                                ? ` · Nº ${aluno.numero_identificacao}`
+                                : ""}
+                            </Text>
+
+                            <Text style={styles.localOrientadorTexto}>
+                              {textoDistribuicaoAluno(aluno.id)}
+                            </Text>
+
+                            <Text style={styles.estagiosAlunoTexto}>
+                              {textoEstagiosAluno(aluno.id)}
+                            </Text>
+                          </View>
+
+                          <Ionicons
+                            name={
+                              selecionado
+                                ? "checkbox-outline"
+                                : "square-outline"
+                            }
+                            size={24}
+                            color="#160909"
+                          />
+                        </View>
+                      </Pressable>
+                    );
+                  })
+                )}
+              </ScrollView>
+            </View>
 
             <View style={styles.popupBotoesLinha}>
               <Pressable
                 style={styles.popupBotaoCancelar}
                 onPress={() =>
                   router.push(
-                    "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                    "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
                   )
                 }
               >
@@ -995,7 +1142,10 @@ export default function CriarDistribuicao() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>

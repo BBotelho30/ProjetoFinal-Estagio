@@ -214,35 +214,6 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-  filtrosCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    zIndex: 30,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
-  },
-
-  searchContainer: {
-    width: "100%",
-    height: 50,
-    backgroundColor: "#F2F4F7",
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-    marginBottom: 14,
-  },
-
   searchInput: {
     flex: 1,
     fontSize: 16,
@@ -250,16 +221,6 @@ const local = StyleSheet.create({
     color: "#160909",
     fontFamily: "serif",
     marginLeft: 10,
-  },
-
-  filtrosLinha: {
-    flexDirection: "row",
-    gap: 14,
-    alignItems: "flex-start",
-  },
-
-  filtroBox: {
-    flex: 1,
   },
 
   filtroLabel: {
@@ -290,23 +251,6 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
-  dropdown: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    padding: 6,
-    marginTop: 8,
-    zIndex: 50,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
-
   dropdownOption: {
     minHeight: 40,
     borderRadius: 8,
@@ -319,20 +263,6 @@ const local = StyleSheet.create({
     fontWeight: "800",
     color: "#160909",
     fontFamily: "serif",
-  },
-
-  tabelaCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    overflow: "hidden",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
   },
 
   tabelaHeader: {
@@ -378,7 +308,7 @@ const local = StyleSheet.create({
   },
 
   colEnsino: {
-    flex: 2,
+    flex: 3,
   },
 
   colAnoCurricular: {
@@ -403,8 +333,8 @@ const local = StyleSheet.create({
 
   estadoBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFF7E0",
-    color: "#B77900",
+    backgroundColor: "#e0f9dcff",
+    color: "#4bcf37ff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
@@ -763,6 +693,87 @@ const local = StyleSheet.create({
     ...backofficeStyles.popupOkText,
     fontSize: 15,
   },
+
+  filtrosCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  padding: 18,
+  marginBottom: 20,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  zIndex: 1000,
+  overflow: "visible",
+  flexDirection: "row",
+  alignItems: "flex-end",
+  gap: 14,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.04,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 20,
+},
+
+searchContainer: {
+  flex: 2,
+  height: 50,
+  backgroundColor: "#F2F4F7",
+  borderRadius: 10,
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 14,
+  borderWidth: 1,
+  borderColor: "#D0D5DD",
+},
+
+filtrosLinha: {
+  flex: 1.4,
+  flexDirection: "row",
+  gap: 14,
+  alignItems: "flex-end",
+  zIndex: 1000,
+  overflow: "visible",
+},
+
+filtroBox: {
+  flex: 1,
+  position: "relative",
+  zIndex: 1000,
+},
+
+dropdown: {
+  position: "absolute",
+  top: 76,
+  left: 0,
+  right: 0,
+  backgroundColor: "#FFFFFF",
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  padding: 6,
+  zIndex: 2000,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 30,
+},
+
+tabelaCard: {
+  backgroundColor: "#FFFFFF",
+  borderRadius: 18,
+  borderWidth: 1,
+  borderColor: "#E4E7EC",
+  overflow: "hidden",
+  zIndex: 1,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.04,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
 });
 
 const styles = {

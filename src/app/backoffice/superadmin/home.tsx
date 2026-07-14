@@ -1,69 +1,67 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View, Image, Modal } from "react-native";
+import { Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { supabase } from "../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "./contasPendentes";
 import styles from "./homeStyles";
-import backofficeStyles from "../../../styles/backofficeStyles";
-
 
 export default function SuperAdminHome() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
   const [nome, setNome] = useState("Admin");
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
   const [popupTipo, setPopupTipo] = useState<"normal" | "sair">("normal");
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
-  
 
   useEffect(() => {
     carregarPerfil();
   }, []);
 
-function abrirPopup(
-  titulo: string,
-  mensagem: string,
-  tipo: "normal" | "sair" = "normal"
-) {
-  setPopupTitle(titulo);
-  setPopupMessage(mensagem);
-  setPopupTipo(tipo);
-  setPopupVisible(true);
-}
-
-async function carregarPerfil() {
-  const { data: authData } = await supabase.auth.getUser();
-
-  const user = authData.user;
-
-  if (!user) {
-    console.log("SEM SESSÃO ATIVA");
-    return;
+  function abrirPopup(
+    titulo: string,
+    mensagem: string,
+    tipo: "normal" | "sair" = "normal",
+  ) {
+    setPopupTitle(titulo);
+    setPopupMessage(mensagem);
+    setPopupTipo(tipo);
+    setPopupVisible(true);
   }
 
-  const { data, error } = await supabase
-    .from("utilizadores")
-    .select("nome, foto_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  async function carregarPerfil() {
+    const { data: authData } = await supabase.auth.getUser();
 
-  if (error) {
-    console.log("Erro ao carregar perfil:", error);
-    return;
+    const user = authData.user;
+
+    if (!user) {
+      console.log("SEM SESSÃO ATIVA");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("utilizadores")
+      .select("nome, foto_url")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Erro ao carregar perfil:", error);
+      return;
+    }
+
+    if (data?.nome) {
+      setNome(data.nome);
+    }
+
+    if (data?.foto_url) {
+      setFotoPerfil(data.foto_url);
+    } else {
+      setFotoPerfil(null);
+    }
   }
-
-  if (data?.nome) {
-    setNome(data.nome);
-  }
-
-  if (data?.foto_url) {
-    setFotoPerfil(data.foto_url);
-  } else {
-    setFotoPerfil(null);
-  }
-}
-
 
   async function terminarSessao() {
     await supabase.auth.signOut();
@@ -88,7 +86,12 @@ async function carregarPerfil() {
           {sidebarAberta && (
             <View style={styles.sidebarHeader}>
               <View style={styles.logoCircle}>
-                <Image source={require("../../../../assets/images/enf.jpg")} style={styles.logoSidebar} resizeMode="cover"/></View>
+                <Image
+                  source={require("../../../../assets/images/enf.jpg")}
+                  style={styles.logoSidebar}
+                  resizeMode="cover"
+                />
+              </View>
 
               <Text style={styles.sidebarTitle}>Passaporte</Text>
               <Text style={styles.sidebarSubtitle}>Enfermagem</Text>
@@ -96,7 +99,11 @@ async function carregarPerfil() {
           )}
         </View>
 
-        <ScrollView style={styles.menuScroll} contentContainerStyle={styles.menu} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.menuScroll}
+          contentContainerStyle={styles.menu}
+          showsVerticalScrollIndicator={false}
+        >
           <Pressable
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() => router.push("/backoffice/superadmin/home" as any)}
@@ -112,17 +119,33 @@ async function carregarPerfil() {
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/aprovarConta/aprovarConta" as any)
+              router.push(
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
+              )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Aprovar Contas</Text>}
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {sidebarAberta && (
+                <Text style={styles.menuText}>Aprovar Contas</Text>
+              )}
+              <ContasPendentesBadge count={contasPendentes} />
+            </View>
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/utilizadores/utilizadores" as any)
+              router.push(
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
+              )
             }
           >
             <Ionicons name="people-outline" size={23} color="#FFFFFF" />
@@ -132,7 +155,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/instituicoes/instituicoes" as any)
+              router.push(
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
+              )
             }
           >
             <Ionicons name="business-outline" size={23} color="#FFFFFF" />
@@ -153,29 +178,35 @@ async function carregarPerfil() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
             <Ionicons name="school-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Ensinos Clínicos</Text>}
-          </Pressable>
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() =>
-              router.push("/backoffice/superadmin/editarEstagio/editarEstagio" as any)
-            }
-          >
-            <Ionicons name="calendar-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Edições de Estágio</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Ensinos Clínicos</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
+              )
+            }
+          >
+            <Ionicons name="calendar-outline" size={23} color="#FFFFFF" />
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Edições de Estágio</Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            style={styles.menuItem}
+            onPress={() =>
+              router.push(
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -188,7 +219,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.menuItem}
             onPress={() =>
-              router.push("/backoffice/superadmin/criar_equipas/equipasEstagio" as any)
+              router.push(
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
+              )
             }
           >
             <Ionicons name="people-circle-outline" size={23} color="#FFFFFF" />
@@ -199,12 +232,14 @@ async function carregarPerfil() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
             <Ionicons name="git-branch-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Distribuir Alunos</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Distribuir Alunos</Text>
+            )}
           </Pressable>
         </ScrollView>
 
@@ -219,7 +254,16 @@ async function carregarPerfil() {
             {sidebarAberta && <Text style={styles.footerText}>Perfil</Text>}
           </Pressable>
 
-          <Pressable style={styles.footerButton} onPress={() => abrirPopup("Terminar sessão", "Tens a certeza que queres terminar sessão?", "sair")}>
+          <Pressable
+            style={styles.footerButton}
+            onPress={() =>
+              abrirPopup(
+                "Terminar sessão",
+                "Tens a certeza que queres terminar sessão?",
+                "sair",
+              )
+            }
+          >
             <Ionicons name="log-out-outline" size={23} color="#FFFFFF" />
             {sidebarAberta && <Text style={styles.footerText}>Sair</Text>}
           </Pressable>
@@ -235,12 +279,25 @@ async function carregarPerfil() {
             </Text>
           </View>
 
-          <Pressable style={styles.profileButton} onPress={() => router.push("/backoffice/superadmin/perfil/perfil" as any)}>
+          <Pressable
+            style={styles.profileButton}
+            onPress={() =>
+              router.push("/backoffice/superadmin/perfil/perfil" as any)
+            }
+          >
             {fotoPerfil ? (
-              <Image source={{ uri: fotoPerfil }} style={styles.profileImage} resizeMode="cover"/>
+              <Image
+                source={{ uri: fotoPerfil }}
+                style={styles.profileImage}
+                resizeMode="cover"
+              />
             ) : (
-            <Ionicons name="person-circle-outline" size={34} color="#225943" />
-          )}
+              <Ionicons
+                name="person-circle-outline"
+                size={34}
+                color="#225943"
+              />
+            )}
           </Pressable>
         </View>
 
@@ -250,7 +307,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.card}
             onPress={() =>
-              router.push("/backoffice/superadmin/aprovarConta/aprovarConta" as any)
+              router.push(
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
+              )
             }
           >
             <Ionicons name="person-add-outline" size={36} color="#FDB515" />
@@ -265,7 +324,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.card}
             onPress={() =>
-              router.push("/backoffice/superadmin/utilizadores/utilizadores" as any)
+              router.push(
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
+              )
             }
           >
             <Ionicons name="people-outline" size={36} color="#FDB515" />
@@ -280,7 +341,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.card}
             onPress={() =>
-              router.push("/backoffice/superadmin/instituicoes/instituicoes" as any)
+              router.push(
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
+              )
             }
           >
             <Ionicons name="business-outline" size={36} color="#FDB515" />
@@ -327,7 +390,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.card}
             onPress={() =>
-              router.push("/backoffice/superadmin/editarEstagio/editarEstagio" as any)
+              router.push(
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
+              )
             }
           >
             <Ionicons name="calendar-outline" size={36} color="#FDB515" />
@@ -359,7 +424,9 @@ async function carregarPerfil() {
           <Pressable
             style={styles.card}
             onPress={() =>
-              router.push("/backoffice/superadmin/criar_equipas/equipasEstagio" as any)
+              router.push(
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
+              )
             }
           >
             <Ionicons name="people-circle-outline" size={36} color="#FDB515" />
@@ -387,42 +454,47 @@ async function carregarPerfil() {
               </Text>
             </View>
           </Pressable>
-
         </View>
       </ScrollView>
 
-      
-      
-      <Modal visible={popupVisible} transparent animationType="fade" onRequestClose={() => setPopupVisible(false)}>
+      <Modal
+        visible={popupVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPopupVisible(false)}
+      >
         <View style={styles.popupOverlay}>
-        <View style={styles.popupContainer}>
-        <Text style={styles.popupTitle}>{popupTitle}</Text>
-        <Text style={styles.popupMessage}>{popupMessage}</Text>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>{popupTitle}</Text>
+            <Text style={styles.popupMessage}>{popupMessage}</Text>
 
-      {popupTipo === "sair" ? (
-        <View style={styles.popupBotoesLinha}>
-          <Pressable
-            style={styles.popupBotaoCancelar}
-            onPress={() => setPopupVisible(false)}
-          >
-            <Text style={styles.popupTextoCancelar}>Cancelar</Text>
-          </Pressable>
+            {popupTipo === "sair" ? (
+              <View style={styles.popupBotoesLinha}>
+                <Pressable
+                  style={styles.popupBotaoCancelar}
+                  onPress={() => setPopupVisible(false)}
+                >
+                  <Text style={styles.popupTextoCancelar}>Cancelar</Text>
+                </Pressable>
 
-          <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
-            <Text style={styles.popupTextoSair}>Sair</Text>
-          </Pressable>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
+                  <Text style={styles.popupTextoSair}>Sair</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                style={styles.popupOkButton}
+                onPress={() => setPopupVisible(false)}
+              >
+                <Text style={styles.popupOkText}>OK</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
-      ) : (
-        <Pressable
-          style={styles.popupOkButton}
-          onPress={() => setPopupVisible(false)}
-        >
-          <Text style={styles.popupOkText}>OK</Text>
-        </Pressable>
-      )}
-    </View>
-  </View>
-</Modal>
+      </Modal>
     </View>
   );
 }

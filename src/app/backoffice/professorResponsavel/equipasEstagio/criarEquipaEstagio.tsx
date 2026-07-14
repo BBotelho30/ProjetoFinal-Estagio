@@ -95,6 +95,9 @@ export default function CriarEquipaEstagioProfessorResponsavel() {
   const [mostrarTodosOrientadores, setMostrarTodosOrientadores] =
     useState(false);
 
+  const [pesquisaProfessor, setPesquisaProfessor] = useState("");
+  const [pesquisaOrientador, setPesquisaOrientador] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [aGuardar, setAGuardar] = useState(false);
 
@@ -306,24 +309,7 @@ export default function CriarEquipaEstagioProfessorResponsavel() {
 
     const orientador = orientadores.find((o) => o.id === orientadorSelecionado);
 
-    if (!orientador) return "Orientador selecionado";
-
-    const hospital = orientador.instituicoes?.nome;
-    const servico = orientador.servicos?.nome;
-
-    if (hospital && servico) {
-      return `${orientador.nome} - ${hospital} / ${servico}`;
-    }
-
-    if (hospital) {
-      return `${orientador.nome} - ${hospital}`;
-    }
-
-    if (servico) {
-      return `${orientador.nome} - ${servico}`;
-    }
-
-    return `${orientador.nome} - local não definido`;
+    return orientador?.nome || "Orientador selecionado";
   }
 
   const locaisSelecionados = useMemo(() => {
@@ -337,7 +323,23 @@ export default function CriarEquipaEstagioProfessorResponsavel() {
       }));
   }, [edicoes, edicoesSelecionadas]);
 
-  const orientadoresFiltrados = useMemo(() => {
+  const professoresFiltrados = useMemo(() => {
+    const termo = pesquisaProfessor.toLowerCase().trim();
+
+    if (!termo) return professores;
+
+    return professores.filter((professor) => {
+      const texto = `
+        ${professor.nome || ""}
+        ${professor.email || ""}
+        ${professor.numero_identificacao || ""}
+      `.toLowerCase();
+
+      return texto.includes(termo);
+    });
+  }, [professores, pesquisaProfessor]);
+
+  const orientadoresPorLocal = useMemo(() => {
     if (mostrarTodosOrientadores || locaisSelecionados.length === 0) {
       return orientadores;
     }
@@ -350,6 +352,24 @@ export default function CriarEquipaEstagioProfessorResponsavel() {
       )
     );
   }, [orientadores, locaisSelecionados, mostrarTodosOrientadores]);
+
+  const orientadoresFiltrados = useMemo(() => {
+    const termo = pesquisaOrientador.toLowerCase().trim();
+
+    if (!termo) return orientadoresPorLocal;
+
+    return orientadoresPorLocal.filter((orientador) => {
+      const texto = `
+        ${orientador.nome || ""}
+        ${orientador.email || ""}
+        ${orientador.numero_identificacao || ""}
+        ${orientador.instituicoes?.nome || ""}
+        ${orientador.servicos?.nome || ""}
+      `.toLowerCase();
+
+      return texto.includes(termo);
+    });
+  }, [orientadoresPorLocal, pesquisaOrientador]);
 
   function textoLocalOrientador(orientador: Utilizador) {
     const hospital = orientador.instituicoes?.nome;
@@ -603,7 +623,11 @@ export default function CriarEquipaEstagioProfessorResponsavel() {
 
             <Pressable
               style={styles.selectToggle}
-              onPress={() => setEdicoesOpen(!edicoesOpen)}
+              onPress={() => {
+                setEdicoesOpen(!edicoesOpen);
+                setProfessoresOpen(false);
+                setOrientadoresOpen(false);
+              }}
             >
               <Text style={styles.selectToggleText}>
                 {edicoesSelecionadasTexto()}
@@ -666,195 +690,280 @@ export default function CriarEquipaEstagioProfessorResponsavel() {
             )}
 
             {locaisSelecionados.length > 0 && (
-              <View style={styles.localBox}>
-                <Ionicons
-                  name="location-outline"
-                  size={22}
-                  color="#B77900"
-                />
+              <View style={styles.localBoxCompacto}>
+                <Ionicons name="location-outline" size={20} color="#B77900" />
 
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.localTitulo}>
-                    Local usado para filtrar orientadores
-                  </Text>
-
-                  {locaisSelecionados.map((local, index) => (
-                    <Text key={index} style={styles.localTexto}>
-                      {local.hospital} / {local.servico}
-                    </Text>
-                  ))}
-                </View>
+                <Text style={styles.localTextoCompacto} numberOfLines={2}>
+                  {locaisSelecionados
+                    .map((local) => `${local.hospital} / ${local.servico}`)
+                    .join(" · ")}
+                </Text>
               </View>
             )}
 
-            <Text style={styles.label}>Professor</Text>
+            <View style={styles.formGridDuasColunas}>
+              <View style={styles.formColuna}>
+                <Text style={styles.label}>Professor</Text>
 
-            <Pressable
-              style={styles.selectToggle}
-              onPress={() => setProfessoresOpen(!professoresOpen)}
-            >
-              <Text style={styles.selectToggleText}>{professorTexto()}</Text>
-              <Ionicons
-                name={
-                  professoresOpen
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
-                }
-                size={22}
-                color="#160909"
-              />
-            </Pressable>
+                <Pressable
+                  style={styles.selectToggle}
+                  onPress={() => {
+                    setProfessoresOpen(!professoresOpen);
+                    setEdicoesOpen(false);
+                    setOrientadoresOpen(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>{professorTexto()}</Text>
+                  <Ionicons
+                    name={
+                      professoresOpen
+                        ? "chevron-up-outline"
+                        : "chevron-down-outline"
+                    }
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
 
-            {professoresOpen && (
-              <ScrollView style={styles.pickerLista} nestedScrollEnabled>
-                {professores.map((professor) => (
-                  <Pressable
-                    key={professor.id}
-                    style={[
-                      styles.opcao,
-                      professorSelecionado === professor.id &&
-                        styles.opcaoSelecionada,
-                    ]}
-                    onPress={() => {
-                      setProfessorSelecionado(professor.id);
-                      setProfessoresOpen(false);
-                    }}
-                  >
-                    <Text style={styles.opcaoTitulo}>{professor.nome}</Text>
-                    <Text style={styles.opcaoTexto}>{professor.email}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            )}
+                {professoresOpen && (
+                  <View style={styles.dropdownPessoaBox}>
+                    <View style={styles.searchPessoaContainer}>
+                      <Ionicons name="search-outline" size={19} color="#667085" />
 
-            <Text style={styles.label}>Limite alunos do professor</Text>
-            <TextInput
-              style={styles.input}
-              value={maxProfessor}
-              onChangeText={setMaxProfessor}
-              placeholder="ex: 8"
-              placeholderTextColor="#8c8787"
-              keyboardType="numeric"
-            />
+                      <TextInput
+                        placeholder="Pesquisar professor..."
+                        placeholderTextColor="#8c8787"
+                        style={styles.searchPessoaInput}
+                        value={pesquisaProfessor}
+                        onChangeText={setPesquisaProfessor}
+                        autoCapitalize="none"
+                      />
 
-            <View style={styles.labelLinha}>
-              <Text style={styles.label}>Orientador</Text>
-
-              <Pressable
-                style={styles.mostrarTodosBotao}
-                onPress={() =>
-                  setMostrarTodosOrientadores(!mostrarTodosOrientadores)
-                }
-              >
-                <Ionicons
-                  name={mostrarTodosOrientadores ? "filter-outline" : "eye-outline"}
-                  size={17}
-                  color="#160909"
-                />
-                <Text style={styles.mostrarTodosTexto}>
-                  {mostrarTodosOrientadores
-                    ? "Filtrar por local"
-                    : "Mostrar todos"}
-                </Text>
-              </Pressable>
-            </View>
-
-            <Pressable
-              style={styles.selectToggle}
-              onPress={() => setOrientadoresOpen(!orientadoresOpen)}
-            >
-              <Text style={styles.selectToggleText}>{orientadorTexto()}</Text>
-              <Ionicons
-                name={
-                  orientadoresOpen
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
-                }
-                size={22}
-                color="#160909"
-              />
-            </Pressable>
-
-            {orientadoresOpen && (
-              <ScrollView style={styles.pickerListaGrande} nestedScrollEnabled>
-                {orientadoresFiltrados.length === 0 ? (
-                  <View style={styles.avisoOrientadoresBox}>
-                    <Ionicons
-                      name="information-circle-outline"
-                      size={22}
-                      color="#B77900"
-                    />
-                    <Text style={styles.avisoOrientadoresTexto}>
-                      Não existem orientadores para este hospital/serviço. Podes
-                      clicar em “Mostrar todos” para escolher outro.
-                    </Text>
-                  </View>
-                ) : (
-                  orientadoresFiltrados.map((orientador) => {
-                    const selecionado = orientadorSelecionado === orientador.id;
-                    const combina = orientadorCombinaComEstagio(orientador);
-
-                    return (
-                      <Pressable
-                        key={orientador.id}
-                        style={[
-                          styles.opcao,
-                          selecionado && styles.opcaoSelecionada,
-                          combina && styles.opcaoOrientadorCombina,
-                        ]}
-                        onPress={() => {
-                          setOrientadorSelecionado(orientador.id);
-                          setOrientadoresOpen(false);
-                        }}
-                      >
-                        <View style={styles.opcaoLinha}>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.opcaoTitulo}>
-                              {orientador.nome}
-                            </Text>
-
-                            <Text style={styles.opcaoTexto}>
-                              {orientador.email}
-                            </Text>
-
-                            <Text
-                              style={[
-                                styles.localOrientadorTexto,
-                                combina && styles.localOrientadorTextoCombina,
-                              ]}
-                            >
-                              {textoLocalOrientador(orientador)}
-                            </Text>
-                          </View>
-
+                      {pesquisaProfessor.length > 0 && (
+                        <Pressable onPress={() => setPesquisaProfessor("")}>
                           <Ionicons
-                            name={
-                              selecionado
-                                ? "checkbox-outline"
-                                : combina
-                                ? "checkmark-circle-outline"
-                                : "square-outline"
-                            }
-                            size={24}
-                            color="#160909"
+                            name="close-circle-outline"
+                            size={20}
+                            color="#667085"
                           />
-                        </View>
-                      </Pressable>
-                    );
-                  })
-                )}
-              </ScrollView>
-            )}
+                        </Pressable>
+                      )}
+                    </View>
 
-            <Text style={styles.label}>Limite alunos do orientador</Text>
-            <TextInput
-              style={styles.input}
-              value={maxOrientador}
-              onChangeText={setMaxOrientador}
-              placeholder="ex: 8"
-              placeholderTextColor="#8c8787"
-              keyboardType="numeric"
-            />
+                    <ScrollView style={styles.pickerListaPessoa} nestedScrollEnabled>
+                      {professoresFiltrados.length === 0 ? (
+                        <Text style={styles.textoVazio}>
+                          Nenhum professor encontrado.
+                        </Text>
+                      ) : (
+                        professoresFiltrados.map((professor) => (
+                          <Pressable
+                            key={professor.id}
+                            style={[
+                              styles.opcaoPessoaCompacta,
+                              professorSelecionado === professor.id &&
+                                styles.opcaoSelecionada,
+                            ]}
+                            onPress={() => {
+                              setProfessorSelecionado(professor.id);
+                              setProfessoresOpen(false);
+                              setPesquisaProfessor("");
+                            }}
+                          >
+                            <Text style={styles.opcaoTitulo}>
+                              {professor.nome}
+                            </Text>
+                            <Text style={styles.opcaoTexto} numberOfLines={1}>
+                              {professor.email}
+                              {professor.numero_identificacao
+                                ? ` · Nº ${professor.numero_identificacao}`
+                                : ""}
+                            </Text>
+                          </Pressable>
+                        ))
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
+
+                <Text style={styles.label}>Limite alunos do professor</Text>
+                <TextInput
+                  style={styles.input}
+                  value={maxProfessor}
+                  onChangeText={setMaxProfessor}
+                  placeholder="ex: 8"
+                  placeholderTextColor="#8c8787"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.formColuna}>
+                <Text style={styles.label}>Orientador</Text>
+
+                <Pressable
+                  style={styles.selectToggle}
+                  onPress={() => {
+                    setOrientadoresOpen(!orientadoresOpen);
+                    setEdicoesOpen(false);
+                    setProfessoresOpen(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>{orientadorTexto()}</Text>
+                  <Ionicons
+                    name={
+                      orientadoresOpen
+                        ? "chevron-up-outline"
+                        : "chevron-down-outline"
+                    }
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                {orientadoresOpen && (
+                  <View style={styles.dropdownPessoaBox}>
+                    <View style={styles.searchComFiltroLinha}>
+                      <View style={styles.searchPessoaContainerComFiltro}>
+                        <Ionicons
+                          name="search-outline"
+                          size={19}
+                          color="#667085"
+                        />
+
+                        <TextInput
+                          placeholder="Pesquisar orientador..."
+                          placeholderTextColor="#8c8787"
+                          style={styles.searchPessoaInput}
+                          value={pesquisaOrientador}
+                          onChangeText={setPesquisaOrientador}
+                          autoCapitalize="none"
+                        />
+
+                        {pesquisaOrientador.length > 0 && (
+                          <Pressable onPress={() => setPesquisaOrientador("")}>
+                            <Ionicons
+                              name="close-circle-outline"
+                              size={20}
+                              color="#667085"
+                            />
+                          </Pressable>
+                        )}
+                      </View>
+
+                      <Pressable
+                        style={styles.mostrarTodosBotaoPesquisa}
+                        onPress={() =>
+                          setMostrarTodosOrientadores(!mostrarTodosOrientadores)
+                        }
+                      >
+                        <Ionicons
+                          name={
+                            mostrarTodosOrientadores
+                              ? "filter-outline"
+                              : "eye-outline"
+                          }
+                          size={17}
+                          color="#160909"
+                        />
+
+                        <Text style={styles.mostrarTodosTexto}>
+                          {mostrarTodosOrientadores ? "Por local" : "Todos"}
+                        </Text>
+                      </Pressable>
+                    </View>
+
+                    <ScrollView style={styles.pickerListaPessoa} nestedScrollEnabled>
+                      {orientadoresFiltrados.length === 0 ? (
+                        <View style={styles.avisoOrientadoresBox}>
+                          <Ionicons
+                            name="information-circle-outline"
+                            size={22}
+                            color="#B77900"
+                          />
+                          <Text style={styles.avisoOrientadoresTexto}>
+                            Não existem orientadores para este hospital/serviço.
+                            Clica em “Todos” para ver a lista completa.
+                          </Text>
+                        </View>
+                      ) : (
+                        orientadoresFiltrados.map((orientador) => {
+                          const selecionado =
+                            orientadorSelecionado === orientador.id;
+                          const combina = orientadorCombinaComEstagio(orientador);
+
+                          return (
+                            <Pressable
+                              key={orientador.id}
+                              style={[
+                                styles.opcaoPessoaCompacta,
+                                selecionado && styles.opcaoSelecionada,
+                                combina && styles.opcaoOrientadorCombina,
+                              ]}
+                              onPress={() => {
+                                setOrientadorSelecionado(orientador.id);
+                                setOrientadoresOpen(false);
+                                setPesquisaOrientador("");
+                              }}
+                            >
+                              <View style={styles.opcaoLinha}>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={styles.opcaoTitulo}>
+                                    {orientador.nome}
+                                  </Text>
+
+                                  <Text
+                                    style={styles.opcaoTexto}
+                                    numberOfLines={1}
+                                  >
+                                    {orientador.email}
+                                    {orientador.numero_identificacao
+                                      ? ` · Nº ${orientador.numero_identificacao}`
+                                      : ""}
+                                  </Text>
+
+                                  <Text
+                                    style={[
+                                      styles.localOrientadorTexto,
+                                      combina &&
+                                        styles.localOrientadorTextoCombina,
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {textoLocalOrientador(orientador)}
+                                  </Text>
+                                </View>
+
+                                <Ionicons
+                                  name={
+                                    selecionado
+                                      ? "checkbox-outline"
+                                      : combina
+                                      ? "checkmark-circle-outline"
+                                      : "square-outline"
+                                  }
+                                  size={24}
+                                  color="#160909"
+                                />
+                              </View>
+                            </Pressable>
+                          );
+                        })
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
+
+                <Text style={styles.label}>Limite alunos do orientador</Text>
+                <TextInput
+                  style={styles.input}
+                  value={maxOrientador}
+                  onChangeText={setMaxOrientador}
+                  placeholder="ex: 8"
+                  placeholderTextColor="#8c8787"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
 
             <View style={styles.popupBotoesLinha}>
               <Pressable

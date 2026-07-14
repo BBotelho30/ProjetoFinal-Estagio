@@ -49,88 +49,75 @@ const styles = StyleSheet.create({
   },
 
   lista: {
-    gap: 14,
+    gap: 18,
   },
 
-  card: {
+  cardNota: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderLeftWidth: 5,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    borderColor: "#E4E4E4",
+    minHeight: 132,
+    overflow: "hidden",
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    elevation: 4,
   },
 
-  cardHeader: {
+  barraCor: {
+    width: 18,
+  },
+
+  cardNotaConteudo: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  infoArea: {
+    flex: 1,
+    paddingRight: 12,
+  },
+
+  cardNotaTitulo: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#160909",
+    fontFamily: "serif",
+    lineHeight: 22,
     marginBottom: 6,
   },
 
-  cardTitulo: {
-    fontSize: 21,
-    fontWeight: "900",
+  cardNotaTexto: {
+    fontSize: 15,
+    fontWeight: "800",
     color: "#160909",
     fontFamily: "serif",
-    lineHeight: 25,
+    lineHeight: 20,
   },
 
-  cardSubtitulo: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: "#777",
-    fontFamily: "serif",
-    marginTop: 3,
-  },
-
-  linhaInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginTop: 10,
-    marginBottom: 8,
-  },
-
-  infoTexto: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#777",
-    fontFamily: "serif",
-    marginTop: 4,
-    lineHeight: 19,
-  },
-
-  badgeEstado: {
-    borderRadius: 20,
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    marginTop: 1,
-  },
-
-  badgeTexto: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#1D7A3A",
-    fontFamily: "serif",
-  },
-
-  botaoDetalhes: {
-    marginTop: 16,
-    backgroundColor: "#FDB515",
-    borderRadius: 8,
-    height: 46,
+  notaCirculo: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 4,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    gap: 6,
+    backgroundColor: "#FFFFFF",
   },
 
-  textoDetalhes: {
+  notaCirculoTexto: {
     fontSize: 16,
     fontWeight: "900",
-    color: "#160909",
     fontFamily: "serif",
   },
 

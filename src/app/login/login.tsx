@@ -15,15 +15,41 @@ export default function LoginScreen() {
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupOnClose, setPopupOnClose] = useState<(() => void) | null>(null);
+
+  function abrirPopup(titulo: string, mensagem: string) {
+    setPopupTitle(titulo);
+    setPopupMessage(mensagem);
+    setPopupVisible(true);
+  }
+
+  function traduzirErroLogin(mensagem: string) {
+    const msg = mensagem.toLowerCase();
+
+    if (
+      msg.includes("invalid login credentials") ||
+      msg.includes("invalid credentials")
+    ) {
+      return "Email ou palavra-passe incorretos.";
+    }
+
+    if (msg.includes("email not confirmed")) {
+      return "O email ainda não foi confirmado.";
+    }
+
+    if (msg.includes("invalid email")) {
+      return "O email inserido não é válido.";
+    }
+
+    return mensagem;
+  }
 
   async function fazerLogin() {
     if (loading) return;
 
-    if (!email || !password) {
-      setPopupTitle("Erro");
-      setPopupMessage("Preenche o email e a palavra-passe.");
-      setPopupVisible(true);
+    const emailFormatado = email.trim().toLowerCase();
+
+    if (!emailFormatado || !password.trim()) {
+      abrirPopup("Erro", "Preenche o email e a palavra-passe.");
       return;
     }
 
@@ -31,70 +57,92 @@ export default function LoginScreen() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: emailFormatado,
         password: password,
       });
 
       if (error) {
         console.log("ERRO LOGIN:", error);
-        setPopupTitle("Erro");
-        setPopupMessage(error.message);
-        setPopupVisible(true);
+        abrirPopup("Erro", traduzirErroLogin(error.message));
         return;
       }
 
       const user = data.user;
 
       if (!user) {
-        setPopupTitle("Erro");
-        setPopupMessage("Não foi possível iniciar sessão.");
-        setPopupVisible(true);
+        abrirPopup("Erro", "Não foi possível iniciar sessão.");
+        await supabase.auth.signOut();
         return;
       }
 
       const { data: perfil, error: perfilError } = await supabase
         .from("utilizadores")
-        .select("*")
+        .select("id, nome, email, tipo, estado, ativo")
         .eq("id", user.id)
         .maybeSingle();
 
       if (perfilError) {
         console.log("ERRO PERFIL:", perfilError);
-        setPopupTitle("Erro");
-        setPopupMessage("Não foi possível carregar o perfil.");
-        setPopupVisible(true);
+        abrirPopup("Erro", "Não foi possível carregar o perfil.");
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (!perfil) {
+        abrirPopup("Erro", "Perfil não encontrado.");
+        await supabase.auth.signOut();
         return;
       }
 
       if (perfil.estado === "pendente") {
-        setPopupTitle("Conta pendente");
-        setPopupMessage(
-          "A tua conta ainda está a aguardar aprovação do Administrador.",
+        abrirPopup(
+          "Conta pendente",
+          "A tua conta ainda está a aguardar aprovação do Administrador."
         );
-        setPopupVisible(true);
+        await supabase.auth.signOut();
         return;
       }
 
       if (perfil.estado === "rejeitado") {
-        setPopupTitle("Conta rejeitada");
-        setPopupMessage("A tua conta foi rejeitada pelo Administrador.");
-        setPopupVisible(true);
+        abrirPopup(
+          "Conta rejeitada",
+          "A tua conta foi rejeitada pelo Administrador."
+        );
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (perfil.ativo === false) {
+        abrirPopup(
+          "Conta inativa",
+          "A tua conta encontra-se inativa. Contacta o Administrador."
+        );
+        await supabase.auth.signOut();
         return;
       }
 
       if (perfil.tipo === "aluno") {
-        router.push({ pathname: "/aluno/home" } as any);
-      } else if (perfil.tipo === "professor") {
-        router.push({ pathname: "/professor/home" } as any);
-      } else if (perfil.tipo === "orientador") {
-        router.push({ pathname: "/orientador/home" } as any);
-      } else if (perfil.tipo === "superadmin") {
-        router.push({ pathname: "/backoffice/superadmin/home" } as any);
-      } else {
-        setPopupTitle("Erro");
-        setPopupMessage("Tipo de utilizador desconhecido.");
-        setPopupVisible(true);
+        router.replace({ pathname: "/aluno/home" } as any);
+        return;
       }
+
+      if (perfil.tipo === "professor") {
+        router.replace({ pathname: "/professor/home" } as any);
+        return;
+      }
+
+      if (perfil.tipo === "orientador") {
+        router.replace({ pathname: "/orientador/home" } as any);
+        return;
+      }
+
+      if (perfil.tipo === "superadmin") {
+        router.replace({ pathname: "/backoffice/superadmin/home" } as any);
+        return;
+      }
+
+      abrirPopup("Erro", "Tipo de utilizador desconhecido.");
+      await supabase.auth.signOut();
     } finally {
       setLoading(false);
     }

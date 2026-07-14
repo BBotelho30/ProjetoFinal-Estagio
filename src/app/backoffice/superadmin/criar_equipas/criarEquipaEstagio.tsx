@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { useContasPendentes } from "../contasPendentes";
 import styles from "./criarEquipaEstagioStyles";
 
 type Edicao = {
@@ -67,13 +68,14 @@ export default function CriarEquipaEstagio() {
   const edicaoIdParam = params.edicaoId ? Number(params.edicaoId) : null;
 
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [edicoes, setEdicoes] = useState<Edicao[]>([]);
   const [professores, setProfessores] = useState<Utilizador[]>([]);
   const [orientadores, setOrientadores] = useState<Utilizador[]>([]);
 
   const [edicoesSelecionadas, setEdicoesSelecionadas] = useState<number[]>(
-    edicaoIdParam ? [edicaoIdParam] : []
+    edicaoIdParam ? [edicaoIdParam] : [],
   );
 
   const [professorSelecionado, setProfessorSelecionado] = useState("");
@@ -88,15 +90,16 @@ export default function CriarEquipaEstagio() {
   const [mostrarTodosOrientadores, setMostrarTodosOrientadores] =
     useState(false);
 
+  const [pesquisaProfessor, setPesquisaProfessor] = useState("");
+  const [pesquisaOrientador, setPesquisaOrientador] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [aGuardar, setAGuardar] = useState(false);
 
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupTipo, setPopupTipo] = useState<
-    "normal" | "sair" | "inativarTudo" | "apagarTudo"
-  >("normal");
+  const [popupTipo, setPopupTipo] = useState<"normal" | "sair">("normal");
 
   useEffect(() => {
     carregarDados();
@@ -105,7 +108,7 @@ export default function CriarEquipaEstagio() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "inativarTudo" | "apagarTudo" = "normal"
+    tipo: "normal" | "sair" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -129,7 +132,7 @@ export default function CriarEquipaEstagio() {
         ensinos_clinicos(nome, ano_curricular),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .neq("estado", "inativo")
       .order("id", { ascending: false });
@@ -146,7 +149,7 @@ export default function CriarEquipaEstagio() {
         servico_id,
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .eq("tipo", "professor")
       .eq("estado", "aprovado")
@@ -165,7 +168,7 @@ export default function CriarEquipaEstagio() {
         servico_id,
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .eq("tipo", "orientador")
       .eq("estado", "aprovado")
@@ -175,7 +178,7 @@ export default function CriarEquipaEstagio() {
     if (edicoesError || professoresError || orientadoresError) {
       console.log(
         "ERRO AO CARREGAR DADOS:",
-        edicoesError || professoresError || orientadoresError
+        edicoesError || professoresError || orientadoresError,
       );
 
       abrirPopup("Erro", "Não foi possível carregar os dados.");
@@ -208,7 +211,8 @@ export default function CriarEquipaEstagio() {
       .limit(1);
 
     const professor = (professorData?.[0] || null) as ProfessorEstagio | null;
-    const orientador = (orientadorData?.[0] || null) as OrientadorEstagio | null;
+    const orientador = (orientadorData?.[0] ||
+      null) as OrientadorEstagio | null;
 
     if (professor) {
       setProfessorSelecionado(professor.professor_id);
@@ -246,25 +250,7 @@ export default function CriarEquipaEstagio() {
 
   function nomeOrientadorSelecionado() {
     const orientador = orientadores.find((o) => o.id === orientadorSelecionado);
-
-    if (!orientador) return "Selecionar orientador";
-
-    const hospital = orientador.instituicoes?.nome;
-    const servico = orientador.servicos?.nome;
-
-    if (hospital && servico) {
-      return `${orientador.nome} - ${hospital} / ${servico}`;
-    }
-
-    if (hospital) {
-      return `${orientador.nome} - ${hospital}`;
-    }
-
-    if (servico) {
-      return `${orientador.nome} - ${servico}`;
-    }
-
-    return `${orientador.nome} - local não definido`;
+    return orientador ? orientador.nome : "Selecionar orientador";
   }
 
   function toggleEdicao(id: number) {
@@ -291,7 +277,23 @@ export default function CriarEquipaEstagio() {
       }));
   }, [edicoes, edicoesSelecionadas]);
 
-  const orientadoresFiltrados = useMemo(() => {
+  const professoresFiltrados = useMemo(() => {
+    const termo = pesquisaProfessor.toLowerCase().trim();
+
+    if (!termo) return professores;
+
+    return professores.filter((professor) => {
+      const texto = `
+        ${professor.nome || ""}
+        ${professor.email || ""}
+        ${professor.numero_identificacao || ""}
+      `.toLowerCase();
+
+      return texto.includes(termo);
+    });
+  }, [professores, pesquisaProfessor]);
+
+  const orientadoresPorLocal = useMemo(() => {
     if (mostrarTodosOrientadores || locaisSelecionados.length === 0) {
       return orientadores;
     }
@@ -300,10 +302,28 @@ export default function CriarEquipaEstagio() {
       locaisSelecionados.some(
         (local) =>
           orientador.instituicao_id === local.instituicao_id &&
-          orientador.servico_id === local.servico_id
-      )
+          orientador.servico_id === local.servico_id,
+      ),
     );
   }, [orientadores, locaisSelecionados, mostrarTodosOrientadores]);
+
+  const orientadoresFiltrados = useMemo(() => {
+    const termo = pesquisaOrientador.toLowerCase().trim();
+
+    if (!termo) return orientadoresPorLocal;
+
+    return orientadoresPorLocal.filter((orientador) => {
+      const texto = `
+        ${orientador.nome || ""}
+        ${orientador.email || ""}
+        ${orientador.numero_identificacao || ""}
+        ${orientador.instituicoes?.nome || ""}
+        ${orientador.servicos?.nome || ""}
+      `.toLowerCase();
+
+      return texto.includes(termo);
+    });
+  }, [orientadoresPorLocal, pesquisaOrientador]);
 
   function textoLocalOrientador(orientador: Utilizador) {
     const hospital = orientador.instituicoes?.nome;
@@ -322,7 +342,7 @@ export default function CriarEquipaEstagio() {
     return locaisSelecionados.some(
       (local) =>
         orientador.instituicao_id === local.instituicao_id &&
-        orientador.servico_id === local.servico_id
+        orientador.servico_id === local.servico_id,
     );
   }
 
@@ -335,10 +355,7 @@ export default function CriarEquipaEstagio() {
     }
 
     if (!professorSelecionado && !orientadorSelecionado) {
-      abrirPopup(
-        "Erro",
-        "Seleciona pelo menos um professor ou um orientador."
-      );
+      abrirPopup("Erro", "Seleciona pelo menos um professor ou um orientador.");
       return;
     }
 
@@ -346,7 +363,7 @@ export default function CriarEquipaEstagio() {
       professorSelecionado &&
       (!maxProfessor.trim() || Number.isNaN(Number(maxProfessor)))
     ) {
-      abrirPopup("Erro", "Preenche corretamente o limite de alunos.");
+      abrirPopup("Erro", "Preenche corretamente o limite do professor.");
       return;
     }
 
@@ -354,7 +371,7 @@ export default function CriarEquipaEstagio() {
       orientadorSelecionado &&
       (!maxOrientador.trim() || Number.isNaN(Number(maxOrientador)))
     ) {
-      abrirPopup("Erro", "Preenche corretamente o limite de alunos.");
+      abrirPopup("Erro", "Preenche corretamente o limite do orientador.");
       return;
     }
 
@@ -372,7 +389,7 @@ export default function CriarEquipaEstagio() {
             },
             {
               onConflict: "edicao_estagio_id,professor_id",
-            }
+            },
           );
 
         if (profError) {
@@ -394,7 +411,7 @@ export default function CriarEquipaEstagio() {
             },
             {
               onConflict: "edicao_estagio_id,orientador_id",
-            }
+            },
           );
 
         if (orientError) {
@@ -412,80 +429,8 @@ export default function CriarEquipaEstagio() {
       "Sucesso",
       edicoesSelecionadas.length === 1
         ? "Equipa guardada com sucesso."
-        : `Equipa guardada em ${edicoesSelecionadas.length} estágios com sucesso.`
+        : `Equipa guardada em ${edicoesSelecionadas.length} estágios com sucesso.`,
     );
-  }
-
-  function pedirInativarTudo() {
-    abrirPopup(
-      "Colocar selecionados inativos",
-      "Tens a certeza que queres colocar as edições selecionadas como inativas?",
-      "inativarTudo"
-    );
-  }
-
-  async function confirmarInativarTudo() {
-    setPopupVisible(false);
-
-    if (edicoesSelecionadas.length === 0) {
-      abrirPopup("Erro", "Seleciona pelo menos uma edição de estágio.");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("edicoes_estagio")
-      .update({ estado: "inativo" })
-      .in("id", edicoesSelecionadas);
-
-    if (error) {
-      console.log("ERRO AO INATIVAR:", error);
-      abrirPopup("Erro", "Não foi possível colocar as edições como inativas.");
-      return;
-    }
-
-    abrirPopup(
-      "Sucesso",
-      "As edições selecionadas foram colocadas como inativas."
-    );
-
-    setEdicoesSelecionadas([]);
-    carregarDados();
-  }
-
-  function pedirApagarTudo() {
-    abrirPopup(
-      "Apagar equipas selecionadas",
-      "Tens a certeza que queres apagar os professores e orientadores das edições selecionadas?",
-      "apagarTudo"
-    );
-  }
-
-  async function confirmarApagarTudo() {
-    setPopupVisible(false);
-
-    if (edicoesSelecionadas.length === 0) {
-      abrirPopup("Erro", "Seleciona pelo menos uma edição de estágio.");
-      return;
-    }
-
-    const { error: profError } = await supabase
-      .from("professores_estagio")
-      .delete()
-      .in("edicao_estagio_id", edicoesSelecionadas);
-
-    const { error: orientError } = await supabase
-      .from("orientadores_estagio")
-      .delete()
-      .in("edicao_estagio_id", edicoesSelecionadas);
-
-    if (profError || orientError) {
-      console.log("ERRO AO APAGAR EQUIPAS:", profError || orientError);
-      abrirPopup("Erro", "Não foi possível apagar as equipas selecionadas.");
-      return;
-    }
-
-    abrirPopup("Sucesso", "Equipas apagadas com sucesso.");
-    carregarDados();
   }
 
   async function terminarSessao() {
@@ -542,19 +487,21 @@ export default function CriarEquipaEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && <Text style={styles.menuText}>Aprovar Contas</Text>}
+            {sidebarAberta && (
+              <Text style={styles.menuText}>Aprovar Contas</Text>
+            )}
           </Pressable>
 
           <Pressable
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -566,7 +513,7 @@ export default function CriarEquipaEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -588,7 +535,7 @@ export default function CriarEquipaEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -602,7 +549,7 @@ export default function CriarEquipaEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -616,7 +563,7 @@ export default function CriarEquipaEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -630,7 +577,7 @@ export default function CriarEquipaEstagio() {
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -646,7 +593,7 @@ export default function CriarEquipaEstagio() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -674,7 +621,7 @@ export default function CriarEquipaEstagio() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -684,14 +631,17 @@ export default function CriarEquipaEstagio() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
               style={styles.botaoVoltarHome}
               onPress={() =>
                 router.push(
-                  "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                  "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
                 )
               }
             >
@@ -735,9 +685,7 @@ export default function CriarEquipaEstagio() {
 
               <Ionicons
                 name={
-                  mostrarEdicoes
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
+                  mostrarEdicoes ? "chevron-up-outline" : "chevron-down-outline"
                 }
                 size={22}
                 color="#160909"
@@ -795,228 +743,306 @@ export default function CriarEquipaEstagio() {
             )}
 
             {locaisSelecionados.length > 0 && (
-              <View style={styles.localBox}>
-                <Ionicons name="location-outline" size={22} color="#B77900" />
+              <View style={styles.localBoxCompacto}>
+                <Ionicons name="location-outline" size={20} color="#B77900" />
 
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.localTitulo}>
-                    Local usado para filtrar orientadores
-                  </Text>
-
-                  {locaisSelecionados.map((local, index) => (
-                    <Text key={index} style={styles.localTexto}>
-                      {local.hospital} / {local.servico}
-                    </Text>
-                  ))}
-                </View>
+                <Text style={styles.localTextoCompacto} numberOfLines={2}>
+                  {locaisSelecionados
+                    .map((local) => `${local.hospital} / ${local.servico}`)
+                    .join(" · ")}
+                </Text>
               </View>
             )}
 
-            <Text style={styles.label}>Professor</Text>
+            <View style={styles.formGridDuasColunas}>
+              <View style={styles.formColuna}>
+                <Text style={styles.label}>Professor</Text>
 
-            <Pressable
-              style={styles.selectToggle}
-              onPress={() => {
-                setMostrarProfessores(!mostrarProfessores);
-                setMostrarEdicoes(false);
-                setMostrarOrientadores(false);
-              }}
-            >
-              <Text style={styles.selectToggleText}>
-                {nomeProfessorSelecionado()}
-              </Text>
-
-              <Ionicons
-                name={
-                  mostrarProfessores
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
-                }
-                size={22}
-                color="#160909"
-              />
-            </Pressable>
-
-            {mostrarProfessores && (
-              <ScrollView style={styles.pickerLista} nestedScrollEnabled>
-                {professores.length === 0 ? (
-                  <Text style={styles.textoVazioModal}>
-                    Não existem professores aprovados.
+                <Pressable
+                  style={styles.selectToggle}
+                  onPress={() => {
+                    setMostrarProfessores(!mostrarProfessores);
+                    setMostrarEdicoes(false);
+                    setMostrarOrientadores(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>
+                    {nomeProfessorSelecionado()}
                   </Text>
-                ) : (
-                  professores.map((professor) => (
-                    <Pressable
-                      key={professor.id}
-                      style={[
-                        styles.opcao,
-                        professorSelecionado === professor.id &&
-                          styles.opcaoSelecionada,
-                      ]}
-                      onPress={() => {
-                        setProfessorSelecionado(professor.id);
-                        setMostrarProfessores(false);
-                      }}
+
+                  <Ionicons
+                    name={
+                      mostrarProfessores
+                        ? "chevron-up-outline"
+                        : "chevron-down-outline"
+                    }
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                {mostrarProfessores && (
+                  <View style={styles.dropdownPessoaBox}>
+                    <View style={styles.searchPessoaContainer}>
+                      <Ionicons
+                        name="search-outline"
+                        size={19}
+                        color="#667085"
+                      />
+
+                      <TextInput
+                        placeholder="Pesquisar professor..."
+                        placeholderTextColor="#8c8787"
+                        style={styles.searchPessoaInput}
+                        value={pesquisaProfessor}
+                        onChangeText={setPesquisaProfessor}
+                        autoCapitalize="none"
+                      />
+
+                      {pesquisaProfessor.length > 0 && (
+                        <Pressable onPress={() => setPesquisaProfessor("")}>
+                          <Ionicons
+                            name="close-circle-outline"
+                            size={20}
+                            color="#667085"
+                          />
+                        </Pressable>
+                      )}
+                    </View>
+
+                    <ScrollView
+                      style={styles.pickerListaPessoa}
+                      nestedScrollEnabled
                     >
-                      <Text style={styles.opcaoTitulo}>{professor.nome}</Text>
-                      <Text style={styles.opcaoTexto}>
-                        {professor.email}
-                        {professor.numero_identificacao
-                          ? ` · Nº ${professor.numero_identificacao}`
-                          : ""}
-                      </Text>
-                    </Pressable>
-                  ))
-                )}
-              </ScrollView>
-            )}
-
-            <Text style={styles.label}>Limite alunos</Text>
-            <TextInput
-              placeholder="ex: 8"
-              placeholderTextColor="#8c8787"
-              style={styles.modalInput}
-              value={maxProfessor}
-              onChangeText={setMaxProfessor}
-              keyboardType="numeric"
-            />
-
-            <View style={styles.labelLinha}>
-              <Text style={styles.label}>Orientador</Text>
-
-              <Pressable
-                style={styles.mostrarTodosBotao}
-                onPress={() =>
-                  setMostrarTodosOrientadores(!mostrarTodosOrientadores)
-                }
-              >
-                <Ionicons
-                  name={
-                    mostrarTodosOrientadores ? "filter-outline" : "eye-outline"
-                  }
-                  size={17}
-                  color="#160909"
-                />
-                <Text style={styles.mostrarTodosTexto}>
-                  {mostrarTodosOrientadores
-                    ? "Filtrar por local"
-                    : "Mostrar todos"}
-                </Text>
-              </Pressable>
-            </View>
-
-            <Pressable
-              style={styles.selectToggle}
-              onPress={() => {
-                setMostrarOrientadores(!mostrarOrientadores);
-                setMostrarEdicoes(false);
-                setMostrarProfessores(false);
-              }}
-            >
-              <Text style={styles.selectToggleText}>
-                {nomeOrientadorSelecionado()}
-              </Text>
-
-              <Ionicons
-                name={
-                  mostrarOrientadores
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
-                }
-                size={22}
-                color="#160909"
-              />
-            </Pressable>
-
-            {mostrarOrientadores && (
-              <ScrollView style={styles.pickerListaGrande} nestedScrollEnabled>
-                {orientadoresFiltrados.length === 0 ? (
-                  <View style={styles.avisoOrientadoresBox}>
-                    <Ionicons
-                      name="information-circle-outline"
-                      size={22}
-                      color="#B77900"
-                    />
-                    <Text style={styles.avisoOrientadoresTexto}>
-                      Não existem orientadores para este hospital/serviço. Podes
-                      clicar em “Mostrar todos” para escolher outro orientador.
-                    </Text>
-                  </View>
-                ) : (
-                  orientadoresFiltrados.map((orientador) => {
-                    const selecionado = orientadorSelecionado === orientador.id;
-                    const combina = orientadorCombinaComEstagio(orientador);
-
-                    return (
-                      <Pressable
-                        key={orientador.id}
-                        style={[
-                          styles.opcao,
-                          selecionado && styles.opcaoSelecionada,
-                          combina && styles.opcaoOrientadorCombina,
-                        ]}
-                        onPress={() => {
-                          setOrientadorSelecionado(orientador.id);
-                          setMostrarOrientadores(false);
-                        }}
-                      >
-                        <View style={styles.opcaoLinha}>
-                          <View style={{ flex: 1 }}>
+                      {professoresFiltrados.length === 0 ? (
+                        <Text style={styles.textoVazioModal}>
+                          Nenhum professor encontrado.
+                        </Text>
+                      ) : (
+                        professoresFiltrados.map((professor) => (
+                          <Pressable
+                            key={professor.id}
+                            style={[
+                              styles.opcaoPessoaCompacta,
+                              professorSelecionado === professor.id &&
+                                styles.opcaoSelecionada,
+                            ]}
+                            onPress={() => {
+                              setProfessorSelecionado(professor.id);
+                              setMostrarProfessores(false);
+                              setPesquisaProfessor("");
+                            }}
+                          >
                             <Text style={styles.opcaoTitulo}>
-                              {orientador.nome}
+                              {professor.nome}
                             </Text>
 
-                            <Text style={styles.opcaoTexto}>
-                              {orientador.email}
-                              {orientador.numero_identificacao
-                                ? ` · Nº ${orientador.numero_identificacao}`
+                            <Text style={styles.opcaoTexto} numberOfLines={1}>
+                              {professor.email}
+                              {professor.numero_identificacao
+                                ? ` · Nº ${professor.numero_identificacao}`
                                 : ""}
                             </Text>
-
-                            <Text
-                              style={[
-                                styles.localOrientadorTexto,
-                                combina && styles.localOrientadorTextoCombina,
-                              ]}
-                            >
-                              {textoLocalOrientador(orientador)}
-                            </Text>
-                          </View>
-
-                          <Ionicons
-                            name={
-                              selecionado
-                                ? "checkbox-outline"
-                                : combina
-                                ? "checkmark-circle-outline"
-                                : "square-outline"
-                            }
-                            size={24}
-                            color="#160909"
-                          />
-                        </View>
-                      </Pressable>
-                    );
-                  })
+                          </Pressable>
+                        ))
+                      )}
+                    </ScrollView>
+                  </View>
                 )}
-              </ScrollView>
-            )}
 
-            <Text style={styles.label}>Limite alunos</Text>
-            <TextInput
-              placeholder="ex: 8"
-              placeholderTextColor="#8c8787"
-              style={styles.modalInput}
-              value={maxOrientador}
-              onChangeText={setMaxOrientador}
-              keyboardType="numeric"
-            />
+                <Text style={styles.label}>Limite professor</Text>
+                <TextInput
+                  placeholder="ex: 8"
+                  placeholderTextColor="#8c8787"
+                  style={styles.modalInput}
+                  value={maxProfessor}
+                  onChangeText={setMaxProfessor}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.formColuna}>
+                <Text style={styles.label}>Orientador</Text>
+
+                <Pressable
+                  style={styles.selectToggle}
+                  onPress={() => {
+                    setMostrarOrientadores(!mostrarOrientadores);
+                    setMostrarEdicoes(false);
+                    setMostrarProfessores(false);
+                  }}
+                >
+                  <Text style={styles.selectToggleText}>
+                    {nomeOrientadorSelecionado()}
+                  </Text>
+
+                  <Ionicons
+                    name={
+                      mostrarOrientadores
+                        ? "chevron-up-outline"
+                        : "chevron-down-outline"
+                    }
+                    size={22}
+                    color="#160909"
+                  />
+                </Pressable>
+
+                {mostrarOrientadores && (
+                  <View style={styles.dropdownPessoaBox}>
+                    <View style={styles.searchComFiltroLinha}>
+                      <View style={styles.searchPessoaContainerComFiltro}>
+                        <Ionicons
+                          name="search-outline"
+                          size={19}
+                          color="#667085"
+                        />
+
+                        <TextInput
+                          placeholder="Pesquisar orientador..."
+                          placeholderTextColor="#8c8787"
+                          style={styles.searchPessoaInput}
+                          value={pesquisaOrientador}
+                          onChangeText={setPesquisaOrientador}
+                          autoCapitalize="none"
+                        />
+
+                        {pesquisaOrientador.length > 0 && (
+                          <Pressable onPress={() => setPesquisaOrientador("")}>
+                            <Ionicons
+                              name="close-circle-outline"
+                              size={20}
+                              color="#667085"
+                            />
+                          </Pressable>
+                        )}
+                      </View>
+
+                      <Pressable
+                        style={styles.mostrarTodosBotaoPesquisa}
+                        onPress={() =>
+                          setMostrarTodosOrientadores(!mostrarTodosOrientadores)
+                        }
+                      >
+                        <Ionicons
+                          name={
+                            mostrarTodosOrientadores
+                              ? "filter-outline"
+                              : "eye-outline"
+                          }
+                          size={17}
+                          color="#160909"
+                        />
+
+                        <Text style={styles.mostrarTodosTexto}>
+                          {mostrarTodosOrientadores ? "Filtrar" : "Todos"}
+                        </Text>
+                      </Pressable>
+                    </View>
+
+                    <ScrollView
+                      style={styles.pickerListaPessoa}
+                      nestedScrollEnabled
+                    >
+                      {orientadoresFiltrados.length === 0 ? (
+                        <View style={styles.avisoOrientadoresBox}>
+                          <Ionicons
+                            name="information-circle-outline"
+                            size={21}
+                            color="#B77900"
+                          />
+
+                          <Text style={styles.avisoOrientadoresTexto}>
+                            Não existem orientadores para este local. Clica em
+                            “Todos” para ver a lista completa.
+                          </Text>
+                        </View>
+                      ) : (
+                        orientadoresFiltrados.map((orientador) => {
+                          const selecionado =
+                            orientadorSelecionado === orientador.id;
+                          const combina =
+                            orientadorCombinaComEstagio(orientador);
+
+                          return (
+                            <Pressable
+                              key={orientador.id}
+                              style={[
+                                styles.opcaoPessoaCompacta,
+                                selecionado && styles.opcaoSelecionada,
+                                combina && styles.opcaoOrientadorCombina,
+                              ]}
+                              onPress={() => {
+                                setOrientadorSelecionado(orientador.id);
+                                setMostrarOrientadores(false);
+                                setPesquisaOrientador("");
+                              }}
+                            >
+                              <View style={styles.opcaoLinha}>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={styles.opcaoTitulo}>
+                                    {orientador.nome}
+                                  </Text>
+
+                                  <Text
+                                    style={styles.opcaoTexto}
+                                    numberOfLines={1}
+                                  >
+                                    {orientador.email}
+                                    {orientador.numero_identificacao
+                                      ? ` · Nº ${orientador.numero_identificacao}`
+                                      : ""}
+                                  </Text>
+
+                                  <Text
+                                    style={[
+                                      styles.localOrientadorTexto,
+                                      combina &&
+                                        styles.localOrientadorTextoCombina,
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {textoLocalOrientador(orientador)}
+                                  </Text>
+                                </View>
+
+                                <Ionicons
+                                  name={
+                                    selecionado
+                                      ? "checkbox-outline"
+                                      : combina
+                                        ? "checkmark-circle-outline"
+                                        : "square-outline"
+                                  }
+                                  size={23}
+                                  color="#160909"
+                                />
+                              </View>
+                            </Pressable>
+                          );
+                        })
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
+
+                <Text style={styles.label}>Limite orientador</Text>
+                <TextInput
+                  placeholder="ex: 8"
+                  placeholderTextColor="#8c8787"
+                  style={styles.modalInput}
+                  value={maxOrientador}
+                  onChangeText={setMaxOrientador}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
 
             <View style={styles.popupBotoesLinha}>
               <Pressable
                 style={styles.popupBotaoCancelar}
                 onPress={() =>
                   router.push(
-                    "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                    "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
                   )
                 }
               >
@@ -1030,28 +1056,6 @@ export default function CriarEquipaEstagio() {
               >
                 <Text style={styles.popupTextoConfirmar}>
                   {aGuardar ? "A guardar..." : "Guardar equipa"}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.botoesFinaisLinha}>
-              <Pressable
-                style={styles.botaoTudoInativo}
-                onPress={pedirInativarTudo}
-              >
-                <Ionicons name="ban-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.textoBotaoFinal}>
-                  Colocar selecionados inativos
-                </Text>
-              </Pressable>
-
-              <Pressable
-                style={styles.botaoApagarTudo}
-                onPress={pedirApagarTudo}
-              >
-                <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.textoBotaoFinal}>
-                  Apagar equipas selecionadas
                 </Text>
               </Pressable>
             </View>
@@ -1079,40 +1083,11 @@ export default function CriarEquipaEstagio() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
-                </Pressable>
-              </View>
-            ) : popupTipo === "inativarTudo" ? (
-              <View style={styles.popupBotoesLinha}>
-                <Pressable
-                  style={styles.popupBotaoCancelar}
-                  onPress={() => setPopupVisible(false)}
-                >
-                  <Text style={styles.popupTextoCancelar}>Cancelar</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.popupBotaoSair}
-                  onPress={confirmarInativarTudo}
-                >
-                  <Text style={styles.popupTextoSair}>Inativar</Text>
-                </Pressable>
-              </View>
-            ) : popupTipo === "apagarTudo" ? (
-              <View style={styles.popupBotoesLinha}>
-                <Pressable
-                  style={styles.popupBotaoCancelar}
-                  onPress={() => setPopupVisible(false)}
-                >
-                  <Text style={styles.popupTextoCancelar}>Cancelar</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.popupBotaoSair}
-                  onPress={confirmarApagarTudo}
-                >
-                  <Text style={styles.popupTextoSair}>Apagar</Text>
                 </Pressable>
               </View>
             ) : (

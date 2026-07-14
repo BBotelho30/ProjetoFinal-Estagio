@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   Text,
@@ -19,6 +20,7 @@ type Aluno = {
   ano_curricular: number | null;
   telefone?: string | null;
   morada?: string | null;
+  foto_url?: string | null;
 };
 
 type Inscricao = {
@@ -59,6 +61,7 @@ type Utilizador = {
   nome: string;
   email: string;
   tipo: string;
+  foto_url: string | null;
 };
 
 type Avaliacao = {
@@ -143,7 +146,7 @@ export default function DetalheAlunoProfessor() {
     const { data: alunoData, error: alunoError } = await supabase
       .from("utilizadores")
       .select(
-        "id, nome, email, numero_identificacao, ano_curricular, telefone, morada"
+        "id, nome, email, numero_identificacao, ano_curricular, telefone, morada, foto_url",
       )
       .eq("id", alunoId)
       .maybeSingle();
@@ -166,7 +169,7 @@ export default function DetalheAlunoProfessor() {
         data_inscricao,
         data_distribuicao,
         distribuido_por
-      `
+      `,
       )
       .eq("id", inscricaoId)
       .maybeSingle();
@@ -190,7 +193,7 @@ export default function DetalheAlunoProfessor() {
         ensinos_clinicos(id, nome, ano_curricular, tipo, horas_estimadas),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .eq("id", edicaoId)
       .maybeSingle();
@@ -231,13 +234,13 @@ export default function DetalheAlunoProfessor() {
 
     const orientadoresIds =
       ((orientadoresData as any) || []).map(
-        (item: any) => item.orientador_id
+        (item: any) => item.orientador_id,
       ) || [];
 
     if (professoresIds.length > 0) {
       const { data, error } = await supabase
         .from("utilizadores")
-        .select("id, nome, email, tipo")
+        .select("id, nome, email, tipo, foto_url")
         .in("id", professoresIds);
 
       if (error) {
@@ -253,7 +256,7 @@ export default function DetalheAlunoProfessor() {
     if (orientadoresIds.length > 0) {
       const { data, error } = await supabase
         .from("utilizadores")
-        .select("id, nome, email, tipo")
+        .select("id, nome, email, tipo, foto_url")
         .in("id", orientadoresIds);
 
       if (error) {
@@ -267,11 +270,14 @@ export default function DetalheAlunoProfessor() {
     }
   }
 
-async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
-  const { data, error } = await supabase
-    .from("avaliacoes")
-    .select(
-      `
+  async function carregarAvaliacao(
+    alunoIdAtual: string,
+    edicaoIdAtual: number,
+  ) {
+    const { data, error } = await supabase
+      .from("avaliacoes")
+      .select(
+        `
       id,
       nota_professor,
       nota_orientador,
@@ -281,38 +287,42 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
       observacao_final,
       estado,
       criado_em
-    `
-    )
-    .eq("aluno_id", alunoIdAtual)
-    .eq("edicao_estagio_id", edicaoIdAtual)
-    .maybeSingle();
+    `,
+      )
+      .eq("aluno_id", alunoIdAtual)
+      .eq("edicao_estagio_id", edicaoIdAtual)
+      .maybeSingle();
 
-  if (error) {
-    console.log("AVALIAÇÃO NÃO CARREGADA:", error);
-    setAvaliacao(null);
-    return;
+    if (error) {
+      console.log("AVALIAÇÃO NÃO CARREGADA:", error);
+      setAvaliacao(null);
+      return;
+    }
+
+    setAvaliacao((data as any) || null);
   }
-
-  setAvaliacao((data as any) || null);
-}
 
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            <Pressable
-      style={styles.voltar}
-      onPress={() =>
-        router.replace({
-          pathname: "/professor/verEstagios/alunosEstagio/alunosEstagio" as any,
-          params: {
-            edicaoId: String(edicaoId || ""),
-          },
-        })
-      }
-    >
-      <Ionicons name="arrow-back-outline" size={24} color="#160909" />
-      <Text style={styles.voltarTexto}>Voltar</Text>
-    </Pressable>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <Pressable
+          style={styles.voltar}
+          onPress={() =>
+            router.replace({
+              pathname:
+                "/professor/verEstagios/alunosEstagio/alunosEstagio" as any,
+              params: {
+                edicaoId: String(edicaoId || ""),
+              },
+            })
+          }
+        >
+          <Ionicons name="arrow-back-outline" size={24} color="#160909" />
+          <Text style={styles.voltarTexto}>Voltar</Text>
+        </Pressable>
 
         {loading ? (
           <ActivityIndicator
@@ -323,14 +333,19 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
         ) : (
           <>
             <View style={styles.alunoHero}>
-              <View style={styles.alunoIconeGrande}>
-                <Ionicons name="person-outline" size={42} color="#160909" />
-              </View>
+              {aluno?.foto_url ? (
+                <Image
+                  source={{ uri: aluno.foto_url }}
+                  style={styles.fotoAluno}
+                />
+              ) : (
+                <View style={styles.alunoIconeGrande}>
+                  <Ionicons name="person-outline" size={42} color="#160909" />
+                </View>
+              )}
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.alunoNome}>
-                  {aluno?.nome || "Aluno"}
-                </Text>
+                <Text style={styles.alunoNome}>{aluno?.nome || "Aluno"}</Text>
 
                 <Text style={styles.alunoTexto}>
                   {aluno?.email || "Sem email"}
@@ -376,7 +391,18 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
 
             <View style={styles.equipaCard}>
               <View style={styles.equipaIcone}>
-                <Ionicons name="person-circle-outline" size={44} color="#FDB515" />
+                {professores && professores[0]?.foto_url ? (
+                  <Image
+                    source={{ uri: professores[0].foto_url }}
+                    style={styles.equipaFoto}
+                  />
+                ) : (
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={44}
+                    color="#FDB515"
+                  />
+                )}
               </View>
 
               <View style={{ flex: 1 }}>
@@ -392,7 +418,18 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
 
             <View style={styles.equipaCard}>
               <View style={styles.equipaIcone}>
-                <Ionicons name="person-circle-outline" size={44} color="#FDB515" />
+                {orientadores && orientadores[0]?.foto_url ? (
+                  <Image
+                    source={{ uri: orientadores[0].foto_url }}
+                    style={styles.equipaFoto}
+                  />
+                ) : (
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={44}
+                    color="#FDB515"
+                  />
+                )}
               </View>
 
               <View style={{ flex: 1 }}>
@@ -452,58 +489,6 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
               </View>
             </View>
 
-            <Text style={styles.secaoTitulo}>Avaliação</Text>
-
-            {avaliacao ? (
-              <View style={styles.avaliacaoBox}>
-                <Text style={styles.avaliacaoNota}>
-                  Nota professor:{" "}
-                  {avaliacao.nota_professor !== null
-                    ? `${avaliacao.nota_professor} valores`
-                    : "Ainda sem nota"}
-                </Text>
-
-                <Text style={styles.avaliacaoTexto}>
-                  Observação professor:{" "}
-                  {avaliacao.observacao_professor || "Ainda sem observação."}
-                </Text>
-
-                <Text style={styles.avaliacaoTexto}>
-                  Nota orientador:{" "}
-                  {avaliacao.nota_orientador !== null
-                    ? `${avaliacao.nota_orientador} valores`
-                    : "Ainda sem nota"}
-                </Text>
-
-                <Text style={styles.avaliacaoTexto}>
-                  Observação orientador:{" "}
-                  {avaliacao.observacao_orientador || "Ainda sem observação."}
-                </Text>
-
-                <Text style={styles.avaliacaoTexto}>
-                  Nota final:{" "}
-                  {avaliacao.nota_final !== null
-                    ? `${avaliacao.nota_final} valores`
-                    : "Ainda sem nota final"}
-                </Text>
-
-                <Text style={styles.avaliacaoTexto}>
-                  Observação final:{" "}
-                  {avaliacao.observacao_final || "Ainda sem observação final."}
-                </Text>
-
-                <Text style={styles.avaliacaoData}>
-                  Estado: {avaliacao.estado || "pendente"}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.avaliacaoVazia}>
-                <Text style={styles.avaliacaoVaziaTexto}>
-                  A avaliação ainda não está disponível.
-                </Text>
-              </View>
-            )}
-
             <Text style={styles.secaoTitulo}>Ações rápidas</Text>
 
             <View style={styles.acoesLista}>
@@ -511,7 +496,8 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
                 style={styles.acaoCard}
                 onPress={() =>
                   router.push({
-                    pathname: "/professor/verEstagios/detalhesAlunos/presencas/presencas" as any,
+                    pathname:
+                      "/professor/verEstagios/detalhesAlunos/presencas/presencas" as any,
                     params: {
                       alunoId: alunoId || "",
                       edicaoId: String(edicaoId || ""),
@@ -536,7 +522,8 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
                 style={styles.acaoCard}
                 onPress={() =>
                   router.push({
-                    pathname: "/professor/verEstagios/detalhesAlunos/avaliacoes/avaliacoes" as any,
+                    pathname:
+                      "/professor/verEstagios/detalhesAlunos/avaliacoes/avaliacoes" as any,
                     params: {
                       alunoId: alunoId || "",
                       edicaoId: String(edicaoId || ""),
@@ -582,30 +569,66 @@ async function carregarAvaliacao(alunoIdAtual: string, edicaoIdAtual: number) {
                 />
               </Pressable>
 
-                      <Pressable
-          style={styles.acaoCard}
-          onPress={() =>
-            router.push({
-              pathname: "/professor/verEstagios/relatorios/relatorios" as any,
-              params: {
-                alunoId: alunoId || "",
-                edicaoId: String(edicaoId || ""),
-                inscricaoId: String(inscricaoId || ""),
-              },
-            })
-          }
-        >
-          <View style={styles.acaoLeft}>
-            <Ionicons name="document-text-outline" size={24} color="#160909" />
-            <Text style={styles.acaoTexto}>Ver relatório final</Text>
-          </View>
+              <Pressable
+                style={styles.acaoCard}
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      "/professor/verEstagios/relatorios/relatorios" as any,
+                    params: {
+                      alunoId: alunoId || "",
+                      edicaoId: String(edicaoId || ""),
+                      inscricaoId: String(inscricaoId || ""),
+                    },
+                  })
+                }
+              >
+                <View style={styles.acaoLeft}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={24}
+                    color="#160909"
+                  />
+                  <Text style={styles.acaoTexto}>Ver relatório final</Text>
+                </View>
 
-          <Ionicons
-            name="chevron-forward-outline"
-            size={25}
-            color="#160909"
-          />
-        </Pressable>
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={25}
+                  color="#160909"
+                />
+              </Pressable>
+
+
+              <Pressable
+                style={styles.acaoCard}
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      "/professor/verEstagios/relatorioOrientador/relatorioOrientador" as any,
+                    params: {
+                      alunoId: alunoId || "",
+                      edicaoId: String(edicaoId || ""),
+                      inscricaoId: String(inscricaoId || ""),
+                    },
+                  })
+                }
+              >
+                <View style={styles.acaoLeft}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={24}
+                    color="#160909"
+                  />
+                  <Text style={styles.acaoTexto}>Ver anexos orientador</Text>
+                </View>
+
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={25}
+                  color="#160909"
+                />
+              </Pressable>
             </View>
           </>
         )}

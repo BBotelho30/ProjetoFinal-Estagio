@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -17,6 +17,11 @@ type Perfil = {
   nome: string;
   email: string;
   foto_url: string | null;
+  telefone: string | null;
+  morada: string | null;
+  data_nascimento: string | null;
+  instituicao_id: number | null;
+  servico_id: number | null;
 };
 
 type InscricaoOrientador = {
@@ -89,6 +94,10 @@ export default function HomeOrientador() {
   const [inscricoes, setInscricoes] = useState<InscricaoOrientador[]>([]);
   const [reunioes, setReunioes] = useState<Reuniao[]>([]);
 
+  const [popupVisivel, setPopupVisivel] = useState(false);
+  const [popupTitulo, setPopupTitulo] = useState("");
+  const [popupMensagem, setPopupMensagem] = useState("");
+
   useEffect(() => {
     carregarDados();
   }, []);
@@ -104,6 +113,12 @@ export default function HomeOrientador() {
 
     return Array.from(mapa.values());
   }, [inscricoes]);
+
+  function mostrarPopup(titulo: string, mensagem: string) {
+    setPopupTitulo(titulo);
+    setPopupMensagem(mensagem);
+    setPopupVisivel(true);
+  }
 
   function numeroDoEstagio(nomeEstagio?: string | null) {
     const nome = nomeEstagio || "";
@@ -177,7 +192,18 @@ export default function HomeOrientador() {
 
     const { data: perfilData, error: perfilError } = await supabase
       .from("utilizadores")
-      .select("nome, email, foto_url")
+      .select(
+        `
+        nome,
+        email,
+        foto_url,
+        telefone,
+        morada,
+        data_nascimento,
+        instituicao_id,
+        servico_id
+      `
+      )
       .eq("id", orientadorId)
       .maybeSingle();
 
@@ -262,6 +288,19 @@ export default function HomeOrientador() {
     );
   }
 
+
+  function perfilIncompleto() {
+    if (!perfil) return true;
+
+    return (
+      !perfil.telefone ||
+      !perfil.morada ||
+      !perfil.data_nascimento ||
+      !perfil.instituicao_id ||
+      !perfil.servico_id
+    );
+  }
+
   return (
     <View style={styles.page}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -270,7 +309,16 @@ export default function HomeOrientador() {
             <Ionicons name="menu-outline" size={32} color="#160909" />
           </Pressable>
 
-          <Ionicons name="notifications-outline" size={29} color="#160909" />
+          <Pressable
+            onPress={() =>
+              mostrarPopup(
+                "Notificações",
+                "Esta funcionalidade será implementada futuramente."
+              )
+            }
+          >
+            <Ionicons name="notifications-outline" size={30} color="#160909" />
+          </Pressable>
         </View>
 
         <View style={styles.header}>
@@ -279,21 +327,41 @@ export default function HomeOrientador() {
             <Text style={styles.nome}>{perfil?.nome || "Orientador"} 👋</Text>
           </View>
 
+          <Pressable
+            onPress={() =>
+              router.push("/orientador/perfil/perfil?from=top" as any)
+            }
+          >
           {perfil?.foto_url ? (
             <Image source={{ uri: perfil.foto_url }} style={styles.fotoPerfil} />
           ) : (
             <Ionicons name="person-circle-outline" size={74} color="#FDB515" />
           )}
+          </Pressable>
         </View>
+
+      {perfilIncompleto() ? (
+        <Pressable style={styles.avisoPerfil}  onPress={() => router.push("/orientador/perfil/perfil?from=home" as any)}>
+          <Ionicons name="alert-circle-outline" size={28} color="#160909" />
+
+          <View style={{ flex: 1 }}>
+            <Text style={styles.avisoTitulo}>Completa o teu perfil</Text>
+
+            <Text style={styles.avisoTexto}>
+              Para continuares, preenche o hospital, serviço e dados pessoais.
+            </Text>
+          </View>
+
+          <Ionicons name="chevron-forward-outline" size={24} color="#160909" />
+        </Pressable>
+      ) : null}
 
         <Text style={styles.secaoTitulo}>Acessos rápidos</Text>
 
         <View style={styles.grid}>
           <Pressable
             style={styles.cardAtalho}
-            onPress={() =>
-              router.push("/orientador/estagios/estagios" as any)
-            }
+            onPress={() => router.push("/orientador/estagios/estagios" as any)}
           >
             <Ionicons name="briefcase-outline" size={32} color="#FDB515" />
             <Text style={styles.cardTitulo}>Os meus estágios</Text>
@@ -303,7 +371,7 @@ export default function HomeOrientador() {
             style={styles.cardAtalho}
             onPress={() =>
               router.push(
-                "/orientador/presencas/estagioPresencas/estagioPresencas" as any
+                "/orientador/estagios/presencas/alunosPresencas/alunosPresencas" as any
               )
             }
           >
@@ -315,7 +383,7 @@ export default function HomeOrientador() {
             style={styles.cardAtalho}
             onPress={() =>
               router.push(
-                "/orientador/relatorios/estagioRelatorios/estagioRelatorios" as any
+                "/orientador/estagios/relatorios/estagioRelatorios/estagioRelatorios" as any
               )
             }
           >
@@ -325,7 +393,14 @@ export default function HomeOrientador() {
 
           <Pressable
             style={styles.cardAtalho}
-            onPress={() => router.push("/orientador/agenda/agenda" as any)}
+            onPress={() =>
+              router.push({
+                pathname: "/orientador/agenda/agenda" as any,
+                params: {
+                  origem: "home",
+                },
+              })
+            }
           >
             <Ionicons name="calendar-outline" size={32} color="#FDB515" />
             <Text style={styles.cardTitulo}>Agenda</Text>
@@ -415,7 +490,14 @@ export default function HomeOrientador() {
               <Pressable
                 key={reuniao.id}
                 style={[styles.eventoCard, { borderLeftColor: "#8ED6FF" }]}
-                onPress={() => router.push("/orientador/agenda/agenda" as any)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/orientador/agenda/agenda" as any,
+                    params: {
+                      origem: "home",
+                    },
+                  })
+                }
               >
                 <View style={styles.eventoHeader}>
                   <Text style={styles.eventoTitulo}>
@@ -460,6 +542,8 @@ export default function HomeOrientador() {
         )}
       </ScrollView>
 
+
+
       <View style={styles.bottomBar}>
         <Pressable style={styles.bottomItem}>
           <Ionicons name="home-outline" size={24} color="#FDB515" />
@@ -469,7 +553,10 @@ export default function HomeOrientador() {
         <Pressable
           style={styles.bottomItem}
           onPress={() =>
-            router.push("/orientador/definicoes/definicoes" as any)
+            mostrarPopup(
+              "Definições",
+              "Esta página encontra-se em desenvolvimento."
+            )
           }
         >
           <Ionicons name="settings-outline" size={24} color="#160909" />
@@ -478,7 +565,7 @@ export default function HomeOrientador() {
 
         <Pressable
           style={styles.bottomItem}
-          onPress={() => router.push("/orientador/perfil/perfil" as any)}
+          onPress={() => router.push("/orientador/perfil/perfil?from=bottom" as any)}
         >
           <Ionicons name="person-outline" size={24} color="#160909" />
           <Text style={styles.bottomTexto}>Perfil</Text>
@@ -514,9 +601,7 @@ export default function HomeOrientador() {
 
               <Pressable
                 style={styles.sidebarItem}
-                onPress={() =>
-                  irPara("/orientador/estagios/estagios")
-                }
+                onPress={() => irPara("/orientador/estagios/estagios")}
               >
                 <Ionicons
                   name="briefcase-outline"
@@ -588,7 +673,14 @@ export default function HomeOrientador() {
 
               <Pressable
                 style={styles.sidebarItem}
-                onPress={() => irPara("/orientador/agenda/agenda")}
+                onPress={() =>
+                  router.push({
+                    pathname: "/orientador/agenda/agenda" as any,
+                    params: {
+                      origem: "home",
+                    },
+                  })
+                }
               >
                 <Ionicons name="calendar-outline" size={25} color="#160909" />
                 <Text style={styles.sidebarTexto}>Agenda</Text>
@@ -604,7 +696,13 @@ export default function HomeOrientador() {
 
               <Pressable
                 style={styles.sidebarItem}
-                onPress={() => irPara("/orientador/definicoes/definicoes")}
+                onPress={() => {
+                  setMenuAberto(false);
+                  mostrarPopup(
+                    "Definições",
+                    "Esta página encontra-se em desenvolvimento."
+                  );
+                }}
               >
                 <Ionicons name="settings-outline" size={25} color="#160909" />
                 <Text style={styles.sidebarTexto}>Definições</Text>
@@ -617,6 +715,33 @@ export default function HomeOrientador() {
                 <Text style={styles.logoutTexto}>Terminar sessão</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={popupVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPopupVisivel(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>
+              {popupTitulo || "Em desenvolvimento"}
+            </Text>
+
+            <Text style={styles.popupMessage}>
+              {popupMensagem ||
+                "Esta funcionalidade será implementada futuramente."}
+            </Text>
+
+            <Pressable
+              style={styles.popupOkButton}
+              onPress={() => setPopupVisivel(false)}
+            >
+              <Text style={styles.popupOkText}>OK</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>

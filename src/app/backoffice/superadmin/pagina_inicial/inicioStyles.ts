@@ -17,6 +17,7 @@ const local = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 32,
   },
+  
 
   logo: {
     width: 120,

@@ -54,6 +54,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  fotoAluno: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: "#FDB515",
+    overflow: "hidden",
+  },
+
   alunoNome: {
     fontSize: 24,
     fontWeight: "900",
@@ -156,6 +164,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF3C4",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  equipaFoto: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    overflow: "hidden",
   },
 
   equipaTitulo: {

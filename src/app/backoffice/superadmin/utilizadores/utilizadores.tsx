@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
+import { ContasPendentesBadge, useContasPendentes } from "../contasPendentes";
 import styles from "./utilizadoresStyle";
 
 type Utilizador = {
@@ -23,10 +24,30 @@ type Utilizador = {
   numero_identificacao: string | null;
   ano_curricular: number | null;
   ativo: boolean | null;
+  instituicao_id: number | null;
+  servico_id: number | null;
+  instituicoes?:
+    | {
+        nome: string;
+      }
+    | null
+    | {
+        nome: string;
+      }[];
+
+  servicos?:
+    | {
+        nome: string;
+      }
+    | null
+    | {
+        nome: string;
+      }[];
 };
 
 export default function Utilizadores() {
   const [sidebarAberta, setSidebarAberta] = useState(true);
+  const contasPendentes = useContasPendentes();
 
   const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +84,7 @@ export default function Utilizadores() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "sair" | "inativar" | "ativar" | "apagar" = "normal"
+    tipo: "normal" | "sair" | "inativar" | "ativar" | "apagar" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -77,7 +98,19 @@ export default function Utilizadores() {
     const { data, error } = await supabase
       .from("utilizadores")
       .select(
-        "id, nome, email, tipo, estado, numero_identificacao, ano_curricular, ativo"
+        ` id,
+        nome,
+        email,
+        tipo,
+        estado,
+        numero_identificacao,
+        ano_curricular,
+        ativo,
+        instituicao_id,
+        servico_id,
+        instituicoes(nome),
+        servicos(nome)
+      `,
       )
       .eq("estado", "aprovado")
       .order("nome", { ascending: true });
@@ -86,7 +119,7 @@ export default function Utilizadores() {
       console.log("ERRO AO CARREGAR UTILIZADORES:", error);
       abrirPopup("Erro", "Não foi possível carregar os utilizadores.");
     } else {
-      setUtilizadores(data || []);
+      setUtilizadores(((data as any) || []) as Utilizador[]);
     }
 
     setLoading(false);
@@ -108,13 +141,13 @@ export default function Utilizadores() {
       abrirPopup(
         "Ativar utilizador",
         `Tens a certeza que queres ativar ${user.nome}?`,
-        "ativar"
+        "ativar",
       );
     } else {
       abrirPopup(
         "Inativar utilizador",
         `Tens a certeza que queres colocar ${user.nome} como inativo?`,
-        "inativar"
+        "inativar",
       );
     }
   }
@@ -125,7 +158,7 @@ export default function Utilizadores() {
     abrirPopup(
       "Apagar utilizador",
       `Tens a certeza que queres apagar ${user.nome}? Esta ação deve ser usada apenas se for mesmo necessário.`,
-      "apagar"
+      "apagar",
     );
   }
 
@@ -151,7 +184,7 @@ export default function Utilizadores() {
       "Sucesso",
       novoAtivo
         ? "Utilizador ativado com sucesso."
-        : "Utilizador colocado como inativo."
+        : "Utilizador colocado como inativo.",
     );
 
     setUtilizadorSelecionado(null);
@@ -206,8 +239,8 @@ export default function Utilizadores() {
         filtroAtivo === "todos"
           ? true
           : filtroAtivo === "ativos"
-          ? user.ativo !== false
-          : user.ativo === false;
+            ? user.ativo !== false
+            : user.ativo === false;
 
       return (
         correspondePesquisa &&
@@ -220,7 +253,7 @@ export default function Utilizadores() {
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(utilizadoresFiltrados.length / itensPorPagina)
+    Math.ceil(utilizadoresFiltrados.length / itensPorPagina),
   );
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -243,6 +276,26 @@ export default function Utilizadores() {
     if (paginaAtual < totalPaginas) {
       setPaginaAtual(paginaAtual + 1);
     }
+  }
+
+  function nomeInstituicao(user: Utilizador) {
+    const instituicao = user.instituicoes as any;
+
+    if (Array.isArray(instituicao)) {
+      return instituicao[0]?.nome || "Não associado";
+    }
+
+    return instituicao?.nome || "Não associado";
+  }
+
+  function nomeServico(user: Utilizador) {
+    const servico = user.servicos as any;
+
+    if (Array.isArray(servico)) {
+      return servico[0]?.nome || "Não associado";
+    }
+
+    return servico?.nome || "Não associado";
   }
 
   return (
@@ -293,21 +346,31 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/aprovarConta/aprovarConta" as any
+                "/backoffice/superadmin/aprovarConta/aprovarConta" as any,
               )
             }
           >
             <Ionicons name="person-add-outline" size={23} color="#FFFFFF" />
-            {sidebarAberta && (
-              <Text style={styles.menuText}>Aprovar Contas</Text>
-            )}
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {sidebarAberta && (
+                <Text style={styles.menuText}>Aprovar Contas</Text>
+              )}
+              <ContasPendentesBadge count={contasPendentes} />
+            </View>
           </Pressable>
 
           <Pressable
             style={[styles.menuItem, styles.menuItemActive]}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/utilizadores/utilizadores" as any
+                "/backoffice/superadmin/utilizadores/utilizadores" as any,
               )
             }
           >
@@ -323,7 +386,7 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/instituicoes/instituicoes" as any
+                "/backoffice/superadmin/instituicoes/instituicoes" as any,
               )
             }
           >
@@ -345,7 +408,7 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any
+                "/backoffice/superadmin/ensinos-clinicos/ensinos-clinicos" as any,
               )
             }
           >
@@ -359,7 +422,7 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/editarEstagio/editarEstagio" as any
+                "/backoffice/superadmin/editarEstagio/editarEstagio" as any,
               )
             }
           >
@@ -373,7 +436,7 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any
+                "/backoffice/superadmin/professoresResponsaveis/professoresResponsaveis" as any,
               )
             }
           >
@@ -387,7 +450,7 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any
+                "/backoffice/superadmin/criar_equipas/equipasEstagio" as any,
               )
             }
           >
@@ -399,7 +462,7 @@ export default function Utilizadores() {
             style={styles.menuItem}
             onPress={() =>
               router.push(
-                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any
+                "/backoffice/superadmin/distribuirAlunos/distribuirAlunos" as any,
               )
             }
           >
@@ -427,7 +490,7 @@ export default function Utilizadores() {
               abrirPopup(
                 "Terminar sessão",
                 "Tens a certeza que queres terminar sessão?",
-                "sair"
+                "sair",
               )
             }
           >
@@ -437,7 +500,10 @@ export default function Utilizadores() {
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Pressable
@@ -650,8 +716,8 @@ export default function Utilizadores() {
                   {filtroAtivo === "ativos"
                     ? "Ativos"
                     : filtroAtivo === "inativos"
-                    ? "Inativos"
-                    : "Todos"}
+                      ? "Inativos"
+                      : "Todos"}
                 </Text>
                 <Ionicons
                   name={
@@ -826,16 +892,28 @@ export default function Utilizadores() {
                         </View>
 
                         <View style={styles.detalheItem}>
-                          <Text style={styles.detalheLabel}>Hospital</Text>
+                          <Text style={styles.detalheLabel}>
+                            {user.tipo === "orientador"
+                              ? "Hospital / Instituição"
+                              : "Instituição"}
+                          </Text>
+
                           <Text style={styles.detalheValor}>
-                            Ainda não associado
+                            {user.tipo === "orientador" ||
+                            user.tipo === "professor"
+                              ? nomeInstituicao(user)
+                              : "Não se aplica"}
                           </Text>
                         </View>
 
                         <View style={styles.detalheItem}>
                           <Text style={styles.detalheLabel}>Serviço</Text>
+
                           <Text style={styles.detalheValor}>
-                            Ainda não associado
+                            {user.tipo === "orientador" ||
+                            user.tipo === "professor"
+                              ? nomeServico(user)
+                              : "Não se aplica"}
                           </Text>
                         </View>
                       </View>
@@ -959,7 +1037,10 @@ export default function Utilizadores() {
                   <Text style={styles.popupTextoCancelar}>Cancelar</Text>
                 </Pressable>
 
-                <Pressable style={styles.popupBotaoSair} onPress={terminarSessao}>
+                <Pressable
+                  style={styles.popupBotaoSair}
+                  onPress={terminarSessao}
+                >
                   <Text style={styles.popupTextoSair}>Sair</Text>
                 </Pressable>
               </View>
