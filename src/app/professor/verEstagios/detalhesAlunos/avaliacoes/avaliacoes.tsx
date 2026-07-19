@@ -133,6 +133,7 @@ export default function AvaliacoesProfessor() {
     return true;
   }
 
+  
   function calcularNotaFinal(notaProfessorNumero: number) {
     const notaOrientador = avaliacao?.nota_orientador;
 
@@ -145,6 +146,7 @@ export default function AvaliacoesProfessor() {
     return notaProfessorNumero;
   }
 
+  
   async function carregarDados() {
     setLoading(true);
 

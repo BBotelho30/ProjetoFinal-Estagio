@@ -17,7 +17,12 @@ type PessoaResumo = {
 
 type Estagio = {
   id: number;
+  edicao_estagio_id: number;
+  estado: string | null;
   estado_estagio: string | null;
+  professor_id: string | null;
+  orientador_id: string | null;
+  distribuido_por: string | null;
   edicoes_estagio?: {
     id: number;
     ano_letivo: string;
@@ -114,7 +119,12 @@ export default function EstagiosAluno() {
       .from("inscricoes_estagio")
       .select(`
         id,
+        edicao_estagio_id,
+        estado,
         estado_estagio,
+        professor_id,
+        orientador_id,
+        distribuido_por,
         edicoes_estagio(
           id,
           ano_letivo,
@@ -213,12 +223,26 @@ export default function EstagiosAluno() {
     return CORES_ESTAGIOS[numero - 1] || "#FDB515";
   }
 
+  function estagioEstaDistribuido(estagio: Estagio) {
+  return Boolean(
+    estagio.professor_id ||
+      estagio.orientador_id ||
+      estagio.distribuido_por
+  );
+}
+
   const estagiosFiltrados = estagios.filter((estagio) => {
     if (tab === "historico") {
       return estagio.estado_estagio === "concluido";
     }
 
-    return estagio.estado_estagio !== "concluido";
+    if (estagio.estado === "rejeitado") return false;
+    if (estagio.estado_estagio === "inativo") return false;
+    if (estagio.estado_estagio === "concluido") return false;
+    if (estagio.estado_estagio === "por_distribuir") return false;
+    if (!estagioEstaDistribuido(estagio)) return false;
+
+    return true;
   });
 
   return (
@@ -352,7 +376,7 @@ export default function EstagiosAluno() {
                         "/aluno/estagios/detalheEstagio/detalheEstagio" as any,
                       params: {
                         inscricaoId: String(estagio.id),
-                        edicaoId: String(estagio.edicoes_estagio?.id || ""),
+                        edicaoId: String(estagio.edicao_estagio_id || ""),                     
                       },
                     })
                   }

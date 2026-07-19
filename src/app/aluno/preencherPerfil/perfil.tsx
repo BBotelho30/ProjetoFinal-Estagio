@@ -454,56 +454,35 @@ function escolherData(date: Date) {
       </ScrollView>
 
       {mostrarBottomBar && (
-        <View style={styles.bottomBar}>
-          <Pressable
-            style={styles.bottomItem}
-            onPress={() => router.push("/aluno/home" as any)}
-          >
-            <Ionicons name="home-outline" size={24} color="#160909" />
-            <Text style={styles.bottomTexto}>Home</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.bottomItem}
-            onPress={() => router.push("/aluno/presencas?from=bottom" as any)}
-          >
-            <Ionicons name="calendar-outline" size={24} color="#160909" />
-            <Text style={styles.bottomTexto}>Presenças</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.bottomItem}
-            onPress={() => router.push("/aluno/avaliacoes?from=bottom" as any)}
-          >
-            <Ionicons name="star-outline" size={24} color="#160909" />
-            <Text style={styles.bottomTexto}>Avaliações</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.bottomItem}
-            onPress={() =>
-              router.push("/aluno/agenda/agenda?from=bottom" as any)
-            }
-          >
-            <Ionicons name="people-outline" size={24} color="#160909" />
-            <Text style={styles.bottomTexto}>Agenda</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.bottomItem}
-            onPress={() =>
-              router.push("/aluno/estagios/estagio?from=bottom" as any)
-            }
-          >
-            <Ionicons name="briefcase-outline" size={24} color="#160909" />
-            <Text style={styles.bottomTexto}>Ensinos Clínicos</Text>
-          </Pressable>
-
-          <Pressable style={styles.bottomItem}>
-            <Ionicons name="person-outline" size={24} color="#FDB515" />
-            <Text style={styles.bottomTextoAtivo}>Perfil</Text>
-          </Pressable>
-        </View>
+         <View style={styles.bottomBar}>
+           <Pressable style={styles.bottomItem}>
+             <Ionicons name="home-outline" size={24} color="#000000" />
+             <Text style={styles.bottomTexto}>Home</Text>
+           </Pressable>
+ 
+           <Pressable
+             style={styles.bottomItem}
+             onPress={() =>
+               mostrarPopup(
+                 "Definições",
+                 "Esta página encontra-se em desenvolvimento."
+               )
+             }
+           >
+             <Ionicons name="settings-outline" size={25} color="#160909" />
+             <Text style={styles.bottomTexto}>Definições</Text>
+           </Pressable>
+ 
+           <Pressable
+             style={styles.bottomItem}
+             onPress={() =>
+               router.push("/aluno/preencherPerfil/perfil?from=bottom" as any)
+             }
+           >
+             <Ionicons name="person-outline" size={24} color="#FDB515" />
+             <Text style={styles.bottomTextoAtivo}>Perfil</Text>
+           </Pressable>
+         </View>
       )}
 
       <Modal visible={calendarioVisivel} transparent animationType="fade">

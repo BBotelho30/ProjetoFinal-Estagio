@@ -77,6 +77,27 @@ export default function EstagioPresencasAluno() {
     });
   }, [estagios]);
 
+  function estagioEstaDistribuido(estagio: Estagio) {
+    return Boolean(
+      estagio.professor_id ||
+        estagio.orientador_id ||
+        estagio.distribuido_por ||
+        estagio.professor?.nome ||
+        estagio.orientador?.nome
+    );
+  }
+
+  function estadoRealEstagio(estagio: Estagio) {
+    if (
+      estagio.estado_estagio === "por_distribuir" &&
+      estagioEstaDistribuido(estagio)
+    ) {
+      return "em_curso";
+    }
+
+    return estagio.estado_estagio;
+  }
+
   async function buscarProfessorDaEdicao(edicaoId: number) {
     const { data, error } = await supabase
       .from("professores_estagio")
@@ -159,14 +180,16 @@ export default function EstagioPresencasAluno() {
 
     console.log("TODOS ESTÁGIOS PRESENÇAS:", data);
 
-    const listaValida = ((data as any) || []).filter((item: Estagio) => {
-      return item.estado_estagio !== "concluido";
+    const listaBase = ((data as any) || []).filter((item: Estagio) => {
+      if (item.estado === "rejeitado") return false;
+      if (item.estado_estagio === "inativo") return false;
+      if (item.estado_estagio === "concluido") return false;
+
+      return true;
     }) as Estagio[];
 
-    console.log("ESTÁGIOS FILTRADOS PRESENÇAS:", listaValida);
-
     const listaComNomes = await Promise.all(
-      listaValida.map(async (estagio: Estagio) => {
+      listaBase.map(async (estagio: Estagio) => {
         const edicaoId = estagio.edicoes_estagio?.id;
 
         let professorFinal = estagio.professor || null;
@@ -217,9 +240,20 @@ export default function EstagioPresencasAluno() {
       })
     );
 
-    console.log("ESTÁGIOS COM NOMES PRESENÇAS:", listaComNomes);
+    const listaFinal = listaComNomes.filter((estagio) => {
+      const distribuido = estagioEstaDistribuido(estagio);
 
-    setEstagios(listaComNomes as any);
+      if (estagio.estado_estagio === "por_distribuir" && !distribuido) {
+        return false;
+      }
+
+      return true;
+    });
+
+    console.log("ESTÁGIOS COM NOMES PRESENÇAS:", listaComNomes);
+    console.log("ESTÁGIOS FINAIS PRESENÇAS:", listaFinal);
+
+    setEstagios(listaFinal as any);
     setLoading(false);
   }
 
@@ -259,21 +293,27 @@ export default function EstagioPresencasAluno() {
     return CORES_ESTAGIOS[numero - 1] || "#FDB515";
   }
 
-  function textoEstado(estado: string | null) {
+  function textoEstado(estagio: Estagio) {
+    const estado = estadoRealEstagio(estagio);
+
     if (estado === "aguarda_relatorio") return "A aguardar relatório";
     if (estado === "aguarda_avaliacao") return "A aguardar avaliação";
     if (estado === "concluido") return "Concluído";
     if (estado === "por_distribuir") return "Por distribuir";
     if (estado === "inativo") return "Inativo";
+
     return "Em curso";
   }
 
-  function corEstado(estado: string | null) {
+  function corEstado(estagio: Estagio) {
+    const estado = estadoRealEstagio(estagio);
+
     if (estado === "concluido") return "#CDEFD6";
     if (estado === "aguarda_relatorio") return "#FDE8B4";
     if (estado === "aguarda_avaliacao") return "#DDEBFF";
     if (estado === "por_distribuir") return "#E9E9E9";
     if (estado === "inativo") return "#E9E9E9";
+
     return "#CDEFD6";
   }
 
@@ -315,7 +355,7 @@ export default function EstagioPresencasAluno() {
             <Text style={styles.vazioTitulo}>Sem estágios</Text>
 
             <Text style={styles.vazioTexto}>
-              Ainda não tens ensinos clínicos associados.
+              Ainda não tens ensinos clínicos distribuídos.
             </Text>
           </View>
         ) : (
@@ -347,12 +387,12 @@ export default function EstagioPresencasAluno() {
                     style={[
                       styles.badgeEstado,
                       {
-                        backgroundColor: corEstado(estagio.estado_estagio),
+                        backgroundColor: corEstado(estagio),
                       },
                     ]}
                   >
                     <Text style={styles.badgeTexto}>
-                      {textoEstado(estagio.estado_estagio)}
+                      {textoEstado(estagio)}
                     </Text>
                   </View>
                 </View>

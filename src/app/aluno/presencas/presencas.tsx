@@ -17,6 +17,11 @@ import styles from "./presencasStyles";
 type EstagioAtual = {
   id: number;
   edicao_estagio_id: number;
+  estado: string | null;
+  estado_estagio: string | null;
+  professor_id: string | null;
+  orientador_id: string | null;
+  distribuido_por: string | null;
   edicoes_estagio?: {
     permite_reposicao_horas: boolean;
     limite_faltas_percentagem: number;
@@ -149,6 +154,15 @@ export default function PresencasAluno() {
     setPopupVisivel(true);
   }
 
+  function estagioEstaDistribuido(estagio: EstagioAtual) {
+  return Boolean(
+    estagio.professor_id ||
+      estagio.orientador_id ||
+      estagio.distribuido_por ||
+      estagio.estado === "aprovado"
+  );
+}
+
   async function carregarDados() {
     setLoading(true);
 
@@ -159,30 +173,37 @@ export default function PresencasAluno() {
       return;
     }
 
-    let query = supabase
-      .from("inscricoes_estagio")
-      .select(`
-        id,
-        edicao_estagio_id,
-        estado_estagio,
-        edicoes_estagio(
-          permite_reposicao_horas,
-          limite_faltas_percentagem,
-          max_horas_dia,
-          data_inicio,
-          data_fim,
-          ensinos_clinicos(nome, horas_estimadas),
-          instituicoes(nome),
-          servicos(nome)
-        )
-      `)
-      .eq("aluno_id", authData.user.id);
+  let query = supabase
+    .from("inscricoes_estagio")
+    .select(`
+      id,
+      edicao_estagio_id,
+      estado,
+      estado_estagio,
+      professor_id,
+      orientador_id,
+      distribuido_por,
+      edicoes_estagio(
+        permite_reposicao_horas,
+        limite_faltas_percentagem,
+        max_horas_dia,
+        data_inicio,
+        data_fim,
+        ensinos_clinicos(nome, horas_estimadas),
+        instituicoes(nome),
+        servicos(nome)
+      )
+    `)
+    .eq("aluno_id", authData.user.id);
 
     if (inscricaoIdParam) {
       query = query.eq("id", inscricaoIdParam);
     } else {
       query = query
+        .eq("estado", "aprovado")
         .neq("estado_estagio", "concluido")
+        .neq("estado_estagio", "inativo")
+        .neq("estado_estagio", "por_distribuir")
         .order("id", { ascending: false })
         .limit(1);
     }
@@ -206,7 +227,23 @@ export default function PresencasAluno() {
       return;
     }
 
-    setEstagio((estagioData as any) || null);
+    const estagioAtual = estagioData as any;
+
+    if (
+      estagioAtual.estado === "rejeitado" ||
+      estagioAtual.estado_estagio === "inativo" ||
+      estagioAtual.estado_estagio === "concluido" ||
+      estagioAtual.estado_estagio === "por_distribuir" ||
+      !estagioEstaDistribuido(estagioAtual)
+    ) {
+      setEstagio(null);
+      setPresencas([]);
+      setFaltas([]);
+      setLoading(false);
+      return;
+    }
+
+    setEstagio(estagioAtual);
 
     const inscricaoId = (estagioData as any).id;
 
@@ -1082,116 +1119,7 @@ export default function PresencasAluno() {
               )}
             </View>
 
-            <Text style={styles.secaoTitulo}>Histórico de Presenças</Text>
-
-            {presencas.length === 0 ? (
-              <Text style={styles.textoVazio}>
-                Ainda não existem presenças registadas.
-              </Text>
-            ) : (
-              <View style={styles.lista}>
-                {presencas.map((presenca) => (
-                  <View key={presenca.id} style={styles.cardPresenca}>
-                    <View style={styles.cardTopo}>
-                      <View>
-                        <Text style={styles.dataTexto}>
-                          Data: {dataParaTexto(presenca.data)}
-                        </Text>
-                        <Text style={styles.horarioTexto}>
-                          Horas: {presenca.hora_inicio.slice(0, 5)} -{" "}
-                          {presenca.hora_fim.slice(0, 5)}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.badgeEstado,
-                          { backgroundColor: corEstado(presenca.estado) },
-                        ]}
-                      >
-                        <Text style={styles.badgeTexto}>
-                          {textoEstado(presenca.estado)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text style={styles.infoTexto}>
-                      Tipo: {textoTipo(presenca.tipo)}
-                    </Text>
-
-                    <Text style={styles.infoTexto}>
-                      Duração: {presenca.duracao}h
-                    </Text>
-
-                    {presenca.horas_reposicao > 0 ? (
-                      <Text style={styles.validacaoTexto}>
-                        Reposição de horas: {presenca.horas_reposicao}h
-                      </Text>
-                    ) : null}
-
-                    <Text style={styles.validacaoTexto}>
-                      Validação:{" "}
-                      {presenca.tipo === "tutorial"
-                        ? "Professor Orientador"
-                        : "Orientador de Estágio"}
-                    </Text>
-
-                    {presenca.observacoes ? (
-                      <Text style={styles.observacoesTexto}>
-                        Obs.: {presenca.observacoes}
-                      </Text>
-                    ) : null}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            <Text style={styles.secaoTitulo}>Faltas</Text>
-
-            {faltas.length === 0 ? (
-              <Text style={styles.textoVazio}>
-                Ainda não existem faltas registadas.
-              </Text>
-            ) : (
-              <View style={styles.lista}>
-                {faltas.map((falta) => (
-                  <View key={falta.id} style={styles.cardFalta}>
-                    <View style={styles.cardTopo}>
-                      <View>
-                        <Text style={styles.dataTexto}>
-                          Data: {dataParaTexto(falta.data)}
-                        </Text>
-
-                        <Text style={styles.horarioTexto}>
-                          Horas: {falta.horas_falta}h de falta
-                        </Text>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.badgeEstado,
-                          { backgroundColor: corEstado(falta.estado) },
-                        ]}
-                      >
-                        <Text style={styles.badgeTexto}>
-                          {textoEstado(falta.estado)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {falta.justificacao_texto ? (
-                      <Text style={styles.infoTexto}>
-                        Justificação: {falta.justificacao_texto}
-                      </Text>
-                    ) : null}
-
-                    {falta.justificacao_url ? (
-                      <Text style={styles.validacaoTexto}>Documento anexado</Text>
-                    ) : null}
-                  </View>
-                ))}
-              </View>
-            )}
+        
           </>
         )}
       </ScrollView>

@@ -158,7 +158,6 @@ export default function AvaliacaoAlunoOrientador() {
           .select("id")
           .eq("aluno_id", alunoIdParam)
           .eq("edicao_estagio_id", edicaoIdParam)
-          .eq("orientador_id", userId)
           .maybeSingle();
 
       if (inscricaoEncontradaError) {
@@ -183,7 +182,6 @@ export default function AvaliacaoAlunoOrientador() {
         "id, aluno_id, edicao_estagio_id, professor_id, orientador_id, estado, estado_estagio"
       )
       .eq("id", inscricaoIdFinal)
-      .eq("orientador_id", userId)
       .maybeSingle();
 
     if (inscricaoError || !inscricaoData) {
@@ -194,8 +192,34 @@ export default function AvaliacaoAlunoOrientador() {
     }
 
     const inscricaoAtual = inscricaoData as Inscricao;
+
+    const { data: associacaoOrientador, error: associacaoError } = await supabase
+      .from("orientadores_estagio")
+      .select("id")
+      .eq("orientador_id", userId)
+      .eq("edicao_estagio_id", inscricaoAtual.edicao_estagio_id)
+      .maybeSingle();
+
+    if (associacaoError || !associacaoOrientador) {
+      console.log("ORIENTADOR SEM ACESSO A ESTA EDIÇÃO:", associacaoError);
+      abrirPopup("Erro", "Não tens acesso à avaliação deste aluno.");
+      setLoading(false);
+      return;
+    }
+
+    if (
+      inscricaoAtual.estado === "rejeitado" ||
+      inscricaoAtual.estado_estagio === "inativo" ||
+      inscricaoAtual.estado_estagio === "por_distribuir"
+    ) {
+      abrirPopup("Erro", "Esta inscrição já não está ativa.");
+      setLoading(false);
+      return;
+    }
+
     setInscricao(inscricaoAtual);
 
+    
     const { data: alunoData, error: alunoError } = await supabase
       .from("utilizadores")
       .select("id, nome, email, numero_identificacao, ano_curricular")

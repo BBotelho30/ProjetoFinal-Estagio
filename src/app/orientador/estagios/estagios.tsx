@@ -11,36 +11,37 @@ import {
 import { supabase } from "../../../lib/supabase";
 import styles from "./estagiosStyles";
 
+type EdicaoOrientador = {
+  id: number;
+  data_inicio: string | null;
+  data_fim: string | null;
+  ano_letivo: string | null;
+  ensinos_clinicos?: {
+    nome: string;
+    ano_curricular: number;
+    tipo: string | null;
+    horas_estimadas: number | null;
+  } | null;
+  instituicoes?: {
+    nome: string;
+  } | null;
+  servicos?: {
+    nome: string;
+  } | null;
+};
+
 type InscricaoOrientador = {
   id: number;
   aluno_id: string;
   edicao_estagio_id: number;
   estado: string | null;
   estado_estagio: string | null;
-  edicoes_estagio?: {
-    id: number;
-    data_inicio: string | null;
-    data_fim: string | null;
-    ano_letivo: string | null;
-    ensinos_clinicos?: {
-      nome: string;
-      ano_curricular: number;
-      tipo: string | null;
-      horas_estimadas: number | null;
-    } | null;
-    instituicoes?: {
-      nome: string;
-    } | null;
-    servicos?: {
-      nome: string;
-    } | null;
-  } | null;
 };
 
 type EstagioAgrupado = {
   edicao_estagio_id: number;
+  edicao: EdicaoOrientador;
   inscricoes: InscricaoOrientador[];
-  exemplo: InscricaoOrientador;
 };
 
 const CORES_ESTAGIOS = [
@@ -59,40 +60,22 @@ const CORES_ESTAGIOS = [
 
 export default function EnsinosClinicosOrientador() {
   const [loading, setLoading] = useState(true);
-  const [inscricoes, setInscricoes] = useState<InscricaoOrientador[]>([]);
+  const [estagios, setEstagios] = useState<EstagioAgrupado[]>([]);
   const [tab, setTab] = useState<"ativos" | "historico">("ativos");
 
   useEffect(() => {
     carregarEstagios();
   }, []);
 
-  const estagiosAgrupados = useMemo(() => {
-    const mapa = new Map<number, EstagioAgrupado>();
+  const estagiosFiltrados = useMemo(() => {
+    return estagios.filter((estagio) => {
+      const concluido = estagioConcluido(estagio);
 
-    inscricoes.forEach((inscricao) => {
-      const edicaoId = inscricao.edicao_estagio_id;
+      if (tab === "historico") return concluido;
 
-      if (!mapa.has(edicaoId)) {
-        mapa.set(edicaoId, {
-          edicao_estagio_id: edicaoId,
-          inscricoes: [inscricao],
-          exemplo: inscricao,
-        });
-      } else {
-        mapa.get(edicaoId)?.inscricoes.push(inscricao);
-      }
+      return !concluido;
     });
-
-    return Array.from(mapa.values());
-  }, [inscricoes]);
-
-  const estagiosFiltrados = estagiosAgrupados.filter((estagio) => {
-    const concluido = estagioConcluido(estagio);
-
-    if (tab === "historico") return concluido;
-
-    return !concluido;
-  });
+  }, [estagios, tab]);
 
   function numeroDoEstagio(nomeEstagio?: string | null) {
     const nome = nomeEstagio || "";
@@ -153,42 +136,91 @@ export default function EnsinosClinicosOrientador() {
 
     const orientadorId = authData.user.id;
 
-    const { data, error } = await supabase
+    const { data: associacoesData, error: associacoesError } = await supabase
+      .from("orientadores_estagio")
+      .select("edicao_estagio_id")
+      .eq("orientador_id", orientadorId);
+
+    if (associacoesError) {
+      console.log("ERRO ASSOCIAÇÕES ORIENTADOR:", associacoesError);
+      setEstagios([]);
+      setLoading(false);
+      return;
+    }
+
+    const edicoesIds = Array.from(
+      new Set(
+        ((associacoesData as any) || [])
+          .map((item: any) => item.edicao_estagio_id)
+          .filter(Boolean)
+      )
+    );
+
+    if (edicoesIds.length === 0) {
+      setEstagios([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: edicoesData, error: edicoesError } = await supabase
+      .from("edicoes_estagio")
+      .select(`
+        id,
+        data_inicio,
+        data_fim,
+        ano_letivo,
+        ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
+        instituicoes(nome),
+        servicos(nome)
+      `)
+      .in("id", edicoesIds);
+
+    if (edicoesError) {
+      console.log("ERRO EDIÇÕES ORIENTADOR:", edicoesError);
+      setEstagios([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: inscricoesData, error: inscricoesError } = await supabase
       .from("inscricoes_estagio")
       .select(`
         id,
         aluno_id,
         edicao_estagio_id,
         estado,
-        estado_estagio,
-        edicoes_estagio(
-          id,
-          data_inicio,
-          data_fim,
-          ano_letivo,
-          ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
-          instituicoes(nome),
-          servicos(nome)
-        )
+        estado_estagio
       `)
-      .eq("orientador_id", orientadorId)
+      .in("edicao_estagio_id", edicoesIds)
+      .neq("estado", "rejeitado")
+      .neq("estado_estagio", "inativo")
+      .neq("estado_estagio", "por_distribuir")
       .order("id", { ascending: false });
 
-    if (error) {
-      console.log("ERRO ESTÁGIOS ORIENTADOR:", error);
-      setInscricoes([]);
+    if (inscricoesError) {
+      console.log("ERRO INSCRIÇÕES ORIENTADOR:", inscricoesError);
+      setEstagios([]);
       setLoading(false);
       return;
     }
 
-    const lista = ((data as any) || []).filter(
-      (inscricao: InscricaoOrientador) =>
-        inscricao.estado !== "rejeitado" &&
-        inscricao.estado_estagio !== "inativo" &&
-        inscricao.estado_estagio !== "por_distribuir"
-    );
+    const listaEdicoes = ((edicoesData as any) || []) as EdicaoOrientador[];
+    const listaInscricoes = ((inscricoesData as any) ||
+      []) as InscricaoOrientador[];
 
-    setInscricoes(lista);
+    const listaFinal: EstagioAgrupado[] = listaEdicoes.map((edicao) => {
+      const inscricoesDaEdicao = listaInscricoes.filter(
+        (inscricao) => inscricao.edicao_estagio_id === edicao.id
+      );
+
+      return {
+        edicao_estagio_id: edicao.id,
+        edicao,
+        inscricoes: inscricoesDaEdicao,
+      };
+    });
+
+    setEstagios(listaFinal);
     setLoading(false);
   }
 
@@ -250,8 +282,7 @@ export default function EnsinosClinicosOrientador() {
         ) : (
           <View style={styles.lista}>
             {estagiosFiltrados.map((estagio) => {
-              const exemplo = estagio.exemplo;
-              const edicao = exemplo.edicoes_estagio;
+              const edicao = estagio.edicao;
 
               const nomeEstagio =
                 edicao?.ensinos_clinicos?.nome || "Ensino Clínico";

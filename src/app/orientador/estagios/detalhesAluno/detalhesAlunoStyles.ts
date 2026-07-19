@@ -69,6 +69,14 @@ const styles = StyleSheet.create({
     fontFamily: "serif",
     lineHeight: 29,
   },
+  
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 60,
+  },
 
   alunoTexto: {
     fontSize: 14,
@@ -162,6 +170,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF3C4",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  pessoaFoto: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 2,
+    borderColor: "#FDB515",
   },
 
   pessoaLabel: {

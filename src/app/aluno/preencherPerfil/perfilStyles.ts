@@ -283,6 +283,8 @@ const local = StyleSheet.create({
     fontFamily: "serif",
   },
 
+  
+
   bottomTextoAtivo: {
     fontSize: 11,
     fontWeight: "900",

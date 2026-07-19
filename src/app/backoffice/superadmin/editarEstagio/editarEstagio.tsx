@@ -403,7 +403,7 @@ export default function Estagios() {
   async function terminarSessao() {
     setPopupVisible(false);
     await supabase.auth.signOut();
-    router.replace("/backoffice/login" as any);
+    router.replace("/backoffice/superadmin/login/login" as any);
   }
 
   const edicoesFiltradas = useMemo(() => {

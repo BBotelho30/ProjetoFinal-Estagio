@@ -357,6 +357,39 @@ export default function CriarEstagio() {
     });
   }
 
+
+  function hojeISO() {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+  function dataMenorQueHoje(dataISO: string) {
+    if (!dataISO) return false;
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const data = new Date(`${dataISO}T00:00:00`);
+    data.setHours(0, 0, 0, 0);
+
+    return data < hoje;
+  }
+
+  function dataFimMenorQueInicio(inicioISO: string, fimISO: string) {
+    if (!inicioISO || !fimISO) return false;
+
+    const inicio = new Date(`${inicioISO}T00:00:00`);
+    const fim = new Date(`${fimISO}T00:00:00`);
+
+    return fim < inicio;
+  }
+
   async function criarEdicao() {
     if (aGuardar) return;
 
@@ -413,6 +446,32 @@ export default function CriarEstagio() {
       return;
     }
 
+    //nao deixar que entre o estagio em dias antes
+    if (!dataInicio) {
+      abrirPopup("Erro", "Seleciona a data de início.");
+      return;
+    }
+
+    if (!dataFim) {
+      abrirPopup("Erro", "Seleciona a data de fim.");
+      return;
+    }
+
+    if (dataMenorQueHoje(dataInicio)) {
+      abrirPopup("Erro", "A data de início não pode ser anterior ao dia de hoje.");
+      return;
+    }
+
+    if (dataMenorQueHoje(dataFim)) {
+      abrirPopup("Erro", "A data de fim não pode ser anterior ao dia de hoje.");
+      return;
+    }
+
+    if (dataFimMenorQueInicio(dataInicio, dataFim)) {
+      abrirPopup("Erro", "A data de fim não pode ser anterior à data de início.");
+      return;
+    }
+
     setAGuardar(true);
 
     const dadosParaInserir = servicosValidos.map((servico) => ({
@@ -454,7 +513,7 @@ export default function CriarEstagio() {
   async function terminarSessao() {
     setPopupVisible(false);
     await supabase.auth.signOut();
-    router.replace("/backoffice/login" as any);
+    router.replace("/backoffice/superadmin/login/login" as any);
   }
 
   return (
@@ -911,11 +970,7 @@ export default function CriarEstagio() {
               </Text>
 
               <Ionicons
-                name={
-                  instituicaoOpen
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
-                }
+                name={ instituicaoOpen ? "chevron-up-outline" : "chevron-down-outline"}
                 size={22}
                 color="#160909"
               />
@@ -936,20 +991,14 @@ export default function CriarEstagio() {
                     return (
                       <Pressable
                         key={instituicao.id}
-                        style={[
-                          styles.opcaoCompacta,
-                          selecionada && styles.opcaoSelecionada,
-                        ]}
-                        onPress={() => toggleInstituicao(instituicao.id)}
-                      >
+                        style={[ styles.opcaoCompacta, selecionada && styles.opcaoSelecionada, ]}
+                        onPress={() => toggleInstituicao(instituicao.id)}>
                         <Text style={styles.opcaoTexto}>
                           {instituicao.nome}
                         </Text>
 
                         <Ionicons
-                          name={
-                            selecionada ? "checkbox-outline" : "square-outline"
-                          }
+                          name={selecionada ? "checkbox-outline" : "square-outline"}
                           size={24}
                           color="#160909"
                         />
@@ -984,14 +1033,8 @@ export default function CriarEstagio() {
                     totalServicosSelecionadosPorInstituicao(instituicaoId);
 
                   return (
-                    <View
-                      key={instituicaoId}
-                      style={styles.hospitalCompactCard}
-                    >
-                      <Pressable
-                        style={styles.hospitalCompactHeader}
-                        onPress={() => toggleServicosHospital(instituicaoId)}
-                      >
+                    <View key={instituicaoId}  style={styles.hospitalCompactCard}>
+                      <Pressable style={styles.hospitalCompactHeader} onPress={() => toggleServicosHospital(instituicaoId)} >
                         <View>
                           <Text style={styles.hospitalCompactTitulo}>
                             {nomeInstituicao(instituicaoId)}
@@ -1005,11 +1048,7 @@ export default function CriarEstagio() {
                         </View>
 
                         <Ionicons
-                          name={
-                            aberto
-                              ? "chevron-up-outline"
-                              : "chevron-down-outline"
-                          }
+                          name={ aberto  ? "chevron-up-outline"  : "chevron-down-outline" }
                           size={23}
                           color="#160909"
                         />
@@ -1028,24 +1067,11 @@ export default function CriarEstagio() {
                               );
 
                               return (
-                                <View
-                                  key={servico.id}
-                                  style={[
-                                    styles.servicoCompactLinha,
-                                    selecionado &&
-                                      styles.servicoCompactLinhaSelecionada,
-                                  ]}
-                                >
-                                  <Pressable
-                                    style={styles.servicoCompactCheckArea}
-                                    onPress={() => toggleServico(servico.id)}
-                                  >
+                                <View key={servico.id}
+                                  style={[ styles.servicoCompactLinha,selecionado && styles.servicoCompactLinhaSelecionada,]} >
+                                  <Pressable style={styles.servicoCompactCheckArea} onPress={() => toggleServico(servico.id)}>
                                     <Ionicons
-                                      name={
-                                        selecionado
-                                          ? "checkbox-outline"
-                                          : "square-outline"
-                                      }
+                                      name={ selecionado ? "checkbox-outline"  : "square-outline"}
                                       size={23}
                                       color="#160909"
                                     />
@@ -1058,11 +1084,7 @@ export default function CriarEstagio() {
                                   <TextInput
                                     placeholder="Vagas"
                                     placeholderTextColor="#8c8787"
-                                    style={[
-                                      styles.vagasCompactInput,
-                                      !selecionado &&
-                                        styles.vagasCompactInputDisabled,
-                                    ]}
+                                    style={[ styles.vagasCompactInput,  !selecionado &&  styles.vagasCompactInputDisabled, ]}
                                     value={vagasPorServico[servico.id] || ""}
                                     onChangeText={(valor) =>
                                       atualizarVagasServico(servico.id, valor)
@@ -1150,29 +1172,38 @@ export default function CriarEstagio() {
               ))}
             </View>
 
-            <View style={styles.calendarioDias}>
-              {diasDoMes().map((dia, index) =>
-                dia === null ? (
-                  <View
-                    key={`empty-${index}`}
-                    style={styles.calendarioDiaVazio}
-                  />
-                ) : (
-                  <Pressable
-                    key={dia}
-                    style={styles.calendarioDia}
-                    onPress={() => selecionarData(dia)}
-                  >
-                    <Text style={styles.calendarioDiaTexto}>{dia}</Text>
-                  </Pressable>
-                ),
-              )}
-            </View>
+      <View style={styles.calendarioDias}>
+        {diasDoMes().map((dia, index) => {
+          if (dia === null) {
+            return (
+              <View key={`empty-${index}`} style={styles.calendarioDiaVazio}/>
+            );
+          }
 
-            <Pressable
-              style={styles.calendarioCancelar}
-              onPress={() => setCalendarioAberto(false)}
-            >
+        const ano = mesCalendario.getFullYear();
+        const mes = mesCalendario.getMonth() + 1;
+
+        const dataISO = `${ano}-${String(mes).padStart(2, "0")}-${String(
+          dia
+        ).padStart(2, "0")}`;
+
+        const diaPassado = dataMenorQueHoje(dataISO);
+
+        return (
+          <Pressable key={`${dataISO}-${index}`} style={[ styles.calendarioDia,  diaPassado && styles.calendarioDiaDesativado, ]}
+            disabled={diaPassado}
+            onPress={() => selecionarData(dia)}
+          >
+            <Text
+              style={[ styles.calendarioDiaTexto, diaPassado && styles.calendarioDiaTextoDesativado,]}>
+              {dia}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+
+            <Pressable style={styles.calendarioCancelar}  onPress={() => setCalendarioAberto(false)} >
               <Text style={styles.calendarioCancelarTexto}>Cancelar</Text>
             </Pressable>
           </View>

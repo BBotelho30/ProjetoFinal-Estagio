@@ -131,8 +131,7 @@ export default function AlunosEstagioOrientador() {
       .select(
         "id, aluno_id, edicao_estagio_id, estado, estado_estagio, data_distribuicao"
       )
-      .eq("edicao_estagio_id", edicaoId)
-      .eq("orientador_id", orientadorId);
+      .eq("edicao_estagio_id", edicaoId);
 
     if (inscricoesError) {
       console.log("ERRO INSCRIÇÕES ORIENTADOR:", inscricoesError);

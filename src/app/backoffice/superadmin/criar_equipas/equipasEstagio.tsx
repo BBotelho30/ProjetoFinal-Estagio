@@ -449,7 +449,7 @@ export default function EquipasEstagio() {
   async function terminarSessao() {
     setPopupVisible(false);
     await supabase.auth.signOut();
-    router.replace("/backoffice/login" as any);
+    router.replace("/backoffice/superadmin/login/login" as any);
   }
 
   const edicoesComEquipa = useMemo(() => {

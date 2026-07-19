@@ -155,22 +155,32 @@ export default function CriarReuniaoOrientador() {
     return alunos.filter((aluno) => alunosIds.includes(aluno.id));
   }, [alunos, inscricoes, edicaoSelecionada]);
 
-  const professoresDaEdicao = useMemo(() => {
-    if (!edicaoSelecionada) return [];
 
-    const professoresIds = inscricoes
-      .filter(
-        (inscricao) =>
-          inscricao.edicao_estagio_id === edicaoSelecionada &&
-          Boolean(inscricao.professor_id)
-      )
-      .map((inscricao) => inscricao.professor_id as string);
+    const professoresDaEdicao = useMemo(() => {
+      if (!edicaoSelecionada) return professores;
 
-    const idsUnicos = Array.from(new Set(professoresIds));
+      const professoresIds = inscricoes
+        .filter(
+          (inscricao) =>
+            inscricao.edicao_estagio_id === edicaoSelecionada &&
+            Boolean(inscricao.professor_id)
+        )
+        .map((inscricao) => inscricao.professor_id as string);
 
-    return professores.filter((professor) => idsUnicos.includes(professor.id));
-  }, [professores, inscricoes, edicaoSelecionada]);
+      const idsUnicos = Array.from(new Set(professoresIds));
 
+      const professoresFiltrados = professores.filter((professor) =>
+        idsUnicos.includes(professor.id)
+      );
+
+      if (professoresFiltrados.length > 0) {
+        return professoresFiltrados;
+      }
+
+      return professores;
+    }, [professores, inscricoes, edicaoSelecionada]);
+
+    
   function abrirPopup(
     titulo: string,
     mensagem: string,
@@ -467,6 +477,39 @@ export default function CriarReuniaoOrientador() {
 
     setOrientadorId(userId);
 
+    const { data: associacoesData, error: associacoesError } = await supabase
+      .from("orientadores_estagio")
+      .select("edicao_estagio_id")
+      .eq("orientador_id", userId);
+
+    if (associacoesError) {
+      console.log("ERRO ASSOCIAÇÕES REUNIÃO ORIENTADOR:", associacoesError);
+      abrirPopup("Erro", "Não foi possível carregar os estágios.");
+      setLoading(false);
+      return;
+    }
+
+    let edicoesIds: number[] = Array.from(
+      new Set(
+        ((associacoesData as any) || [])
+          .map((item: any) => Number(item.edicao_estagio_id))
+          .filter((id: number) => !Number.isNaN(id))
+      )
+    );
+
+    if (edicaoIdParam && !edicoesIds.includes(edicaoIdParam)) {
+      edicoesIds.push(edicaoIdParam);
+    }
+
+    if (edicoesIds.length === 0) {
+      setEdicoes([]);
+      setInscricoes([]);
+      setAlunos([]);
+      setProfessores([]);
+      setLoading(false);
+      return;
+    }
+
     const { data: inscricoesData, error: inscricoesError } = await supabase
       .from("inscricoes_estagio")
       .select(
@@ -481,11 +524,11 @@ export default function CriarReuniaoOrientador() {
         distribuido_por
       `
       )
-      .eq("orientador_id", userId);
+      .in("edicao_estagio_id", edicoesIds);
 
     if (inscricoesError) {
       console.log("ERRO INSCRIÇÕES REUNIÃO ORIENTADOR:", inscricoesError);
-      abrirPopup("Erro", "Não foi possível carregar os estágios.");
+      abrirPopup("Erro", "Não foi possível carregar os alunos do estágio.");
       setLoading(false);
       return;
     }
@@ -494,12 +537,20 @@ export default function CriarReuniaoOrientador() {
       (inscricao: Inscricao) =>
         inscricao.estado !== "rejeitado" &&
         inscricao.estado_estagio !== "inativo" &&
-        inscricao.estado_estagio !== "por_distribuir"
+        inscricao.estado_estagio !== "por_distribuir" &&
+        (inscricao.estado === "aprovado" ||
+          inscricao.estado_estagio === "em_curso" ||
+          inscricao.estado_estagio === "aguarda_relatorio" ||
+          inscricao.estado_estagio === "aguarda_avaliacao" ||
+          inscricao.estado_estagio === "concluido" ||
+          Boolean(inscricao.distribuido_por) ||
+          Boolean(inscricao.professor_id) ||
+          Boolean(inscricao.orientador_id))
     );
 
     setInscricoes(inscricoesLista);
 
-    const edicoesIds: number[] = Array.from(
+    const edicoesIdsComAlunos: number[] = Array.from(
       new Set(
         inscricoesLista
           .map((item: Inscricao) => Number(item.edicao_estagio_id))
@@ -507,13 +558,8 @@ export default function CriarReuniaoOrientador() {
       )
     );
 
-    if (edicoesIds.length === 0) {
-      setEdicoes([]);
-      setAlunos([]);
-      setProfessores([]);
-      setLoading(false);
-      return;
-    }
+    const edicoesParaBuscar =
+      edicoesIdsComAlunos.length > 0 ? edicoesIdsComAlunos : edicoesIds;
 
     const { data: edicoesData, error: edicoesError } = await supabase
       .from("edicoes_estagio")
@@ -527,7 +573,7 @@ export default function CriarReuniaoOrientador() {
         servicos(nome)
       `
       )
-      .in("id", edicoesIds)
+      .in("id", edicoesParaBuscar)
       .order("id", { ascending: false });
 
     if (edicoesError) {
@@ -564,7 +610,7 @@ export default function CriarReuniaoOrientador() {
       setAlunos([]);
     }
 
-    const professoresIds: string[] = Array.from(
+    let professoresIds: string[] = Array.from(
       new Set(
         inscricoesLista
           .map((inscricao: Inscricao) => inscricao.professor_id)
@@ -572,13 +618,33 @@ export default function CriarReuniaoOrientador() {
       )
     );
 
+    const { data: professoresEdicaoData, error: professoresEdicaoError } =
+      await supabase
+        .from("professores_estagio")
+        .select("professor_id")
+        .in("edicao_estagio_id", edicoesParaBuscar);
+
+    if (professoresEdicaoError) {
+      console.log(
+        "ERRO PROFESSORES DA EDIÇÃO REUNIÃO:",
+        professoresEdicaoError
+      );
+    } else {
+      const professoresDaEquipa = ((professoresEdicaoData as any) || [])
+        .map((item: any) => item.professor_id)
+        .filter(Boolean);
+
+      professoresIds = Array.from(
+        new Set([...professoresIds, ...professoresDaEquipa])
+      );
+    }
+
     if (professoresIds.length > 0) {
-      const { data: professoresData, error: professoresError } =
-        await supabase
-          .from("utilizadores")
-          .select("id, nome, email")
-          .in("id", professoresIds)
-          .order("nome", { ascending: true });
+      const { data: professoresData, error: professoresError } = await supabase
+        .from("utilizadores")
+        .select("id, nome, email")
+        .in("id", professoresIds)
+        .order("nome", { ascending: true });
 
       if (professoresError) {
         console.log("ERRO PROFESSORES REUNIÃO ORIENTADOR:", professoresError);
@@ -592,8 +658,8 @@ export default function CriarReuniaoOrientador() {
 
     if (edicaoIdParam) {
       setEdicaoSelecionada(edicaoIdParam);
-    } else if (!edicaoSelecionada && edicoesIds.length > 0) {
-      setEdicaoSelecionada(edicoesIds[0]);
+    } else if (!edicaoSelecionada && edicoesParaBuscar.length > 0) {
+      setEdicaoSelecionada(edicoesParaBuscar[0]);
     }
 
     if (alunoIdParam) {
@@ -608,6 +674,8 @@ export default function CriarReuniaoOrientador() {
 
     if (inscricaoDoAluno?.professor_id) {
       setProfessorSelecionado(inscricaoDoAluno.professor_id);
+    } else if (professoresIds.length > 0) {
+      setProfessorSelecionado(professoresIds[0]);
     }
 
     setLoading(false);

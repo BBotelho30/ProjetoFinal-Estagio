@@ -757,7 +757,18 @@ vagasCompactInput: {
   borderWidth: 1,
   borderColor: "#D0D5DD",
   textAlign: "center",
+
 },
+
+calendarioDiaDesativado: {
+  backgroundColor: "#E9E9E9",
+  opacity: 0.45,
+},
+
+calendarioDiaTextoDesativado: {
+  color: "#8c8787",
+},
+
 
 vagasCompactInputDisabled: {
   opacity: 0.45,

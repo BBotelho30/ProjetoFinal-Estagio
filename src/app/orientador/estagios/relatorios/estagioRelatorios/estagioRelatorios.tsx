@@ -27,6 +27,8 @@ type Inscricao = {
   estado: string | null;
   estado_estagio: string | null;
   distribuido_por: string | null;
+  professor_id: string | null;
+  orientador_id: string | null;
 };
 
 type Edicao = {
@@ -143,10 +145,8 @@ export default function EstagioRelatoriosOrientador() {
     return anos.sort((a, b) => a - b);
   }, [linhas]);
 
-  const linhasFiltradas = useMemo(() => {
-    let resultado = linhas.filter((linha) => {
-      return linha.relatorio !== null;
-    });
+    const linhasFiltradas = useMemo(() => {
+    let resultado = linhas;
 
     if (anoSelecionado !== "todos") {
       resultado = resultado.filter(
@@ -241,162 +241,201 @@ export default function EstagioRelatoriosOrientador() {
     return linha.relatorio.estado || "Submetido";
   }
 
-  async function carregarDados() {
-    setLoading(true);
+async function carregarDados() {
+  setLoading(true);
 
-    const { data: authData } = await supabase.auth.getUser();
+  const { data: authData } = await supabase.auth.getUser();
 
-    if (!authData.user) {
-      router.replace("/login/login" as any);
-      return;
-    }
+  if (!authData.user) {
+    router.replace("/login/login" as any);
+    return;
+  }
 
-    const orientadorId = authData.user.id;
+  const orientadorId = authData.user.id;
 
-    const { data: inscricoesData, error: inscricoesError } = await supabase
-      .from("inscricoes_estagio")
+  const { data: associacoesData, error: associacoesError } = await supabase
+    .from("orientadores_estagio")
+    .select("edicao_estagio_id")
+    .eq("orientador_id", orientadorId);
+
+  if (associacoesError) {
+    console.log("ERRO ASSOCIAÇÕES RELATÓRIOS ORIENTADOR:", associacoesError);
+    setInscricoes([]);
+    setAlunos([]);
+    setEdicoes([]);
+    setRelatorios([]);
+    setLoading(false);
+    return;
+  }
+
+  const edicoesIds: number[] = Array.from(
+    new Set(
+      ((associacoesData as any) || [])
+        .map((item: any) => Number(item.edicao_estagio_id))
+        .filter((id: number) => !Number.isNaN(id))
+    )
+  );
+
+  if (edicoesIds.length === 0) {
+    setInscricoes([]);
+    setAlunos([]);
+    setEdicoes([]);
+    setRelatorios([]);
+    setLoading(false);
+    return;
+  }
+
+  const { data: inscricoesData, error: inscricoesError } = await supabase
+    .from("inscricoes_estagio")
+    .select(
+      `
+      id,
+      aluno_id,
+      edicao_estagio_id,
+      estado,
+      estado_estagio,
+      distribuido_por,
+      professor_id,
+      orientador_id
+    `
+    )
+    .in("edicao_estagio_id", edicoesIds)
+    .order("id", { ascending: false });
+
+  if (inscricoesError) {
+    console.log("ERRO INSCRIÇÕES RELATÓRIOS ORIENTADOR:", inscricoesError);
+    setInscricoes([]);
+    setAlunos([]);
+    setEdicoes([]);
+    setRelatorios([]);
+    setLoading(false);
+    return;
+  }
+
+  const inscricoesValidas = ((inscricoesData as any) || []).filter(
+    (inscricao: Inscricao) =>
+      inscricao.estado !== "rejeitado" &&
+      inscricao.estado_estagio !== "inativo" &&
+      inscricao.estado_estagio !== "por_distribuir" &&
+      (inscricao.estado === "aprovado" ||
+        inscricao.estado_estagio === "em_curso" ||
+        inscricao.estado_estagio === "aguarda_relatorio" ||
+        inscricao.estado_estagio === "aguarda_avaliacao" ||
+        inscricao.estado_estagio === "concluido" ||
+        Boolean(inscricao.distribuido_por) ||
+        Boolean(inscricao.professor_id) ||
+        Boolean(inscricao.orientador_id))
+  ) as Inscricao[];
+
+  setInscricoes(inscricoesValidas);
+
+  const edicoesIdsValidas: number[] = Array.from(
+    new Set(
+      inscricoesValidas
+        .map((inscricao) => Number(inscricao.edicao_estagio_id))
+        .filter((id) => !Number.isNaN(id))
+    )
+  );
+
+  if (edicoesIdsValidas.length > 0) {
+    const { data: edicoesData, error: edicoesError } = await supabase
+      .from("edicoes_estagio")
       .select(
         `
         id,
-        aluno_id,
-        edicao_estagio_id,
-        estado,
-        estado_estagio,
-        distribuido_por
+        ensino_clinico_id,
+        data_inicio,
+        data_fim,
+        ano_letivo,
+        ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
+        instituicoes(nome),
+        servicos(nome)
       `
       )
-      .eq("orientador_id", orientadorId)
+      .in("id", edicoesIdsValidas)
       .order("id", { ascending: false });
 
-    if (inscricoesError) {
-      console.log("ERRO INSCRIÇÕES RELATÓRIOS ORIENTADOR:", inscricoesError);
-      setInscricoes([]);
-      setLoading(false);
-      return;
-    }
-
-    const inscricoesValidas = ((inscricoesData as any) || []).filter(
-      (inscricao: Inscricao) =>
-        inscricao.estado !== "rejeitado" &&
-        inscricao.estado_estagio !== "inativo" &&
-        inscricao.estado_estagio !== "por_distribuir" &&
-        (inscricao.estado === "aprovado" ||
-          inscricao.estado_estagio === "em_curso" ||
-          inscricao.estado_estagio === "aguarda_relatorio" ||
-          inscricao.estado_estagio === "aguarda_avaliacao" ||
-          inscricao.estado_estagio === "concluido" ||
-          Boolean(inscricao.distribuido_por))
-    ) as Inscricao[];
-
-    setInscricoes(inscricoesValidas);
-
-    const edicoesIds: number[] = Array.from(
-      new Set(
-        inscricoesValidas
-          .map((inscricao) => Number(inscricao.edicao_estagio_id))
-          .filter((id) => !Number.isNaN(id))
-      )
-    );
-
-    if (edicoesIds.length > 0) {
-      const { data: edicoesData, error: edicoesError } = await supabase
-        .from("edicoes_estagio")
-        .select(
-          `
-          id,
-          ensino_clinico_id,
-          data_inicio,
-          data_fim,
-          ano_letivo,
-          ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
-          instituicoes(nome),
-          servicos(nome)
-        `
-        )
-        .in("id", edicoesIds)
-        .order("id", { ascending: false });
-
-      if (edicoesError) {
-        console.log("ERRO EDIÇÕES RELATÓRIOS ORIENTADOR:", edicoesError);
-        setEdicoes([]);
-      } else {
-        setEdicoes((edicoesData as any) || []);
-      }
-    } else {
+    if (edicoesError) {
+      console.log("ERRO EDIÇÕES RELATÓRIOS ORIENTADOR:", edicoesError);
       setEdicoes([]);
-    }
-
-    const alunosIds: string[] = Array.from(
-      new Set(
-        inscricoesValidas
-          .map((inscricao) => inscricao.aluno_id)
-          .filter(Boolean)
-      )
-    );
-
-    if (alunosIds.length > 0) {
-      const { data: alunosData, error: alunosError } = await supabase
-        .from("utilizadores")
-        .select("id, nome, email, numero_identificacao, ano_curricular")
-        .in("id", alunosIds)
-        .order("nome", { ascending: true });
-
-      if (alunosError) {
-        console.log("ERRO ALUNOS RELATÓRIOS ORIENTADOR:", alunosError);
-        setAlunos([]);
-      } else {
-        setAlunos((alunosData as any) || []);
-      }
     } else {
-      setAlunos([]);
+      setEdicoes((edicoesData as any) || []);
     }
-
-    const inscricoesIds = inscricoesValidas.map((inscricao) => inscricao.id);
-
-    if (inscricoesIds.length > 0) {
-      const { data: relatoriosData, error: relatoriosError } = await supabase
-        .from("relatorios_finais")
-        .select(
-          `
-          id,
-          inscricao_id,
-          ficheiro_url,
-          observacoes,
-          estado,
-          validado_por,
-          data_validacao,
-          criado_em
-        `
-        )
-        .in("inscricao_id", inscricoesIds)
-        .order("criado_em", { ascending: false });
-
-      if (relatoriosError) {
-        console.log("ERRO RELATÓRIOS ORIENTADOR:", relatoriosError);
-        setRelatorios([]);
-      } else {
-        const todos = ((relatoriosData as any) || []) as RelatorioFinal[];
-
-        const maisRecentes: RelatorioFinal[] = [];
-
-        todos.forEach((relatorio) => {
-          const jaExiste = maisRecentes.find(
-            (item) => item.inscricao_id === relatorio.inscricao_id
-          );
-
-          if (!jaExiste) {
-            maisRecentes.push(relatorio);
-          }
-        });
-
-        setRelatorios(maisRecentes);
-      }
-    } else {
-      setRelatorios([]);
-    }
-
-    setLoading(false);
+  } else {
+    setEdicoes([]);
   }
+
+  const alunosIds: string[] = Array.from(
+    new Set(
+      inscricoesValidas
+        .map((inscricao) => inscricao.aluno_id)
+        .filter(Boolean)
+    )
+  );
+
+  if (alunosIds.length > 0) {
+    const { data: alunosData, error: alunosError } = await supabase
+      .from("utilizadores")
+      .select("id, nome, email, numero_identificacao, ano_curricular")
+      .in("id", alunosIds)
+      .order("nome", { ascending: true });
+
+    if (alunosError) {
+      console.log("ERRO ALUNOS RELATÓRIOS ORIENTADOR:", alunosError);
+      setAlunos([]);
+    } else {
+      setAlunos((alunosData as any) || []);
+    }
+  } else {
+    setAlunos([]);
+  }
+
+  const inscricoesIds = inscricoesValidas.map((inscricao) => inscricao.id);
+
+  if (inscricoesIds.length > 0) {
+    const { data: relatoriosData, error: relatoriosError } = await supabase
+      .from("relatorios_finais")
+      .select(
+        `
+        id,
+        inscricao_id,
+        ficheiro_url,
+        observacoes,
+        estado,
+        validado_por,
+        data_validacao,
+        criado_em
+      `
+      )
+      .in("inscricao_id", inscricoesIds)
+      .order("criado_em", { ascending: false });
+
+    if (relatoriosError) {
+      console.log("ERRO RELATÓRIOS ORIENTADOR:", relatoriosError);
+      setRelatorios([]);
+    } else {
+      const todos = ((relatoriosData as any) || []) as RelatorioFinal[];
+
+      const maisRecentes: RelatorioFinal[] = [];
+
+      todos.forEach((relatorio) => {
+        const jaExiste = maisRecentes.find(
+          (item) => item.inscricao_id === relatorio.inscricao_id
+        );
+
+        if (!jaExiste) {
+          maisRecentes.push(relatorio);
+        }
+      });
+
+      setRelatorios(maisRecentes);
+    }
+  } else {
+    setRelatorios([]);
+  }
+
+  setLoading(false);
+}
 
   return (
     <View style={styles.page}>

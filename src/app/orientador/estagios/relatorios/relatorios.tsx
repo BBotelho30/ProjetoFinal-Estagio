@@ -90,7 +90,7 @@ export default function RelatorioAlunoOrientador() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "confirmar" = "normal"
+    tipo: "normal" | "confirmar" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -108,6 +108,13 @@ export default function RelatorioAlunoOrientador() {
           edicaoId: String(inscricao?.edicao_estagio_id || edicaoIdParam || ""),
         },
       });
+      return;
+    }
+
+    if (origem === "estagioRelatorios") {
+      router.replace(
+        "/orientador/estagios/relatorios/estagioRelatorios/estagioRelatorios" as any,
+      );
       return;
     }
 
@@ -136,119 +143,136 @@ export default function RelatorioAlunoOrientador() {
       .replace(/_+/g, "_");
   }
 
-  async function carregarDados() {
-    setLoading(true);
+      async function carregarDados() {
+      setLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+      const { data: authData, error: authError } = await supabase.auth.getUser();
 
-    if (authError) {
-      console.log("ERRO AUTH:", authError);
-      abrirPopup("Erro", "Não foi possível validar a sessão.");
-      setLoading(false);
-      return;
-    }
-
-    if (!authData.user) {
-      router.replace("/login/login" as any);
-      return;
-    }
-
-    const userId = authData.user.id;
-    setOrientadorId(userId);
-
-    let inscricaoIdFinal = inscricaoIdParam;
-
-    if (!inscricaoIdFinal && alunoIdParam && edicaoIdParam) {
-      const { data: inscricaoEncontrada, error: erroInscricaoEncontrada } =
-        await supabase
-          .from("inscricoes_estagio")
-          .select("id")
-          .eq("aluno_id", alunoIdParam)
-          .eq("edicao_estagio_id", edicaoIdParam)
-          .eq("orientador_id", userId)
-          .maybeSingle();
-
-      if (erroInscricaoEncontrada) {
-        console.log("ERRO A ENCONTRAR INSCRIÇÃO:", erroInscricaoEncontrada);
-      } else {
-        inscricaoIdFinal = inscricaoEncontrada?.id || null;
+      if (authError) {
+        console.log("ERRO AUTH:", authError);
+        abrirPopup("Erro", "Não foi possível validar a sessão.");
+        setLoading(false);
+        return;
       }
-    }
 
-    if (!inscricaoIdFinal) {
+      if (!authData.user) {
+        router.replace("/login/login" as any);
+        return;
+      }
+
+      const userId = authData.user.id;
+      setOrientadorId(userId);
+
+      let inscricaoIdFinal = inscricaoIdParam;
+
+      if (!inscricaoIdFinal && alunoIdParam && edicaoIdParam) {
+        const { data: inscricaoEncontrada, error: erroInscricaoEncontrada } =
+          await supabase
+            .from("inscricoes_estagio")
+            .select("id")
+            .eq("aluno_id", alunoIdParam)
+            .eq("edicao_estagio_id", edicaoIdParam)
+            .maybeSingle();
+
+        if (erroInscricaoEncontrada) {
+          console.log("ERRO A ENCONTRAR INSCRIÇÃO:", erroInscricaoEncontrada);
+        } else {
+          inscricaoIdFinal = inscricaoEncontrada?.id || null;
+        }
+      }
+
+      if (!inscricaoIdFinal) {
+        setLoading(false);
+        abrirPopup("Erro", "Não foi possível identificar este estágio/aluno.");
+        return;
+      }
+
+      const { data: inscricaoData, error: inscricaoError } = await supabase
+        .from("inscricoes_estagio")
+        .select("id, aluno_id, edicao_estagio_id, orientador_id")
+        .eq("id", inscricaoIdFinal)
+        .maybeSingle();
+
+      if (inscricaoError || !inscricaoData) {
+        console.log("ERRO INSCRIÇÃO:", inscricaoError);
+        setLoading(false);
+        abrirPopup(
+          "Erro",
+          inscricaoError?.message || "Não foi possível carregar a inscrição."
+        );
+        return;
+      }
+
+      const inscricaoAtual = inscricaoData as Inscricao;
+
+      const { data: associacaoOrientador, error: associacaoError } = await supabase
+        .from("orientadores_estagio")
+        .select("id")
+        .eq("orientador_id", userId)
+        .eq("edicao_estagio_id", inscricaoAtual.edicao_estagio_id)
+        .maybeSingle();
+
+      if (associacaoError || !associacaoOrientador) {
+        console.log("ORIENTADOR SEM ACESSO AO RELATÓRIO:", associacaoError);
+        setLoading(false);
+        abrirPopup("Erro", "Não tens acesso aos relatórios deste aluno.");
+        return;
+      }
+
+      setInscricao(inscricaoAtual);
+
+      const { data: edicaoData, error: edicaoError } = await supabase
+        .from("edicoes_estagio")
+        .select(
+          `
+          id,
+          data_inicio,
+          data_fim,
+          ensinos_clinicos(nome),
+          instituicoes(nome),
+          servicos(nome)
+        `
+        )
+        .eq("id", inscricaoAtual.edicao_estagio_id)
+        .maybeSingle();
+
+      if (edicaoError) {
+        console.log("ERRO EDIÇÃO:", edicaoError);
+        setEdicao(null);
+      } else {
+        setEdicao((edicaoData as any) || null);
+      }
+
+      const { data: relatoriosData, error: relatoriosError } = await supabase
+        .from("relatorios_orientador")
+        .select(
+          `
+          id,
+          inscricao_id,
+          aluno_id,
+          edicao_estagio_id,
+          orientador_id,
+          titulo,
+          observacao,
+          ficheiro_nome,
+          ficheiro_url,
+          data_submissao,
+          criado_em
+        `
+        )
+        .eq("inscricao_id", inscricaoAtual.id)
+        .order("data_submissao", { ascending: false })
+        .order("id", { ascending: false });
+
+      if (relatoriosError) {
+        console.log("ERRO RELATÓRIOS ORIENTADOR:", relatoriosError);
+        setRelatorios([]);
+      } else {
+        setRelatorios((relatoriosData as any) || []);
+      }
+
       setLoading(false);
-      abrirPopup("Erro", "Não foi possível identificar este estágio/aluno.");
-      return;
     }
-
-    const { data: inscricaoData, error: inscricaoError } = await supabase
-      .from("inscricoes_estagio")
-      .select("id, aluno_id, edicao_estagio_id, orientador_id")
-      .eq("id", inscricaoIdFinal)
-      .eq("orientador_id", userId)
-      .maybeSingle();
-
-    if (inscricaoError || !inscricaoData) {
-      console.log("ERRO INSCRIÇÃO:", inscricaoError);
-      setLoading(false);
-      abrirPopup(
-        "Erro",
-        inscricaoError?.message || "Não foi possível carregar a inscrição."
-      );
-      return;
-    }
-
-    const inscricaoAtual = inscricaoData as Inscricao;
-    setInscricao(inscricaoAtual);
-
-    const { data: edicaoData, error: edicaoError } = await supabase
-      .from("edicoes_estagio")
-      .select(`
-        id,
-        data_inicio,
-        data_fim,
-        ensinos_clinicos(nome),
-        instituicoes(nome),
-        servicos(nome)
-      `)
-      .eq("id", inscricaoAtual.edicao_estagio_id)
-      .maybeSingle();
-
-    if (edicaoError) {
-      console.log("ERRO EDIÇÃO:", edicaoError);
-      setEdicao(null);
-    } else {
-      setEdicao((edicaoData as any) || null);
-    }
-
-    const { data: relatoriosData, error: relatoriosError } = await supabase
-      .from("relatorios_orientador")
-      .select(`
-        id,
-        inscricao_id,
-        aluno_id,
-        edicao_estagio_id,
-        orientador_id,
-        titulo,
-        observacao,
-        ficheiro_nome,
-        ficheiro_url,
-        data_submissao,
-        criado_em
-      `)
-      .eq("inscricao_id", inscricaoAtual.id)
-      .order("data_submissao", { ascending: false })
-      .order("id", { ascending: false });
-
-    if (relatoriosError) {
-      console.log("ERRO RELATÓRIOS ORIENTADOR:", relatoriosError);
-      setRelatorios([]);
-    } else {
-      setRelatorios((relatoriosData as any) || []);
-    }
-
-    setLoading(false);
-  }
 
   async function escolherFicheiro() {
     const resultado = await DocumentPicker.getDocumentAsync({
@@ -277,7 +301,7 @@ export default function RelatorioAlunoOrientador() {
     if (!temFicheiro && !temObservacao) {
       abrirPopup(
         "Aviso",
-        "Anexa um PDF ou escreve uma observação antes de submeter."
+        "Anexa um PDF ou escreve uma observação antes de submeter.",
       );
       return;
     }
@@ -285,7 +309,7 @@ export default function RelatorioAlunoOrientador() {
     abrirPopup(
       "Submeter relatório",
       "Tens a certeza que queres submeter este relatório/anexo?",
-      "confirmar"
+      "confirmar",
     );
   }
 
@@ -354,7 +378,7 @@ export default function RelatorioAlunoOrientador() {
     if (!temFicheiro && !temObservacao) {
       abrirPopup(
         "Aviso",
-        "Anexa um PDF ou escreve uma observação antes de submeter."
+        "Anexa um PDF ou escreve uma observação antes de submeter.",
       );
       return;
     }
@@ -371,7 +395,7 @@ export default function RelatorioAlunoOrientador() {
         abrirPopup(
           "Erro no upload",
           resultadoUpload.erro ||
-            "Não foi possível enviar o ficheiro. Verifica o bucket relatorios-orientador."
+            "Não foi possível enviar o ficheiro. Verifica o bucket relatorios-orientador.",
         );
         return;
       }
@@ -394,7 +418,9 @@ export default function RelatorioAlunoOrientador() {
       criado_em: agora,
     };
 
-    const { error } = await supabase.from("relatorios_orientador").insert(payload);
+    const { error } = await supabase
+      .from("relatorios_orientador")
+      .insert(payload);
 
     setAGuardar(false);
 
@@ -423,13 +449,16 @@ export default function RelatorioAlunoOrientador() {
 
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
           <Ionicons name="arrow-back-outline" size={24} color="#160909" />
           <Text style={styles.voltarTexto}>Voltar</Text>
         </Pressable>
 
-        <Text style={styles.titulo}>Relatório Final</Text>
+        <Text style={styles.titulo}>Relatório e Anexos</Text>
 
         {loading ? (
           <ActivityIndicator
@@ -497,10 +526,13 @@ export default function RelatorioAlunoOrientador() {
 
             {relatorios.length === 0 ? (
               <View style={styles.vazioBox}>
-                <Text style={styles.vazioTitulo}>Ainda não entregaste nada</Text>
+                <Text style={styles.vazioTitulo}>
+                  Ainda não entregaste nada
+                </Text>
 
                 <Text style={styles.vazioTexto}>
-                  Quando submeteres documentos ou observações, vão aparecer aqui.
+                  Quando submeteres documentos ou observações, vão aparecer
+                  aqui.
                 </Text>
               </View>
             ) : (
@@ -516,7 +548,7 @@ export default function RelatorioAlunoOrientador() {
                     <Text style={styles.relatorioData}>
                       Entregue em{" "}
                       {formatarData(
-                        relatorio.data_submissao || relatorio.criado_em
+                        relatorio.data_submissao || relatorio.criado_em,
                       )}
                     </Text>
 

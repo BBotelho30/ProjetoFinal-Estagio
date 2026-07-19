@@ -214,40 +214,58 @@ export default function HomeOrientador() {
       setPerfil((perfilData as any) || null);
     }
 
-    const { data: inscricoesData, error: inscricoesError } = await supabase
-      .from("inscricoes_estagio")
-      .select(`
-        id,
-        aluno_id,
-        edicao_estagio_id,
-        estado,
-        estado_estagio,
-        aluno:utilizadores!inscricoes_estagio_aluno_id_fkey(nome, email),
-        edicoes_estagio(
-          id,
-          data_inicio,
-          data_fim,
-          ano_letivo,
-          ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
-          instituicoes(nome),
-          servicos(nome)
-        )
-      `)
-      .eq("orientador_id", orientadorId)
-      .order("id", { ascending: false });
+    const { data: associacoesData, error: associacoesError } = await supabase
+      .from("orientadores_estagio")
+      .select("edicao_estagio_id")
+      .eq("orientador_id", orientadorId);
 
-    if (inscricoesError) {
-      console.log("ERRO INSCRIÇÕES ORIENTADOR:", inscricoesError);
+    if (associacoesError) {
+      console.log("ERRO ASSOCIAÇÕES ORIENTADOR HOME:", associacoesError);
       setInscricoes([]);
     } else {
-      const lista = ((inscricoesData as any) || []).filter(
-        (inscricao: InscricaoOrientador) =>
-          inscricao.estado !== "rejeitado" &&
-          inscricao.estado_estagio !== "inativo" &&
-          inscricao.estado_estagio !== "por_distribuir"
+      const edicoesIds = Array.from(
+        new Set(
+          ((associacoesData as any) || [])
+            .map((item: any) => item.edicao_estagio_id)
+            .filter(Boolean)
+        )
       );
 
-      setInscricoes(lista);
+      if (edicoesIds.length === 0) {
+        setInscricoes([]);
+      } else {
+        const { data: inscricoesData, error: inscricoesError } = await supabase
+          .from("inscricoes_estagio")
+          .select(`
+            id,
+            aluno_id,
+            edicao_estagio_id,
+            estado,
+            estado_estagio,
+            aluno:utilizadores!inscricoes_estagio_aluno_id_fkey(nome, email),
+            edicoes_estagio(
+              id,
+              data_inicio,
+              data_fim,
+              ano_letivo,
+              ensinos_clinicos(nome, ano_curricular, tipo, horas_estimadas),
+              instituicoes(nome),
+              servicos(nome)
+            )
+          `)
+          .in("edicao_estagio_id", edicoesIds)
+          .neq("estado", "rejeitado")
+          .neq("estado_estagio", "inativo")
+          .neq("estado_estagio", "por_distribuir")
+          .order("id", { ascending: false });
+
+        if (inscricoesError) {
+          console.log("ERRO INSCRIÇÕES ORIENTADOR HOME:", inscricoesError);
+          setInscricoes([]);
+        } else {
+          setInscricoes((inscricoesData as any) || []);
+        }
+      }
     }
 
     const agora = new Date().toISOString();
@@ -432,7 +450,7 @@ export default function HomeOrientador() {
                   onPress={() =>
                     router.push({
                       pathname:
-                        "/orientador/ensinosClinicos/alunosEstagio/alunosEstagio" as any,
+                        "/orientador/estagios/alunosEstagio/alunosEstagio" as any,
                       params: {
                         edicaoId: String(item.edicao_estagio_id),
                       },

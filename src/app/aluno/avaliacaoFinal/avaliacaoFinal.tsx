@@ -65,30 +65,6 @@ export default function AvaliacaoAluno() {
     carregarDados();
   }, []);
 
-function voltarPaginaAnterior() {
-  const idInscricao = String(estagio?.id || inscricaoId || "");
-  const idEdicao = String(estagio?.edicao_estagio_id || edicaoId || "");
-
-  if (
-    origem === "detalhesEstagio" ||
-    origem === "detalheEstagio" ||
-    origem === "detalhesAluno" ||
-    origem === "detalhe"
-  ) {
-    router.replace({
-      pathname: "/aluno/estagios/detalhesAluno/detalhesAluno" as any,
-      params: {
-        inscricaoId: idInscricao,
-        edicaoId: idEdicao,
-      },
-    });
-
-    return;
-  }
-
-  router.replace("/aluno/home" as any);
-}
-
   function formatarData(data?: string | null) {
     if (!data) return "Sem data";
 
@@ -102,6 +78,15 @@ function voltarPaginaAnterior() {
   function formatarNota(nota?: number | null) {
     if (nota === null || nota === undefined) return "Ainda não atribuída";
     return `${nota} valores`;
+  }
+
+  function podeMostrarNotaFinal() {
+    return (
+      avaliacao?.nota_professor !== null &&
+      avaliacao?.nota_professor !== undefined &&
+      avaliacao?.nota_orientador !== null &&
+      avaliacao?.nota_orientador !== undefined
+    );
   }
 
   async function carregarDados() {
@@ -118,7 +103,8 @@ function voltarPaginaAnterior() {
 
     let query = supabase
       .from("inscricoes_estagio")
-      .select(`
+      .select(
+        `
         id,
         aluno_id,
         edicao_estagio_id,
@@ -131,7 +117,8 @@ function voltarPaginaAnterior() {
           instituicoes(nome),
           servicos(nome)
         )
-      `)
+      `,
+      )
       .eq("aluno_id", alunoId);
 
     if (inscricaoId) {
@@ -142,7 +129,8 @@ function voltarPaginaAnterior() {
       query = query.order("id", { ascending: false }).limit(1);
     }
 
-    const { data: estagioData, error: estagioError } = await query.maybeSingle();
+    const { data: estagioData, error: estagioError } =
+      await query.maybeSingle();
 
     if (estagioError) {
       console.log("ERRO ESTÁGIO AVALIAÇÃO:", estagioError);
@@ -168,7 +156,8 @@ function voltarPaginaAnterior() {
 
     const { data: avaliacaoData, error: avaliacaoError } = await supabase
       .from("avaliacoes")
-      .select(`
+      .select(
+        `
         id,
         aluno_id,
         professor_id,
@@ -182,7 +171,8 @@ function voltarPaginaAnterior() {
         observacao_final,
         estado,
         criado_em
-      `)
+      `,
+      )
       .eq("aluno_id", alunoId)
       .eq("edicao_estagio_id", estagioAtual.edicao_estagio_id)
       .order("criado_em", { ascending: false })
@@ -210,8 +200,20 @@ function voltarPaginaAnterior() {
 
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <Pressable
+          style={styles.voltar}
+          onPress={() =>
+            inscricaoId
+              ? router.push(
+                  `/aluno/estagios/detalheEstagio/detalheEstagio?id=${inscricaoId}` as any,
+                )
+              : router.push("/aluno/home" as any)
+          }
+        >
           <Ionicons name="arrow-back-outline" size={24} color="#160909" />
           <Text style={styles.voltarTexto}>Voltar</Text>
         </Pressable>
@@ -245,17 +247,13 @@ function voltarPaginaAnterior() {
               <Text style={styles.notaTitulo}>Nota final</Text>
 
               <Text style={styles.notaValor}>
-                {avaliacao?.nota_final !== null &&
-                avaliacao?.nota_final !== undefined
-                  ? avaliacao.nota_final
-                  : "--"}
+                {podeMostrarNotaFinal() ? avaliacao?.nota_final : "--"}
               </Text>
 
               <Text style={styles.notaData}>
-                {avaliacao?.nota_final !== null &&
-                avaliacao?.nota_final !== undefined
+                {podeMostrarNotaFinal()
                   ? "valores"
-                  : "Ainda não foi lançada nota final."}
+                  : "Aguardando a avaliação do professor e do orientador."}
               </Text>
             </View>
 

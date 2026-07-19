@@ -49,12 +49,10 @@ type Edicao = {
 type Comentario = {
   id: number;
   inscricao_id: number;
-  aluno_id: string;
-  edicao_estagio_id: number;
   orientador_id: string;
-  semana: string | null;
+  semana: number;
   comentario: string;
-  data: string | null;
+  data_comentario: string | null;
   criado_em: string | null;
 };
 
@@ -197,7 +195,7 @@ export default function ComentariosAlunoOrientador() {
     router.replace("/orientador/home" as any);
   }
 
-  async function carregarDados() {
+    async function carregarDados() {
     setLoading(true);
 
     const { data: authData } = await supabase.auth.getUser();
@@ -219,7 +217,6 @@ export default function ComentariosAlunoOrientador() {
           .select("id")
           .eq("aluno_id", alunoIdParam)
           .eq("edicao_estagio_id", edicaoIdParam)
-          .eq("orientador_id", userId)
           .maybeSingle();
 
       if (inscricaoEncontradaError) {
@@ -245,7 +242,6 @@ export default function ComentariosAlunoOrientador() {
         "id, aluno_id, edicao_estagio_id, orientador_id, estado, estado_estagio"
       )
       .eq("id", inscricaoIdFinal)
-      .eq("orientador_id", userId)
       .maybeSingle();
 
     if (inscricaoError || !inscricaoData) {
@@ -256,6 +252,30 @@ export default function ComentariosAlunoOrientador() {
     }
 
     const inscricaoAtual = inscricaoData as Inscricao;
+
+    const { data: associacaoOrientador, error: associacaoError } = await supabase
+      .from("orientadores_estagio")
+      .select("id")
+      .eq("orientador_id", userId)
+      .eq("edicao_estagio_id", inscricaoAtual.edicao_estagio_id)
+      .maybeSingle();
+
+    if (associacaoError || !associacaoOrientador) {
+      console.log("ORIENTADOR SEM ACESSO A ESTA EDIÇÃO:", associacaoError);
+      abrirPopup("Erro", "Não tens acesso aos comentários deste aluno.");
+      setLoading(false);
+      return;
+    }
+
+    if (
+      inscricaoAtual.estado === "rejeitado" ||
+      inscricaoAtual.estado_estagio === "inativo" ||
+      inscricaoAtual.estado_estagio === "por_distribuir"
+    ) {
+      abrirPopup("Erro", "Esta inscrição já não está ativa.");
+      setLoading(false);
+      return;
+    }
 
     setInscricao(inscricaoAtual);
 
@@ -279,10 +299,12 @@ export default function ComentariosAlunoOrientador() {
         id,
         ensino_clinico_id,
         ano_letivo,
+        data_inicio,
         ensinos_clinicos(nome, ano_curricular),
         instituicoes(nome),
         servicos(nome)
       `
+
       )
       .eq("id", inscricaoAtual.edicao_estagio_id)
       .maybeSingle();
@@ -300,13 +322,12 @@ export default function ComentariosAlunoOrientador() {
         `
         id,
         inscricao_id,
-        aluno_id,
-        edicao_estagio_id,
         orientador_id,
         semana,
         comentario,
-        data,
+        data_comentario,
         criado_em
+
       `
       )
       .eq("inscricao_id", inscricaoAtual.id)
@@ -352,47 +373,45 @@ export default function ComentariosAlunoOrientador() {
     );
   }
 
-  async function guardarComentario() {
-    if (!orientadorId || !inscricao) return;
+    async function guardarComentario() {
+      if (!orientadorId || !inscricao) return;
 
-    const dataISO = textoParaDataISO(dataComentario.trim());
+      const dataISO = textoParaDataISO(dataComentario.trim());
 
-    if (!dataISO) {
-      abrirPopup("Erro", "A data está inválida.");
-      return;
+      if (!dataISO) {
+        abrirPopup("Erro", "A data está inválida.");
+        return;
+      }
+
+      setAGuardar(true);
+
+      const agora = new Date().toISOString();
+
+      const { error } = await supabase.from("comentarios_semanais").insert({
+        inscricao_id: inscricao.id,
+        orientador_id: orientadorId,
+        semana: null,
+        comentario: comentario.trim(),
+        data_comentario: dataISO,
+        criado_em: agora,
+      });
+
+      setAGuardar(false);
+
+      if (error) {
+        console.log("ERRO GUARDAR COMENTÁRIO:", error);
+        abrirPopup("Erro", error.message);
+        return;
+      }
+
+      setPopupVisible(false);
+      setComentario("");
+      setDataComentario(dataParaTexto(new Date()));
+
+      abrirPopup("Sucesso", "Comentário guardado com sucesso.");
+
+      await carregarDados();
     }
-
-    setAGuardar(true);
-
-    const agora = new Date().toISOString();
-
-    const { error } = await supabase.from("comentarios_semanais").insert({
-      inscricao_id: inscricao.id,
-      aluno_id: inscricao.aluno_id,
-      edicao_estagio_id: inscricao.edicao_estagio_id,
-      orientador_id: orientadorId,
-      semana: null,
-      comentario: comentario.trim(),
-      data: dataISO,
-      criado_em: agora,
-    });
-
-    setAGuardar(false);
-
-    if (error) {
-      console.log("ERRO GUARDAR COMENTÁRIO:", error);
-      abrirPopup("Erro", "Não foi possível guardar o comentário.");
-      return;
-    }
-
-    setPopupVisible(false);
-    setComentario("");
-    setDataComentario(dataParaTexto(new Date()));
-
-    abrirPopup("Sucesso", "Comentário guardado com sucesso.");
-
-    await carregarDados();
-  }
 
   return (
     <View style={styles.page}>
@@ -507,7 +526,7 @@ export default function ComentariosAlunoOrientador() {
 
                       <View style={{ flex: 1 }}>
                         <Text style={styles.comentarioSemana}>
-                          {formatarData(item.data)}
+                          {formatarData(item.data_comentario)}
                         </Text>
 
                         <Text style={styles.comentarioData}>

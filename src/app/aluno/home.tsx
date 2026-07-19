@@ -144,6 +144,14 @@ async function buscarOrientadorDaEdicao(edicaoId: number) {
 }
 
 
+function estagioEstaDistribuido(estagio: EstagioAtual) {
+  return Boolean(
+    estagio.professor_id ||
+      estagio.orientador_id ||
+      estagio.estado === "aprovado"
+  );
+}
+
   async function carregarDados() {
     setLoading(true);
 
@@ -201,7 +209,11 @@ async function buscarOrientadorDaEdicao(edicaoId: number) {
     } else {
       const lista = ((estagiosData as any) || []).filter(
         (estagio: EstagioAtual) =>
-          estagio.estado_estagio !== "concluido"
+          estagio.estado !== "rejeitado" &&
+          estagio.estado_estagio !== "inativo" &&
+          estagio.estado_estagio !== "concluido" &&
+          estagio.estado_estagio !== "por_distribuir" &&
+          estagioEstaDistribuido(estagio)
       ) as EstagioAtual[];
 
       const listaCorrigida = await Promise.all(

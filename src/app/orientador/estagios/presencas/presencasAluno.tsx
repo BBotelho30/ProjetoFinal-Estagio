@@ -2,12 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 import { supabase } from "../../../../lib/supabase";
 import styles from "./presencasAlunoStyles";
@@ -93,7 +93,7 @@ export default function PresencasOrientador() {
   >("normal");
 
   const [presencaSelecionada, setPresencaSelecionada] = useState<number | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function PresencasOrientador() {
   function abrirPopup(
     titulo: string,
     mensagem: string,
-    tipo: "normal" | "validarTudo" | "validarUma" = "normal"
+    tipo: "normal" | "validarTudo" | "validarUma" = "normal",
   ) {
     setPopupTitle(titulo);
     setPopupMessage(mensagem);
@@ -146,8 +146,7 @@ export default function PresencasOrientador() {
 
     if (origemParam === "detalhesAluno") {
       router.replace({
-        pathname:
-          "/orientador/estagios/detalhesAluno/detalhesAluno" as any,
+        pathname: "/orientador/estagios/detalhesAluno/detalhesAluno" as any,
         params: {
           inscricaoId: String(inscricao?.id || inscricaoIdParam || ""),
           alunoId: String(inscricao?.aluno_id || alunoIdParam || ""),
@@ -160,7 +159,7 @@ export default function PresencasOrientador() {
 
     if (origemParam === "alunosPresencas") {
       router.replace(
-        "/orientador/presencas/alunoPresencas/alunoPresencas" as any
+        "/orientador/estagios/presencas/alunosPresencas/alunosPresencas" as any,
       );
 
       return;
@@ -192,7 +191,6 @@ export default function PresencasOrientador() {
           .select("id")
           .eq("aluno_id", alunoIdParam)
           .eq("edicao_estagio_id", edicaoIdParam)
-          .eq("orientador_id", userId)
           .maybeSingle();
 
       if (inscricaoEncontradaError) {
@@ -205,7 +203,7 @@ export default function PresencasOrientador() {
     if (!inscricaoIdFinal) {
       abrirPopup(
         "Erro",
-        "Não foi possível identificar a inscrição deste aluno."
+        "Não foi possível identificar a inscrição deste aluno.",
       );
 
       setLoading(false);
@@ -216,7 +214,6 @@ export default function PresencasOrientador() {
       .from("inscricoes_estagio")
       .select("id, aluno_id, edicao_estagio_id, estado, estado_estagio")
       .eq("id", inscricaoIdFinal)
-      .eq("orientador_id", userId)
       .maybeSingle();
 
     if (inscricaoError || !inscricaoData) {
@@ -226,9 +223,34 @@ export default function PresencasOrientador() {
       return;
     }
 
-    const inscricaoAtual = inscricaoData as Inscricao;
+    
 
-    setInscricao(inscricaoAtual);
+      const inscricaoAtual = inscricaoData as Inscricao;
+
+      const { data: associacaoOrientador, error: associacaoError } = await supabase
+        .from("orientadores_estagio")
+        .select("id")
+        .eq("orientador_id", userId)
+        .eq("edicao_estagio_id", inscricaoAtual.edicao_estagio_id)
+        .maybeSingle();
+
+      if (associacaoError || !associacaoOrientador) {
+        console.log("ORIENTADOR SEM ACESSO A ESTA EDIÇÃO:", associacaoError);
+        abrirPopup("Erro", "Não tens acesso às presenças deste aluno.");
+        setLoading(false);
+        return;
+      }
+
+      if (
+        inscricaoAtual.estado === "rejeitado" ||
+        inscricaoAtual.estado_estagio === "inativo" ||
+        inscricaoAtual.estado_estagio === "por_distribuir"
+      ) {
+        abrirPopup("Erro", "Esta inscrição já não está ativa.");
+        setLoading(false);
+        return;
+      }
+          setInscricao(inscricaoAtual);
 
     const { data: alunoData, error: alunoError } = await supabase
       .from("utilizadores")
@@ -254,7 +276,7 @@ export default function PresencasOrientador() {
         ensinos_clinicos(nome, ano_curricular),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .eq("id", inscricaoAtual.edicao_estagio_id)
       .maybeSingle();
@@ -283,7 +305,7 @@ export default function PresencasOrientador() {
         estado_professor,
         observacoes,
         horas_reposicao
-      `
+      `,
       )
       .eq("inscricao_id", inscricaoIdFinal)
       .order("data", { ascending: true })
@@ -302,11 +324,11 @@ export default function PresencasOrientador() {
   const totais = useMemo(() => {
     const totalHoras = presencas.reduce(
       (soma, presenca) => soma + Number(presenca.duracao || 0),
-      0
+      0,
     );
 
     const totalValidadas = presencas.filter(
-      (presenca) => presenca.estado_orientador === "validado"
+      (presenca) => presenca.estado_orientador === "validado",
     ).length;
 
     const totalPendentes = presencas.length - totalValidadas;
@@ -325,7 +347,7 @@ export default function PresencasOrientador() {
     abrirPopup(
       "Validar presença",
       "Tens a certeza que queres validar esta presença?",
-      "validarUma"
+      "validarUma",
     );
   }
 
@@ -336,7 +358,7 @@ export default function PresencasOrientador() {
     }
 
     const pendentes = presencas.filter(
-      (presenca) => presenca.estado_orientador !== "validado"
+      (presenca) => presenca.estado_orientador !== "validado",
     );
 
     if (pendentes.length === 0) {
@@ -347,7 +369,7 @@ export default function PresencasOrientador() {
     abrirPopup(
       "Validar tudo",
       `Tens a certeza que queres validar ${pendentes.length} presença(s) pendente(s)?`,
-      "validarTudo"
+      "validarTudo",
     );
   }
 
@@ -415,7 +437,10 @@ export default function PresencasOrientador() {
 
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
           <Ionicons name="arrow-back-outline" size={24} color="#160909" />
 

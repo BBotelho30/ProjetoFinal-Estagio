@@ -93,7 +93,7 @@ export default function RelatoriosOrientadorProfessor() {
 
   function voltarPaginaAnterior() {
     router.replace({
-      pathname: "/orientador/estagios/detalhesAluno/detalhesAluno" as any,
+      pathname: "/professor/verEstagios/detalhesAlunos/detalhesAlunos" as any,
       params: {
         inscricaoId: String(inscricao?.id || inscricaoIdParam || ""),
         alunoId: String(inscricao?.aluno_id || alunoIdParam || ""),
@@ -149,7 +149,7 @@ export default function RelatoriosOrientadorProfessor() {
     if (!inscricaoIdFinal) {
       abrirPopup(
         "Erro",
-        "Não foi possível identificar a inscrição deste aluno."
+        "Não foi possível identificar a inscrição deste aluno.",
       );
       setLoading(false);
       return;
@@ -195,7 +195,7 @@ export default function RelatoriosOrientadorProfessor() {
         ensinos_clinicos(nome, ano_curricular, semestre),
         instituicoes(nome),
         servicos(nome)
-      `
+      `,
       )
       .eq("id", inscricaoAtual.edicao_estagio_id)
       .maybeSingle();
@@ -222,7 +222,7 @@ export default function RelatoriosOrientadorProfessor() {
         ficheiro_url,
         data_submissao,
         criado_em
-      `
+      `,
       )
       .eq("inscricao_id", inscricaoAtual.id)
       .order("data_submissao", { ascending: false })
@@ -249,7 +249,10 @@ export default function RelatoriosOrientadorProfessor() {
 
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <Pressable style={styles.voltar} onPress={voltarPaginaAnterior}>
           <Ionicons name="arrow-back-outline" size={24} color="#160909" />
           <Text style={styles.voltarTexto}>Voltar</Text>
@@ -343,7 +346,7 @@ export default function RelatoriosOrientadorProfessor() {
                         <Text style={styles.relatorioData}>
                           Submetido em{" "}
                           {formatarData(
-                            relatorio.data_submissao || relatorio.criado_em
+                            relatorio.data_submissao || relatorio.criado_em,
                           )}
                         </Text>
                       </View>
@@ -363,7 +366,9 @@ export default function RelatoriosOrientadorProfessor() {
                       onPress={() => abrirDocumento(relatorio.ficheiro_url)}
                     >
                       <Ionicons name="open-outline" size={18} color="#160909" />
-                      <Text style={styles.botaoAbrirTexto}>Abrir documento</Text>
+                      <Text style={styles.botaoAbrirTexto}>
+                        Abrir documento
+                      </Text>
                     </Pressable>
                   </View>
                 ))}
